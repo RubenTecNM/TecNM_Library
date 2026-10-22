@@ -1,0 +1,208 @@
+{
+  "main": {
+    "id": "e06a2c99f322033b",
+    "type": "split",
+    "children": [
+      {
+        "id": "d2f5a0e0c7ea4103",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0e39075258fca1f5",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "DIAGRAMA_ER_COMPLETO.md",
+                "mode": "preview",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "DIAGRAMA_ER_COMPLETO"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "bdc41fdbdbbf5228",
+    "type": "split",
+    "children": [
+      {
+        "id": "0d8c82041b11a912",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e4e98d979e405ae9",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "5fddfe334d2237ac",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "b37b6ab96170bfda",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200
+  },
+  "right": {
+    "id": "10a7fd69246408df",
+    "type": "split",
+    "children": [
+      {
+        "id": "73ab3f9328ec2422",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "43268fe17f7b97c3",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "DIAGRAMA_ER_COMPLETO.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "2af760dcebc59a17",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "DIAGRAMA_ER_COMPLETO.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "2b5d4dbc080f7a73",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "ddcc421c830a5d13",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "12112fcdd8d62d10",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "DIAGRAMA_ER_COMPLETO.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "0e39075258fca1f5",
+  "lastOpenFiles": [
+    "base_de_datos_completa.canvas",
+    "esquema.canvas",
+    "ESQUEMA_TABLAS.md",
+    "visor_er.html",
+    "create_html_viewer.py",
+    "DIAGRAMA_ER_COMPLETO.md",
+    "build_unified_er.py",
+    "make_full_canvas.py",
+    "test_canvas_gen.py",
+    "generate_full_canvas.py",
+    "test_canvas_layout.py",
+    "test_relations.py",
+    "update_html.py",
+    "update_flowchart.py"
+  ]
+}

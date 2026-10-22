@@ -1,0 +1,1 @@
+<template><svg class="mark" viewBox="0 0 36 40" fill="none" aria-hidden="true"><path d="M3 6 18 1l15 5v17c0 7-9 13-15 16C12 36 3 30 3 23V6Z" stroke="currentColor" stroke-width="1.5"/><path d="M11 27V14l7-4 7 4v13M8 28h20M15 17v8m6-8v8" stroke="currentColor" stroke-width="2"/></svg></template>

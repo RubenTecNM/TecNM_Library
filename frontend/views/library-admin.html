@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+
+<html lang="es" style="">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_standard" name="shell-type" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        @layer base {
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                overscroll-behavior: none;
+            }
+
+            main> :first-child {
+                margin-top: 0 !important;
+            }
+
+            main> :last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 3D Book Jacket Perspective & Realistic Physics */
+        .book-stage {
+            perspective: 900px;
+        }
+
+        .book-cover-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: rotateY(-6deg) rotateX(2deg);
+        }
+
+        .book-card:hover .book-cover-3d {
+            transform: rotateY(-18deg) rotateX(4deg) translateY(-8px) translateZ(14px);
+            box-shadow: 18px 24px 34px -8px rgba(0, 35, 81, 0.45), 0 0 24px -2px rgba(197, 160, 89, 0.35);
+        }
+
+        .book-spine-lighting {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 2.5%, rgba(0, 0, 0, 0.45) 5%, transparent 12%);
+        }
+
+        .gold-foil-text {
+            background: linear-gradient(135deg, #FFF3D6 0%, #D8B168 45%, #FBF0D9 70%, #9B752A 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gold-foil-border {
+            border-image: linear-gradient(135deg, #eed8a1, #b88e3d, #fef1cf) 1;
+        }
+
+        .embossed-gold {
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script
+        id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-surface": "#0b1c30", "on-primary-fixed": "#001a40", "on-tertiary-container": "#44b5a8", "on-tertiary-fixed": "#00201d", "on-error": "#ffffff", "secondary-container": "#fed488", "tertiary": "#002a26", "surface-tint": "#435e91", "tertiary-fixed": "#89f5e7", "surface-container-highest": "#d3e4fe", "on-primary-fixed-variant": "#2a4678", "inverse-on-surface": "#eaf1ff", "primary-fixed": "#d7e2ff", "surface-dim": "#cbdbf5", "primary": "#002351", "secondary-fixed-dim": "#e9c176", "primary-container": "#1b396a", "surface-container-high": "#dce9ff", "background": "#f8f9ff", "on-tertiary": "#ffffff", "on-primary": "#ffffff", "secondary-fixed": "#ffdea5", "on-surface-variant": "#44474f", "on-primary-container": "#89a4dc", "surface": "#f8f9ff", "on-secondary-container": "#785a1a", "surface-variant": "#d3e4fe", "surface-container-low": "#eff4ff", "tertiary-container": "#00423c", "inverse-surface": "#213145", "surface-container": "#e5eeff", "on-secondary": "#ffffff", "on-secondary-fixed-variant": "#5d4201", "inverse-primary": "#acc7ff", "on-secondary-fixed": "#261900", "secondary": "#775a19", "tecnm-gold": "#C5A059", "tecnm-gold-light": "#ecd49c", "on-tertiary-fixed-variant": "#005049", "surface-container-lowest": "#ffffff", "outline-variant": "#c4c6d0", "surface-bright": "#f8f9ff", "error": "#ba1a1a", "primary-fixed-dim": "#acc7ff", "on-background": "#0b1c30", "on-error-container": "#93000a", "tertiary-fixed-dim": "#6bd8cb", "error-container": "#ffdad6", "outline": "#747780" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-sm": "0.5rem", "space-xs": "0.25rem", "gutter": "1.5rem", "margin": "2rem", "space-xl": "2.5rem", "space-md": "1rem", "space-lg": "1.5rem", "gutter-mobile": "1rem", "margin-mobile": "1rem" }, "fontFamily": { "headline-sm": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "label-md": ["Inter"], "citation-code": ["Inter"], "body-sm": ["Inter"], "display-hero": ["Plus Jakarta Sans"], "display-cinzel": ["Cinzel"], "headline-lg-mobile": ["Plus Jakarta Sans"], "label-sm": ["Inter"], "display-hero-mobile": ["Plus Jakarta Sans"], "body-md": ["Inter"], "label-lg": ["Inter"] }, "fontSize": { "headline-sm": ["18px", { "lineHeight": "26px", "fontWeight": "600" }], "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "citation-code": ["13px", { "lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400" }], "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }], "display-hero": ["38px", { "lineHeight": "46px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "display-hero-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }] } } } }</script>
+</head>
+
+<body class="bg-[#f5f7fc] font-body-md text-on-surface antialiased selection:bg-tecnm-gold/30 selection:text-primary">
+    <header
+        class="fixed top-0 w-full z-50 bg-[#001b3d] shadow-[0_4px_24px_rgba(0,18,48,0.25)] border-b border-white/10">
+        <div class="h-20 w-full px-margin flex items-center justify-between gap-space-md">
+            <div class="flex items-center gap-space-lg">
+                <div class="flex items-center gap-space-sm group cursor-pointer">
+                    <div
+                        class="relative flex items-center justify-center p-1.5 rounded-lg bg-white/5 border border-white/10 shadow-inner group-hover:border-tecnm-gold/50 transition-colors">
+                        <img alt="TecNM ITS Monclova Logo" class="h-11 w-auto object-contain brightness-110"
+                            src="https://lh3.googleusercontent.com/aida/AEtjO1W385pCpg6wXaY7Uhc-cJHcy1ozpNA2pmEHksKMzzR7CqMSqasfpuy3AbJPlo3fK6X9o6BFO6E_LW-bxZlaE-yOMd3axwgQWmJxG5xkdeuVGVzpGmsrjmVkH38qZPInq66Rs2fMMn32gouWrX_wga9poCpNLBbueGsdo7PfAsjIVecGxTYI7OhgZJtvGtIAipaRWOAa5aw2RpGkpelolWcGpVN-vDfetfeShmGFMpHp5qh0UQhGWzyzUMRU" />
+                        <div class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#001b3d]"
+                            title="Sistema Local ITSM Operativo"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-1.5"><span
+                                class="font-headline-sm text-headline-sm text-white tracking-tight leading-none font-bold">ITSM</span><span
+                                class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#C5A059]/20 text-[#ecd49c] border border-[#C5A059]/40 tracking-wider">CAMPUS
+                                MONCLOVA</span></div><span
+                            class="font-label-sm text-[11px] text-[#f2dfbe] font-medium tracking-wide mt-1 flex items-center gap-1"><span
+                                class="material-symbols-outlined text-[13px] text-tecnm-gold">local_library</span>
+                            Biblioteca Central • Panel Administrativo</span>
+                    </div>
+                </div>
+                <nav class="hidden xl:flex items-center gap-space-xs"
+                    data-active-classes="bg-primary-container text-on-primary font-label-lg rounded-lg"><a
+                        class="font-label-lg text-label-lg text-white bg-white/10 px-space-md py-space-sm rounded-lg border border-white/10 shadow-sm flex items-center gap-1.5"
+                        data-path="control-acervo" href="#"><span
+                            class="material-symbols-outlined text-[16px]">menu_book</span> Control de Acervo</a><a
+                        class="font-label-lg text-label-lg text-on-primary-container hover:text-white hover:bg-white/5 px-space-md py-space-sm rounded-lg transition-colors flex items-center gap-1.5"
+                        data-path="circulacion" href="#"><span
+                            class="material-symbols-outlined text-[16px]">swap_horiz</span> Circulación &amp;
+                        Préstamos</a><a
+                        class="font-label-lg text-label-lg text-on-primary-container hover:text-white hover:bg-white/5 px-space-md py-space-sm rounded-lg transition-colors flex items-center gap-1.5"
+                        data-path="catalogacion" href="#"><span
+                            class="material-symbols-outlined text-[16px]">edit_note</span> Catalogación</a><a
+                        class="font-label-lg text-label-lg text-on-primary-container hover:text-white hover:bg-white/5 px-space-md py-space-sm rounded-lg transition-colors flex items-center gap-1.5"
+                        data-path="taller-reparacion" href="#"><span
+                            class="material-symbols-outlined text-[16px]">build</span> Taller &amp; Bajas</a><a
+                        class="font-label-lg text-label-lg text-on-primary-container hover:text-white hover:bg-white/5 px-space-md py-space-sm rounded-lg transition-colors flex items-center gap-1.5"
+                        data-path="reportes" href="#"><span
+                            class="material-symbols-outlined text-[16px]">bar_chart</span> Reportes &amp; Auditoría</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-space-md">
+                <div
+                    class="hidden sm:flex items-center gap-2 px-space-md py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/30 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span><span
+                        class="font-label-sm text-label-sm text-emerald-200">Sistema SIGB: <strong
+                            class="text-white">Operativo En Línea</strong></span>
+                </div><button
+                    class="relative p-space-sm text-on-primary-container hover:text-white hover:bg-white/10 rounded-full transition-colors"><span
+                        class="material-symbols-outlined text-xl">notifications</span><span
+                        class="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400"></span></button>
+                <div class="flex items-center gap-space-sm pl-space-sm border-l border-white/10">
+                    <div class="hidden md:flex flex-col text-right">
+                        <div class="flex items-center justify-end gap-1.5"><span
+                                class="font-label-sm text-label-sm text-white font-semibold">Mtra. Carmen
+                                Valdés</span><span
+                                class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#C5A059] text-[#001b3d] tracking-wider uppercase">Rol:
+                                Administrador</span></div><span
+                            class="font-citation-code text-[11px] text-[#f2dfbe]">Administradora / Bibliotecaria
+                            ITSM</span>
+                    </div>
+                    <div class="relative"><img alt="Foto Mtra. Carmen Valdés"
+                            class="w-9 h-9 rounded-full object-cover ring-2 ring-[#C5A059] shadow-md"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-1BWfKQpiiQoPJGtZC8dazGKV2pC5yPCOjuZbtJ1ksYUwsblLb_m6lzBfd5T_f2FxCoQfAMI_1vGTWxN0CIHub6c7R-dJpvUhjDZf7ZE0SYxBs7tZQ1stG-fqHStS5NkoRRikRlEwQ6YvHBDAAbNfWz6ahs8UPe_SmdDNAZN5WCyxst1LkE2b0sw-wpevZAUDZUuA9HN6EfO-2MiYzs7mdyIyX7I4X2j0a4l4TOOGAhFfcEksyS3yuA" />
+                        <div
+                            class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-[#001b3d]">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div
+            class="bg-gradient-to-r from-[#001530] via-[#09254d] to-[#001530] py-1.5 px-margin border-t border-white/5">
+            <div
+                class="max-w-[1440px] mx-auto flex items-center justify-between text-on-primary-container font-label-sm text-[11px]">
+                <div class="flex items-center gap-space-xs"><span
+                        class="font-semibold text-tecnm-gold tracking-wider">INSTITUTO TECNOLÓGICO SUPERIOR DE
+                        MONCLOVA</span><span class="text-white/30">•</span><span class="text-white/80">Módulo de
+                        Administración y Gestión Bibliotecaria</span></div>
+                <div class="flex items-center gap-3"><span
+                        class="hidden lg:inline text-white/70 font-citation-code text-citation-code">Control de
+                        Inventario y Movimientos de Sala</span><span
+                        class="inline-flex items-center gap-1 text-[#f2dfbe] font-medium"><span
+                            class="material-symbols-outlined text-[13px] text-tecnm-gold">location_on</span> Monclova,
+                        Coahuila</span></div>
+            </div>
+        </div>
+    </header>
+    <main class="w-full pt-20 bg-[#f5f7fc]">
+        <div class="flex flex-col w-full">
+            <!-- Top Search & Hero Section -->
+            <section
+                class="relative w-full bg-gradient-to-b from-[#001838] via-[#00285a] to-[#0c3770] px-margin pt-10 pb-16 text-on-primary overflow-hidden shadow-xl">
+                <div
+                    class="absolute inset-0 opacity-10 bg-[radial-gradient(#C5A059_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none">
+                </div>
+                <div
+                    class="absolute -right-20 -top-24 w-96 h-96 rounded-full bg-[#C5A059]/10 blur-3xl pointer-events-none">
+                </div>
+                <div
+                    class="absolute -left-20 bottom-0 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none">
+                </div>
+                <div class="relative max-w-[1440px] mx-auto flex flex-col gap-space-lg">
+                    <!-- Eyebrow & Institutional Heading with Books Illustration -->
+                    <div class="flex flex-col lg:flex-row items-center justify-between gap-6 text-center lg:text-left">
+                        <div class="flex flex-col gap-1.5 max-w-3xl">
+                            <div class="flex items-center justify-center lg:justify-start gap-2">
+                                <span
+                                    class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#C5A059]/20 text-[#ecd49c] border border-[#C5A059]/40 tracking-wider flex items-center gap-1.5 shadow-sm">
+                                    <span
+                                        class="material-symbols-outlined text-sm text-tecnm-gold">admin_panel_settings</span>
+                                    SISTEMA INTEGRAL DE GESTIÓN BIBLIOTECARIA • ITSM
+                                </span>
+                                <span class="hidden sm:inline-block text-white/40 text-xs">•</span>
+                                <span class="hidden sm:inline-block font-citation-code text-xs text-white/70">Módulo de
+                                    Bibliotecarios</span>
+                            </div>
+                            <h1
+                                class="font-display-hero text-[42px] lg:text-[54px] font-extrabold text-white tracking-tight leading-none mt-1">
+                                Biblioteca
+                            </h1>
+                            <p
+                                class="font-headline-md text-[22px] lg:text-[26px] font-semibold text-[#ecd49c] tracking-wide">
+                                Instituto Tecnológico Superior de Monclova
+                            </p>
+                            <p class="font-body-md text-sm text-[#c3d5f5] max-w-2xl leading-relaxed mt-1">
+                                Panel Administrativo de Control. Gestione estados de disponibilidad, préstamos en
+                                mostrador, mantenimiento de volúmenes y fichas topográficas Dewey.
+                            </p>
+                        </div>
+                        <!-- Aesthetic Vector Books Illustration Banner -->
+                        <div
+                            class="hidden lg:flex items-center justify-center shrink-0 p-4 rounded-2xl bg-white/5 border border-white/10 shadow-2xl backdrop-blur-sm">
+                            <svg class="w-48 h-28 text-white drop-shadow-lg" fill="none" viewbox="0 0 200 120"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <!-- Books on shelf aesthetic vector -->
+                                <rect fill="#1b396a" height="74" rx="4" stroke="#ecd49c" stroke-width="1.5" width="22"
+                                    x="18" y="32"></rect>
+                                <line stroke="#ecd49c" stroke-width="1.5" x1="22" x2="36" y1="42" y2="42"></line>
+                                <line stroke="#ecd49c" stroke-width="1.5" x1="22" x2="36" y1="47" y2="47"></line>
+                                <rect fill="#C5A059" height="82" rx="4" stroke="#ffffff" stroke-width="1.5" width="24"
+                                    x="44" y="24"></rect>
+                                <line stroke="#001838" stroke-width="1.5" x1="49" x2="63" y1="36" y2="36"></line>
+                                <line stroke="#001838" stroke-width="1.5" x1="49" x2="63" y1="42" y2="42"></line>
+                                <rect fill="#002351" height="68" rx="4" stroke="#93c5fd" stroke-width="1.5" width="20"
+                                    x="72" y="38"></rect>
+                                <!-- Leaning book -->
+                                <g transform="rotate(16 102 70)">
+                                    <rect fill="#0e7490" height="78" rx="4" stroke="#67e8f9" stroke-width="1.5"
+                                        width="22" x="98" y="22"></rect>
+                                    <line stroke="#ffffff" stroke-width="1.5" x1="102" x2="116" y1="34" y2="34"></line>
+                                </g>
+                                <!-- Open book in front -->
+                                <path d="M125 90 C 145 78, 160 80, 185 88 L 185 106 C 160 98, 145 96, 125 108 Z"
+                                    fill="#eff6ff" stroke="#1e3a8a" stroke-width="1.5"></path>
+                                <path d="M125 90 C 105 78, 90 80, 65 88 L 65 106 C 90 98, 105 96, 125 108 Z"
+                                    fill="#ffffff" stroke="#1e3a8a" stroke-width="1.5"></path>
+                                <line stroke="#002351" stroke-width="2" x1="125" x2="125" y1="88" y2="108"></line>
+                                <!-- Book base shelf -->
+                                <rect fill="#334155" height="6" rx="2" width="180" x="10" y="106"></rect>
+                                <!-- Glow / Stars decoration -->
+                                <circle cx="160" cy="30" fill="#facc15" r="2.5"></circle>
+                                <circle cx="178" cy="46" fill="#facc15" r="1.5"></circle>
+                                <circle cx="30" cy="18" fill="#facc15" r="2"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                    <!-- Omnibox Search Container with Glass & Rich Borders (Widened search without room dropdown) -->
+                    <div
+                        class="bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-[0_20px_50px_rgba(0,20,50,0.35)] border border-white/40 text-on-surface">
+                        <form class="flex flex-col lg:flex-row items-stretch gap-2.5"
+                            onsubmit="event.preventDefault(); filterBooks();">
+                            <!-- Field Type Dropdown (Updated with Autor, Tema / Especialidad, Title, Dewey) -->
+                            <div class="relative min-w-[210px]">
+                                <div
+                                    class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-primary">
+                                    <span class="material-symbols-outlined text-xl">manage_search</span>
+                                </div>
+                                <select
+                                    class="w-full h-12 pl-11 pr-8 bg-surface-container-low text-primary font-label-lg text-label-lg rounded-xl border border-primary/10 focus:outline-none focus:ring-2 focus:ring-tecnm-gold cursor-pointer appearance-none shadow-inner"
+                                    id="searchField">
+                                    <option value="all">Todo el Catálogo ITSM</option>
+                                    <option value="title">Título de la Obra</option>
+                                    <option value="author">Autor</option>
+                                    <option value="subject">Tema / Especialidad</option>
+                                    <option value="dewey">Código Dewey / Clasificación</option>
+                                    <option value="barcode">Código de Barras / Adquisición</option>
+                                </select>
+                                <div
+                                    class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-primary/60">
+                                    <span class="material-symbols-outlined text-lg">expand_more</span>
+                                </div>
+                            </div>
+                            <!-- Main Text Input (Significantly Widened Spanning Central Width) -->
+                            <div class="relative flex-1 flex items-center">
+                                <span
+                                    class="material-symbols-outlined absolute left-4 text-primary text-2xl">search</span>
+                                <input
+                                    class="w-full h-12 pl-12 pr-10 bg-slate-50 text-on-surface font-body-md text-body-md placeholder:text-slate-400 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-tecnm-gold focus:bg-white transition-all shadow-inner"
+                                    id="searchKeyword"
+                                    placeholder="Buscar por título, autor, tema / especialidad, código Dewey o ID de inventario..."
+                                    type="text" />
+                                <button
+                                    class="absolute right-3 p-1 text-slate-400 hover:text-primary rounded-full transition-colors"
+                                    onclick="document.getElementById('searchKeyword').value=''; filterBooks();"
+                                    title="Borrar búsqueda" type="button">
+                                    <span class="material-symbols-outlined text-lg">cancel</span>
+                                </button>
+                            </div>
+                            <!-- Submit Button labeled exactly "Search" -->
+                            <button
+                                class="h-12 px-8 bg-gradient-to-r from-primary to-[#184580] hover:from-[#001738] hover:to-primary text-white font-headline-sm text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/30 active:scale-95 border border-white/20 shrink-0"
+                                type="submit">
+                                <span class="material-symbols-outlined text-tecnm-gold-light text-xl">search</span>
+                                <span class="font-bold tracking-wide">Search</span>
+                            </button>
+                        </form>
+                        <!-- Search Status Filter Pills (Official 5 Book Statuses with distinct colors) -->
+                        <div
+                            class="mt-3 pt-2.5 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-1 text-on-surface">
+                            <span
+                                class="font-label-sm text-[11px] text-slate-500 whitespace-nowrap pl-1 font-semibold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xs text-tecnm-gold">filter_alt</span> Estado
+                                del Ejemplar:
+                            </span>
+                            <button
+                                class="status-pill px-3 py-1 bg-primary text-white rounded-lg font-label-sm text-xs whitespace-nowrap transition-all shadow-sm flex items-center gap-1.5"
+                                onclick="setStatusFilter('all', this)">
+                                <span class="">Todos</span>
+                                <span class="px-1.5 py-0.2 rounded text-[10px] bg-white/20 font-bold">8</span>
+                            </button>
+                            <!-- 1. Disponible (Green: #15803D / #D1FAE5) -->
+                            <button
+                                class="status-pill px-3 py-1 bg-[#D1FAE5] hover:bg-[#a7f3d0] text-[#15803D] border border-[#15803D]/30 rounded-lg font-label-sm text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5"
+                                onclick="setStatusFilter('disponible', this)">
+                                <span class="w-2 h-2 rounded-full bg-[#15803D]"></span>
+                                <span class="">Disponible</span>
+                                <span class="px-1.5 py-0.2 rounded text-[10px] bg-[#15803D]/15 font-bold">4</span>
+                            </button>
+                            <!-- 2. Prestado (Blue: #1D4ED8 / #DBEAFE) -->
+                            <button
+                                class="status-pill px-3 py-1 bg-[#DBEAFE] hover:bg-[#bfdbfe] text-[#1D4ED8] border border-[#1D4ED8]/30 rounded-lg font-label-sm text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5"
+                                onclick="setStatusFilter('prestado', this)">
+                                <span class="w-2 h-2 rounded-full bg-[#1D4ED8]"></span>
+                                <span class="">Prestado</span>
+                                <span class="px-1.5 py-0.2 rounded text-[10px] bg-[#1D4ED8]/15 font-bold">1</span>
+                            </button>
+                            <!-- 3. En reparación (Amber: #D97706 / #FEF3C7) -->
+                            <button
+                                class="status-pill px-3 py-1 bg-[#FEF3C7] hover:bg-[#fde68a] text-[#D97706] border border-[#D97706]/30 rounded-lg font-label-sm text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5"
+                                onclick="setStatusFilter('reparacion', this)">
+                                <span class="w-2 h-2 rounded-full bg-[#D97706]"></span>
+                                <span class="">En reparación</span>
+                                <span class="px-1.5 py-0.2 rounded text-[10px] bg-[#D97706]/15 font-bold">1</span>
+                            </button>
+                            <!-- 4. En proceso de baja (Red: #DC2626 / #FEE2E2) -->
+                            <button
+                                class="status-pill px-3 py-1 bg-[#FEE2E2] hover:bg-[#fecaca] text-[#DC2626] border border-[#DC2626]/30 rounded-lg font-label-sm text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5"
+                                onclick="setStatusFilter('baja', this)">
+                                <span class="w-2 h-2 rounded-full bg-[#DC2626]"></span>
+                                <span class="">En proceso de baja</span>
+                                <span class="px-1.5 py-0.2 rounded text-[10px] bg-[#DC2626]/15 font-bold">1</span>
+                            </button>
+                            <!-- 5. En catálogo (Purple: #7C3AED / #EDE9FE) -->
+                            <button
+                                class="status-pill px-3 py-1 bg-[#EDE9FE] hover:bg-[#ddd6fe] text-[#7C3AED] border border-[#7C3AED]/30 rounded-lg font-label-sm text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5"
+                                onclick="setStatusFilter('catalogo', this)">
+                                <span class="w-2 h-2 rounded-full bg-[#7C3AED]"></span>
+                                <span class="">En catálogo</span>
+                                <span class="px-1.5 py-0.2 rounded text-[10px] bg-[#7C3AED]/15 font-bold">1</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Metric & Inventory Quick Status Strip (Adjusted for Librarian Admin) -->
+            <section class="w-full px-margin -mt-8 z-20">
+                <div class="max-w-[1440px] mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                    <!-- Metric 1: Total Ejemplares -->
+                    <div
+                        class="bg-white p-3.5 rounded-xl shadow-[0_8px_24px_rgba(0,35,81,0.08)] border border-slate-100 flex items-center gap-3 hover:border-tecnm-gold/40 transition-colors">
+                        <div
+                            class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#002351] to-[#1b396a] text-[#ecd49c] flex items-center justify-center shrink-0 shadow-md">
+                            <span class="material-symbols-outlined text-xl">menu_book</span>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span
+                                class="font-headline-md text-[22px] text-primary leading-tight font-extrabold tracking-tight">5,240</span>
+                            <span class="font-body-sm text-[11px] text-slate-500 font-medium">Total Ejemplares</span>
+                        </div>
+                    </div>
+                    <!-- Metric 2: Prestados en Circulación (#1D4ED8) -->
+                    <div
+                        class="bg-white p-3.5 rounded-xl shadow-[0_8px_24px_rgba(0,35,81,0.08)] border border-blue-100 flex items-center gap-3 hover:border-blue-400/40 transition-colors">
+                        <div
+                            class="w-11 h-11 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] border border-[#1D4ED8]/20 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-xl">sync_alt</span>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span
+                                class="font-headline-md text-[22px] text-[#1D4ED8] leading-tight font-extrabold tracking-tight">85</span>
+                            <span class="font-body-sm text-[11px] text-slate-500 font-medium">Prestados en
+                                Circulación</span>
+                        </div>
+                    </div>
+                    <!-- Metric 3: En Reparación (#D97706) -->
+                    <div
+                        class="bg-white p-3.5 rounded-xl shadow-[0_8px_24px_rgba(0,35,81,0.08)] border border-amber-100 flex items-center gap-3 hover:border-amber-400/40 transition-colors">
+                        <div
+                            class="w-11 h-11 rounded-xl bg-[#FEF3C7] text-[#D97706] border border-[#D97706]/20 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-xl">build_circle</span>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span
+                                class="font-headline-md text-[22px] text-[#D97706] leading-tight font-extrabold tracking-tight">14</span>
+                            <span class="font-body-sm text-[11px] text-slate-500 font-medium">En Reparación</span>
+                        </div>
+                    </div>
+                    <!-- Metric 4: En Proceso de Baja (#DC2626) -->
+                    <div
+                        class="bg-white p-3.5 rounded-xl shadow-[0_8px_24px_rgba(0,35,81,0.08)] border border-rose-100 flex items-center gap-3 hover:border-rose-400/40 transition-colors">
+                        <div
+                            class="w-11 h-11 rounded-xl bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/20 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-xl">delete_forever</span>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span
+                                class="font-headline-md text-[22px] text-[#DC2626] leading-tight font-extrabold tracking-tight">6</span>
+                            <span class="font-body-sm text-[11px] text-slate-500 font-medium">En Proceso de Baja</span>
+                        </div>
+                    </div>
+                    <!-- Metric 5: En Catalogación Reciente (#7C3AED) -->
+                    <div
+                        class="bg-white p-3.5 rounded-xl shadow-[0_8px_24px_rgba(0,35,81,0.08)] border border-purple-100 flex items-center gap-3 hover:border-purple-400/40 transition-colors col-span-2 sm:col-span-1">
+                        <div
+                            class="w-11 h-11 rounded-xl bg-[#EDE9FE] text-[#7C3AED] border border-[#7C3AED]/20 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-xl">auto_stories</span>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span
+                                class="font-headline-md text-[22px] text-[#7C3AED] leading-tight font-extrabold tracking-tight">42</span>
+                            <span class="font-body-sm text-[11px] text-slate-500 font-medium">En Catalogación
+                                Reciente</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Main Catalog Area & Drawer Interface -->
+            <main class="w-full px-margin py-8">
+                <div class="max-w-[1440px] mx-auto flex flex-col gap-6">
+                    <!-- Toolbar & Controls -->
+                    <div
+                        class="bg-white p-4 rounded-xl shadow-[0_2px_12px_rgba(0,35,81,0.04)] border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-space-md">
+                        <!-- Results Counter & Status -->
+                        <div class="flex items-center gap-space-sm w-full md:w-auto">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+                            <p class="font-body-md text-sm text-slate-700" id="resultsCount">
+                                Mostrando <span class="font-bold text-primary">8</span> obras registradas en inventario
+                                • <strong class="text-primary font-semibold">Tec Monclova</strong>
+                            </p>
+                        </div>
+                        <!-- Filter Chips & Sorting Control -->
+                        <div class="flex items-center flex-wrap gap-2.5 w-full md:w-auto justify-end">
+                            <button
+                                class="px-3 py-1.5 bg-primary text-white rounded-lg font-label-sm text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:bg-[#184580] transition-colors"
+                                onclick="openNewBookModal()">
+                                <span class="material-symbols-outlined text-sm">add</span>
+                                <span class="">Registrar Nuevo Ejemplar</span>
+                            </button>
+                            <div class="flex items-center gap-2">
+                                <label class="font-label-sm text-xs text-slate-500 font-semibold whitespace-nowrap"
+                                    for="sortSelector">Ordenar:</label>
+                                <select
+                                    class="h-9 px-3 bg-slate-50 text-slate-800 font-label-md text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                                    id="sortSelector">
+                                    <option value="dewey">Clasificación Dewey Ascendente</option>
+                                    <option value="status">Estado Administrativo</option>
+                                    <option value="relevance">Plan de Estudios Tec Monclova</option>
+                                    <option value="barcode">Número de Inventario</option>
+                                </select>
+                            </div>
+                            <!-- Grid/List Switch -->
+                            <div class="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+                                <button class="p-1 rounded bg-white text-primary shadow-sm" id="btnGrid"
+                                    onclick="toggleLayout('grid')" title="Vista Cuadrícula">
+                                    <span class="material-symbols-outlined text-lg leading-none">grid_view</span>
+                                </button>
+                                <button class="p-1 rounded text-slate-500 hover:text-slate-800" id="btnList"
+                                    onclick="toggleLayout('list')" title="Vista Detallada">
+                                    <span class="material-symbols-outlined text-lg leading-none">view_agenda</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Main Layout: Catalog Stream + Detail Slide Drawer -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        <!-- Book Cards Grid (8 items) with Status Badges, No Star Ratings -->
+                        <div class="lg:col-span-8 xl:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-5 transition-all duration-300"
+                            id="booksGridContainer">
+                            <!-- Card 1: Stewart Cálculo (Status: DISPONIBLE) -->
+                            <div class="book-card group relative bg-white rounded-2xl p-4 shadow-[0_4px_18px_rgba(0,35,81,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(0,35,81,0.22)] border border-slate-200 hover:border-tecnm-gold/50 cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-300"
+                                data-category="ciencias" data-status="disponible" onclick="selectBook(1)">
+                                <div class="flex items-center justify-between mb-3"><span
+                                        class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#D1FAE5] text-[#15803D] border border-[#15803D]/30 flex items-center gap-1.5 shadow-sm"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-[#15803D]"></span> Disponible</span><span
+                                        class="font-citation-code text-[11px] font-bold text-primary bg-slate-100 px-2 py-0.5 rounded">Folio:
+                                        4001</span></div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="book-stage shrink-0">
+                                        <div
+                                            class="book-cover-3d relative w-28 h-40 rounded-r-lg rounded-l-[3px] shadow-[6px_8px_18px_rgba(0,25,60,0.35)] bg-gradient-to-br from-[#0c264d] via-[#001f47] to-[#04142d] flex flex-col justify-between p-2.5 text-white border-l-4 border-l-[#d2a858] border-y border-r border-white/20 overflow-hidden">
+                                            <div class="book-spine-lighting absolute inset-0 pointer-events-none z-20">
+                                            </div>
+                                            <div class="relative z-10 flex justify-between items-start"><span
+                                                    class="font-citation-code text-[8px] font-bold tracking-widest text-[#f5d99b]">ITSM
+                                                    • 4001</span><span
+                                                    class="material-symbols-outlined text-[13px] text-[#eed394]">functions</span>
+                                            </div>
+                                            <div class="relative z-10 my-auto text-center">
+                                                <p
+                                                    class="font-headline-sm text-[12px] leading-tight font-extrabold tracking-wider gold-foil-text drop-shadow">
+                                                    CÁLCULO</p>
+                                                <p
+                                                    class="font-label-sm text-[7.5px] text-[#e0e8f8] tracking-tight mt-0.5">
+                                                    Trascendentes Tempranas</p>
+                                                <div class="w-8 h-0.5 bg-[#C5A059] mx-auto mt-1 rounded-full"></div>
+                                            </div>
+                                            <div
+                                                class="relative z-10 flex items-center justify-between text-[7.5px] text-white/80 border-t border-white/15 pt-1 font-citation-code">
+                                                <span class="font-semibold text-[#eed394]">J. Stewart</span><span
+                                                    class="px-1 py-0.2 bg-white/10 rounded">8ª Ed.</span>
+                                            </div>
+                                            <div
+                                                class="absolute bottom-1 left-1 z-30 bg-white text-slate-900 px-1 py-0.5 rounded-[2px] font-citation-code text-[6.5px] font-bold shadow">
+                                                QA303.2</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <h3
+                                            class="font-headline-sm text-[16px] leading-snug text-primary group-hover:text-[#184580] line-clamp-2 transition-colors font-bold mt-0.5">
+                                            Cálculo de Trascendentes Tempranas</h3>
+                                        <p class="font-body-md text-xs text-slate-600 mt-1 flex items-center gap-1">
+                                            <span class="font-semibold text-primary">Autor:</span> James Stewart
+                                        </p>
+                                        <div class="mt-1.5 flex items-center"><span
+                                                class="font-citation-code text-[10.5px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium"><strong
+                                                    class="text-primary font-semibold">Nota:</strong> 8va Edición • Vol.
+                                                1</span></div>
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5"><span
+                                                class="font-citation-code text-[11px] text-primary font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Dewey:
+                                                QA303.2</span><span
+                                                class="font-citation-code text-[11px] text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Cutter:
+                                                .S74 2023</span></div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-600">
+                                    <div class="flex items-center gap-1.5 font-body-sm text-[11px]"><span
+                                            class="material-symbols-outlined text-[15px] text-tecnm-gold">shelves</span><span
+                                            class="font-medium text-slate-700 truncate max-w-[170px]">Estante:
+                                            1.1.1</span></div><button
+                                        class="px-2.5 py-1 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs rounded-lg transition-all flex items-center gap-1 shadow-sm"><span
+                                            class="">Gestionar</span><span
+                                            class="material-symbols-outlined text-[13px]">tune</span></button>
+                                </div>
+                            </div>
+                            <!-- Card 2: Mecatrónica (Status: PRESTADO) -->
+                            <div class="book-card group relative bg-white rounded-2xl p-4 shadow-[0_4px_18px_rgba(0,35,81,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(0,35,81,0.22)] border border-slate-200 hover:border-tecnm-gold/50 cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-300"
+                                data-category="mecatronica" data-status="prestado" onclick="selectBook(2)">
+                                <div class="flex items-center justify-between mb-3"><span
+                                        class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#DBEAFE] text-[#1D4ED8] border border-[#1D4ED8]/30 flex items-center gap-1.5 shadow-sm"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-[#1D4ED8]"></span> Prestado</span><span
+                                        class="font-citation-code text-[11px] font-bold text-primary bg-slate-100 px-2 py-0.5 rounded">Folio:
+                                        4002</span></div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="book-stage shrink-0">
+                                        <div
+                                            class="book-cover-3d relative w-28 h-40 rounded-r-lg rounded-l-[3px] shadow-[6px_8px_18px_rgba(0,25,60,0.35)] bg-gradient-to-br from-[#003b35] via-[#042421] to-[#011413] flex flex-col justify-between p-2.5 text-white border-l-4 border-l-[#C5A059] border-y border-r border-white/20 overflow-hidden">
+                                            <div class="book-spine-lighting absolute inset-0 pointer-events-none z-20">
+                                            </div>
+                                            <div class="relative z-10 flex justify-between items-start"><span
+                                                    class="font-citation-code text-[8px] font-bold tracking-widest text-[#6bd8cb]">ITSM
+                                                    • 4002</span><span
+                                                    class="material-symbols-outlined text-[13px] text-[#6bd8cb]">precision_manufacturing</span>
+                                            </div>
+                                            <div class="relative z-10 my-auto text-center">
+                                                <p
+                                                    class="font-headline-sm text-[11px] leading-tight font-extrabold tracking-wider text-white">
+                                                    MECATRÓNICA</p>
+                                                <p
+                                                    class="font-label-sm text-[7px] text-[#a9ede4] tracking-tight mt-0.5">
+                                                    Control &amp; Automatización</p>
+                                                <div class="w-8 h-0.5 bg-[#89f5e7] mx-auto mt-1 rounded-full"></div>
+                                            </div>
+                                            <div
+                                                class="relative z-10 flex items-center justify-between text-[7.5px] text-[#a9ede4] border-t border-white/15 pt-1 font-citation-code">
+                                                <span class="">W. Bolton</span><span class="">6ª Ed.</span>
+                                            </div>
+                                            <div
+                                                class="absolute bottom-1 left-1 z-30 bg-white text-slate-900 px-1 py-0.5 rounded-[2px] font-citation-code text-[6.5px] font-bold shadow">
+                                                TJ223</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <h3
+                                            class="font-headline-sm text-[16px] leading-snug text-primary group-hover:text-[#184580] line-clamp-2 transition-colors font-bold mt-0.5">
+                                            Mecatrónica: Sistemas de Control Electrónico en la Industria</h3>
+                                        <p class="font-body-md text-xs text-slate-600 mt-1 flex items-center gap-1">
+                                            <span class="font-semibold text-primary">Autor:</span> William Bolton
+                                        </p>
+                                        <div class="mt-1.5 flex items-center"><span
+                                                class="font-citation-code text-[10.5px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium"><strong
+                                                    class="text-primary font-semibold">Nota:</strong> 6ta Edición</span>
+                                        </div>
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5"><span
+                                                class="font-citation-code text-[11px] text-primary font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Dewey:
+                                                TJ223</span><span
+                                                class="font-citation-code text-[11px] text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Cutter:
+                                                .B65 2023</span></div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-600">
+                                    <div class="flex items-center gap-1.5 font-body-sm text-[11px]"><span
+                                            class="material-symbols-outlined text-[15px] text-tecnm-gold">shelves</span><span
+                                            class="font-medium text-slate-700 truncate max-w-[170px]">Estante:
+                                            9.2.3</span></div><button
+                                        class="px-2.5 py-1 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs rounded-lg transition-all flex items-center gap-1 shadow-sm"><span
+                                            class="">Gestionar</span><span
+                                            class="material-symbols-outlined text-[13px]">tune</span></button>
+                                </div>
+                            </div>
+                            <!-- Card 3: Siderurgia Monclova (Status: DISPONIBLE) -->
+                            <div class="book-card group relative bg-white rounded-2xl p-4 shadow-[0_4px_18px_rgba(0,35,81,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(0,35,81,0.22)] border border-slate-200 hover:border-tecnm-gold/50 cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-300"
+                                data-category="quimica" data-status="disponible" onclick="selectBook(3)">
+                                <div class="flex items-center justify-between mb-3"><span
+                                        class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#D1FAE5] text-[#15803D] border border-[#15803D]/30 flex items-center gap-1.5 shadow-sm"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-[#15803D]"></span> Disponible</span><span
+                                        class="font-citation-code text-[11px] font-bold text-primary bg-slate-100 px-2 py-0.5 rounded">Folio:
+                                        4003</span></div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="book-stage shrink-0">
+                                        <div
+                                            class="book-cover-3d relative w-28 h-40 rounded-r-lg rounded-l-[3px] shadow-[6px_8px_18px_rgba(0,25,60,0.35)] bg-gradient-to-br from-[#3b1900] via-[#241100] to-[#120800] flex flex-col justify-between p-2.5 text-white border-l-4 border-l-[#e6aa3e] border-y border-r border-white/20 overflow-hidden">
+                                            <div class="book-spine-lighting absolute inset-0 pointer-events-none z-20">
+                                            </div>
+                                            <div class="relative z-10 flex justify-between items-start"><span
+                                                    class="font-citation-code text-[8px] font-bold tracking-widest text-amber-300">ITSM
+                                                    • 4003</span><span
+                                                    class="material-symbols-outlined text-[13px] text-amber-300">local_fire_department</span>
+                                            </div>
+                                            <div class="relative z-10 my-auto text-center">
+                                                <p
+                                                    class="font-headline-sm text-[11px] leading-tight font-extrabold tracking-wider gold-foil-text">
+                                                    SIDERURGIA</p>
+                                                <p
+                                                    class="font-label-sm text-[7px] text-[#fcd8a2] tracking-tight mt-0.5">
+                                                    Metalurgia del Acero</p>
+                                                <div class="w-8 h-0.5 bg-amber-400 mx-auto mt-1 rounded-full"></div>
+                                            </div>
+                                            <div
+                                                class="relative z-10 flex items-center justify-between text-[7.5px] text-amber-200 border-t border-white/15 pt-1 font-citation-code">
+                                                <span class="">Avner &amp; Peña</span><span class="">Ed. Monclova</span>
+                                            </div>
+                                            <div
+                                                class="absolute bottom-1 left-1 z-30 bg-white text-slate-900 px-1 py-0.5 rounded-[2px] font-citation-code text-[6.5px] font-bold shadow">
+                                                TN665</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <h3
+                                            class="font-headline-sm text-[16px] leading-snug text-primary group-hover:text-[#184580] line-clamp-2 transition-colors font-bold mt-0.5">
+                                            Introducción a la Metalurgia Física y Procesos Siderúrgicos</h3>
+                                        <p class="font-body-md text-xs text-slate-600 mt-1 flex items-center gap-1">
+                                            <span class="font-semibold text-primary">Autor:</span> Sidney H. Avner
+                                        </p>
+                                        <div class="mt-1.5 flex items-center"><span
+                                                class="font-citation-code text-[10.5px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium"><strong
+                                                    class="text-primary font-semibold">Nota:</strong> Edición Revisada •
+                                                2da Ed.</span></div>
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5"><span
+                                                class="font-citation-code text-[11px] text-primary font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Dewey:
+                                                TN665</span><span
+                                                class="font-citation-code text-[11px] text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Cutter:
+                                                .A86 2022</span></div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-600">
+                                    <div class="flex items-center gap-1.5 font-body-sm text-[11px]"><span
+                                            class="material-symbols-outlined text-[15px] text-tecnm-gold">shelves</span><span
+                                            class="font-medium text-slate-700 truncate max-w-[170px]">Estante:
+                                            2.1.4</span></div><button
+                                        class="px-2.5 py-1 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs rounded-lg transition-all flex items-center gap-1 shadow-sm"><span
+                                            class="">Gestionar</span><span
+                                            class="material-symbols-outlined text-[13px]">tune</span></button>
+                                </div>
+                            </div>
+                            <!-- Card 4: Algoritmos Python (Status: EN CATÁLOGO) -->
+                            <div class="book-card group relative bg-white rounded-2xl p-4 shadow-[0_4px_18px_rgba(0,35,81,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(0,35,81,0.22)] border border-slate-200 hover:border-tecnm-gold/50 cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-300"
+                                data-category="sistemas" data-status="catalogo" onclick="selectBook(4)">
+                                <div class="flex items-center justify-between mb-3"><span
+                                        class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EDE9FE] text-[#7C3AED] border border-[#7C3AED]/30 flex items-center gap-1.5 shadow-sm"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-[#7C3AED]"></span> En
+                                        catálogo</span><span
+                                        class="font-citation-code text-[11px] font-bold text-primary bg-slate-100 px-2 py-0.5 rounded">Folio:
+                                        4004</span></div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="book-stage shrink-0">
+                                        <div
+                                            class="book-cover-3d relative w-28 h-40 rounded-r-lg rounded-l-[3px] shadow-[6px_8px_18px_rgba(0,25,60,0.35)] bg-gradient-to-br from-[#121e3d] via-[#091326] to-[#040812] flex flex-col justify-between p-2.5 text-white border-l-4 border-l-[#C5A059] border-y border-r border-white/20 overflow-hidden">
+                                            <div class="book-spine-lighting absolute inset-0 pointer-events-none z-20">
+                                            </div>
+                                            <div class="relative z-10 flex justify-between items-start"><span
+                                                    class="font-citation-code text-[8px] font-bold tracking-widest text-[#a8c3f8]">ITSM
+                                                    • 4004</span><span
+                                                    class="material-symbols-outlined text-[13px] text-[#a8c3f8]">terminal</span>
+                                            </div>
+                                            <div class="relative z-10 my-auto text-center">
+                                                <p
+                                                    class="font-headline-sm text-[11px] leading-tight font-extrabold tracking-wider gold-foil-text">
+                                                    ESTRUCTURAS</p>
+                                                <p
+                                                    class="font-label-sm text-[7px] text-[#cadbff] tracking-tight mt-0.5">
+                                                    Algoritmos en Python &amp; C++</p>
+                                                <div class="w-8 h-0.5 bg-blue-400 mx-auto mt-1 rounded-full"></div>
+                                            </div>
+                                            <div
+                                                class="relative z-10 flex items-center justify-between text-[7.5px] text-[#cadbff] border-t border-white/15 pt-1 font-citation-code">
+                                                <span class="">Mark A. Weiss</span><span class="">Pearson</span>
+                                            </div>
+                                            <div
+                                                class="absolute bottom-1 left-1 z-30 bg-white text-slate-900 px-1 py-0.5 rounded-[2px] font-citation-code text-[6.5px] font-bold shadow">
+                                                QA76.73</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <h3
+                                            class="font-headline-sm text-[16px] leading-snug text-primary group-hover:text-[#184580] line-clamp-2 transition-colors font-bold mt-0.5">
+                                            Estructuras de Datos y Análisis de Algoritmos en Python</h3>
+                                        <p class="font-body-md text-xs text-slate-600 mt-1 flex items-center gap-1">
+                                            <span class="font-semibold text-primary">Autor:</span> Mark Allen Weiss
+                                        </p>
+                                        <div class="mt-1.5 flex items-center"><span
+                                                class="font-citation-code text-[10.5px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium"><strong
+                                                    class="text-primary font-semibold">Nota:</strong> 4ta Edición
+                                                2024</span></div>
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5"><span
+                                                class="font-citation-code text-[11px] text-primary font-semibold bg-purple-50 px-2 py-0.5 rounded border border-purple-200">Dewey:
+                                                QA76.73</span><span
+                                                class="font-citation-code text-[11px] text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Cutter:
+                                                .W45 2024</span></div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-600">
+                                    <div class="flex items-center gap-1.5 font-body-sm text-[11px]"><span
+                                            class="material-symbols-outlined text-[15px] text-tecnm-gold">shelves</span><span
+                                            class="font-medium text-slate-700 truncate max-w-[170px]">Estante:
+                                            5.3.2</span></div><button
+                                        class="px-2.5 py-1 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs rounded-lg transition-all flex items-center gap-1 shadow-sm"><span
+                                            class="">Gestionar</span><span
+                                            class="material-symbols-outlined text-[13px]">tune</span></button>
+                                </div>
+                            </div>
+                            <!-- Card 5: Circuitos Eléctricos (Status: EN REPARACIÓN) -->
+                            <div class="book-card group relative bg-white rounded-2xl p-4 shadow-[0_4px_18px_rgba(0,35,81,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(0,35,81,0.22)] border border-slate-200 hover:border-tecnm-gold/50 cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-300"
+                                data-category="electrica" data-status="reparacion" onclick="selectBook(5)">
+                                <div class="flex items-center justify-between mb-3"><span
+                                        class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#D97706] border border-[#D97706]/30 flex items-center gap-1.5 shadow-sm"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span> En
+                                        reparación</span><span
+                                        class="font-citation-code text-[11px] font-bold text-primary bg-slate-100 px-2 py-0.5 rounded">Folio:
+                                        4005</span></div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="book-stage shrink-0">
+                                        <div
+                                            class="book-cover-3d relative w-28 h-40 rounded-r-lg rounded-l-[3px] shadow-[6px_8px_18px_rgba(0,25,60,0.35)] bg-gradient-to-br from-[#101b3b] via-[#091024] to-[#02050f] flex flex-col justify-between p-2.5 text-white border-l-4 border-l-[#C5A059] border-y border-r border-white/20 overflow-hidden">
+                                            <div class="book-spine-lighting absolute inset-0 pointer-events-none z-20">
+                                            </div>
+                                            <div class="relative z-10 flex justify-between items-start"><span
+                                                    class="font-citation-code text-[8px] font-bold tracking-widest text-[#f5d99b]">ITSM
+                                                    • 4005</span><span
+                                                    class="material-symbols-outlined text-[13px] text-[#f5d99b]">memory</span>
+                                            </div>
+                                            <div class="relative z-10 my-auto text-center">
+                                                <p
+                                                    class="font-headline-sm text-[11px] leading-tight font-extrabold tracking-wider gold-foil-text">
+                                                    CIRCUITOS</p>
+                                                <p
+                                                    class="font-label-sm text-[7px] text-[#d6e3ff] tracking-tight mt-0.5">
+                                                    Análisis en Ingeniería</p>
+                                                <div class="w-8 h-0.5 bg-[#C5A059] mx-auto mt-1 rounded-full"></div>
+                                            </div>
+                                            <div
+                                                class="relative z-10 flex items-center justify-between text-[7.5px] text-white/80 border-t border-white/15 pt-1 font-citation-code">
+                                                <span class="">Hayt &amp; Kemmerly</span><span class="">9ª Ed.</span>
+                                            </div>
+                                            <div
+                                                class="absolute bottom-1 left-1 z-30 bg-white text-slate-900 px-1 py-0.5 rounded-[2px] font-citation-code text-[6.5px] font-bold shadow">
+                                                TK454</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <h3
+                                            class="font-headline-sm text-[16px] leading-snug text-primary group-hover:text-[#184580] line-clamp-2 transition-colors font-bold mt-0.5">
+                                            Análisis de Circuitos en Ingeniería Eléctrica y Electrónica</h3>
+                                        <p class="font-body-md text-xs text-slate-600 mt-1 flex items-center gap-1">
+                                            <span class="font-semibold text-primary">Autor:</span> William H. Hayt
+                                        </p>
+                                        <div class="mt-1.5 flex items-center"><span
+                                                class="font-citation-code text-[10.5px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium"><strong
+                                                    class="text-primary font-semibold">Nota:</strong> 9na Edición</span>
+                                        </div>
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5"><span
+                                                class="font-citation-code text-[11px] text-primary font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Dewey:
+                                                TK454</span><span
+                                                class="font-citation-code text-[11px] text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Cutter:
+                                                .H39 2023</span></div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-600">
+                                    <div class="flex items-center gap-1.5 font-body-sm text-[11px]"><span
+                                            class="material-symbols-outlined text-[15px] text-tecnm-gold">shelves</span><span
+                                            class="font-medium text-slate-700 truncate max-w-[170px]">Estante:
+                                            3.1.2</span></div><button
+                                        class="px-2.5 py-1 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs rounded-lg transition-all flex items-center gap-1 shadow-sm"><span
+                                            class="">Gestionar</span><span
+                                            class="material-symbols-outlined text-[13px]">tune</span></button>
+                                </div>
+                            </div>
+                            <!-- Card 6: Termodinámica (Status: EN PROCESO DE BAJA) -->
+                            <div class="book-card group relative bg-white rounded-2xl p-4 shadow-[0_4px_18px_rgba(0,35,81,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(0,35,81,0.22)] border border-slate-200 hover:border-tecnm-gold/50 cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-300"
+                                data-category="ciencias" data-status="baja" onclick="selectBook(6)">
+                                <div class="flex items-center justify-between mb-3"><span
+                                        class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30 flex items-center gap-1.5 shadow-sm"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-[#DC2626]"></span> En proceso de
+                                        baja</span><span
+                                        class="font-citation-code text-[11px] font-bold text-primary bg-slate-100 px-2 py-0.5 rounded">Folio:
+                                        4006</span></div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="book-stage shrink-0">
+                                        <div
+                                            class="book-cover-3d relative w-28 h-40 rounded-r-lg rounded-l-[3px] shadow-[6px_8px_18px_rgba(0,25,60,0.35)] bg-gradient-to-br from-[#421b00] via-[#240e00] to-[#120700] flex flex-col justify-between p-2.5 text-white border-l-4 border-l-[#e6a540] border-y border-r border-white/20 overflow-hidden opacity-90">
+                                            <div class="book-spine-lighting absolute inset-0 pointer-events-none z-20">
+                                            </div>
+                                            <div class="relative z-10 flex justify-between items-start"><span
+                                                    class="font-citation-code text-[8px] font-bold tracking-widest text-[#ffd387]">ITSM
+                                                    • 4006</span><span
+                                                    class="material-symbols-outlined text-[13px] text-[#ffd387]">mode_heat</span>
+                                            </div>
+                                            <div class="relative z-10 my-auto text-center">
+                                                <p
+                                                    class="font-headline-sm text-[10.5px] leading-tight font-extrabold tracking-wider gold-foil-text">
+                                                    TERMODINÁMICA</p>
+                                                <p
+                                                    class="font-label-sm text-[7px] text-[#fed699] tracking-tight mt-0.5">
+                                                    Para Ingenieros</p>
+                                                <div class="w-8 h-0.5 bg-amber-400 mx-auto mt-1 rounded-full"></div>
+                                            </div>
+                                            <div
+                                                class="relative z-10 flex items-center justify-between text-[7.5px] text-amber-200 border-t border-white/15 pt-1 font-citation-code">
+                                                <span class="">Çengel &amp; Boles</span><span
+                                                    class="">McGraw-Hill</span>
+                                            </div>
+                                            <div
+                                                class="absolute bottom-1 left-1 z-30 bg-white text-slate-900 px-1 py-0.5 rounded-[2px] font-citation-code text-[6.5px] font-bold shadow">
+                                                TJ265</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <h3
+                                            class="font-headline-sm text-[16px] leading-snug text-primary group-hover:text-[#184580] line-clamp-2 transition-colors font-bold mt-0.5">
+                                            Termodinámica Técnica para Ingeniería y Procesos Industriales</h3>
+                                        <p class="font-body-md text-xs text-slate-600 mt-1 flex items-center gap-1">
+                                            <span class="font-semibold text-primary">Autor:</span> Yunus A. Çengel
+                                        </p>
+                                        <div class="mt-1.5 flex items-center"><span
+                                                class="font-citation-code text-[10.5px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium"><strong
+                                                    class="text-primary font-semibold">Nota:</strong> 9na Edición •
+                                                Enfoque Ingenierías</span></div>
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5"><span
+                                                class="font-citation-code text-[11px] text-rose-800 font-semibold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">Dewey:
+                                                TJ265</span><span
+                                                class="font-citation-code text-[11px] text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Cutter:
+                                                .C46 2022</span></div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-600">
+                                    <div class="flex items-center gap-1.5 font-body-sm text-[11px]"><span
+                                            class="material-symbols-outlined text-[15px] text-rose-600">shelves</span><span
+                                            class="font-medium text-slate-700 truncate max-w-[170px]">Estante:
+                                            7.2.1</span></div><button
+                                        class="px-2.5 py-1 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs rounded-lg transition-all flex items-center gap-1 shadow-sm"><span
+                                            class="">Gestionar</span><span
+                                            class="material-symbols-outlined text-[13px]">tune</span></button>
+                                </div>
+                            </div>
+                            <!-- Card 7: Física Sears (Status: DISPONIBLE) -->
+                            <div class="book-card group relative bg-white rounded-2xl p-4 shadow-[0_4px_18px_rgba(0,35,81,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(0,35,81,0.22)] border border-slate-200 hover:border-tecnm-gold/50 cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-300"
+                                data-category="ciencias" data-status="disponible" onclick="selectBook(7)">
+                                <div class="flex items-center justify-between mb-3"><span
+                                        class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#D1FAE5] text-[#15803D] border border-[#15803D]/30 flex items-center gap-1.5 shadow-sm"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-[#15803D]"></span> Disponible</span><span
+                                        class="font-citation-code text-[11px] font-bold text-primary bg-slate-100 px-2 py-0.5 rounded">Folio:
+                                        4007</span></div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="book-stage shrink-0">
+                                        <div
+                                            class="book-cover-3d relative w-28 h-40 rounded-r-lg rounded-l-[3px] shadow-[6px_8px_18px_rgba(0,25,60,0.35)] bg-gradient-to-br from-[#021f47] via-[#01142e] to-[#000a17] flex flex-col justify-between p-2.5 text-white border-l-4 border-l-[#C5A059] border-y border-r border-white/20 overflow-hidden">
+                                            <div class="book-spine-lighting absolute inset-0 pointer-events-none z-20">
+                                            </div>
+                                            <div class="relative z-10 flex justify-between items-start"><span
+                                                    class="font-citation-code text-[8px] font-bold tracking-widest text-[#f5d99b]">ITSM
+                                                    • 4007</span><span
+                                                    class="material-symbols-outlined text-[13px] text-[#f5d99b]">blur_on</span>
+                                            </div>
+                                            <div class="relative z-10 my-auto text-center">
+                                                <p
+                                                    class="font-headline-sm text-[12px] leading-tight font-extrabold tracking-wider gold-foil-text">
+                                                    FÍSICA</p>
+                                                <p
+                                                    class="font-label-sm text-[7px] text-[#d6e3ff] tracking-tight mt-0.5">
+                                                    Universitaria con Moderna</p>
+                                                <div class="w-8 h-0.5 bg-[#C5A059] mx-auto mt-1 rounded-full"></div>
+                                            </div>
+                                            <div
+                                                class="relative z-10 flex items-center justify-between text-[7.5px] text-white/80 border-t border-white/15 pt-1 font-citation-code">
+                                                <span class="">Sears &amp; Zemansky</span><span class="">14ª Ed.</span>
+                                            </div>
+                                            <div
+                                                class="absolute bottom-1 left-1 z-30 bg-white text-slate-900 px-1 py-0.5 rounded-[2px] font-citation-code text-[6.5px] font-bold shadow">
+                                                QC21.3</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <h3
+                                            class="font-headline-sm text-[16px] leading-snug text-primary group-hover:text-[#184580] line-clamp-2 transition-colors font-bold mt-0.5">
+                                            Física Universitaria con Física Moderna</h3>
+                                        <p class="font-body-md text-xs text-slate-600 mt-1 flex items-center gap-1">
+                                            <span class="font-semibold text-primary">Autor:</span> Hugh D. Young
+                                        </p>
+                                        <div class="mt-1.5 flex items-center"><span
+                                                class="font-citation-code text-[10.5px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium"><strong
+                                                    class="text-primary font-semibold">Nota:</strong> 14va Edición •
+                                                Vol. 1 y 2</span></div>
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5"><span
+                                                class="font-citation-code text-[11px] text-primary font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Dewey:
+                                                QC21.3</span><span
+                                                class="font-citation-code text-[11px] text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Cutter:
+                                                .Y68 2023</span></div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-600">
+                                    <div class="flex items-center gap-1.5 font-body-sm text-[11px]"><span
+                                            class="material-symbols-outlined text-[15px] text-tecnm-gold">shelves</span><span
+                                            class="font-medium text-slate-700 truncate max-w-[170px]">Estante:
+                                            1.2.4</span></div><button
+                                        class="px-2.5 py-1 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs rounded-lg transition-all flex items-center gap-1 shadow-sm"><span
+                                            class="">Gestionar</span><span
+                                            class="material-symbols-outlined text-[13px]">tune</span></button>
+                                </div>
+                            </div>
+                            <!-- Card 8: Proyectos Gabriel Baca (Status: DISPONIBLE) -->
+                            <div class="book-card group relative bg-white rounded-2xl p-4 shadow-[0_4px_18px_rgba(0,35,81,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(0,35,81,0.22)] border border-slate-200 hover:border-tecnm-gold/50 cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-300"
+                                data-category="gestion" data-status="disponible" onclick="selectBook(8)">
+                                <div class="flex items-center justify-between mb-3"><span
+                                        class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#D1FAE5] text-[#15803D] border border-[#15803D]/30 flex items-center gap-1.5 shadow-sm"><span
+                                            class="w-1.5 h-1.5 rounded-full bg-[#15803D]"></span> Disponible</span><span
+                                        class="font-citation-code text-[11px] font-bold text-primary bg-slate-100 px-2 py-0.5 rounded">Folio:
+                                        4008</span></div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="book-stage shrink-0">
+                                        <div
+                                            class="book-cover-3d relative w-28 h-40 rounded-r-lg rounded-l-[3px] shadow-[6px_8px_18px_rgba(0,25,60,0.35)] bg-gradient-to-br from-[#3b2a05] via-[#241a02] to-[#120d00] flex flex-col justify-between p-2.5 text-white border-l-4 border-l-[#d2a858] border-y border-r border-white/20 overflow-hidden">
+                                            <div class="book-spine-lighting absolute inset-0 pointer-events-none z-20">
+                                            </div>
+                                            <div class="relative z-10 flex justify-between items-start"><span
+                                                    class="font-citation-code text-[8px] font-bold tracking-widest text-[#f5d99b]">ITSM
+                                                    • 4008</span><span
+                                                    class="material-symbols-outlined text-[13px] text-[#eed394]">trending_up</span>
+                                            </div>
+                                            <div class="relative z-10 my-auto text-center">
+                                                <p
+                                                    class="font-headline-sm text-[11px] leading-tight font-extrabold tracking-wider gold-foil-text">
+                                                    PROYECTOS</p>
+                                                <p
+                                                    class="font-label-sm text-[7px] text-[#f2e1bd] tracking-tight mt-0.5">
+                                                    Evaluación en Industria</p>
+                                                <div class="w-8 h-0.5 bg-[#C5A059] mx-auto mt-1 rounded-full"></div>
+                                            </div>
+                                            <div
+                                                class="relative z-10 flex items-center justify-between text-[7.5px] text-[#f2e1bd] border-t border-white/15 pt-1 font-citation-code">
+                                                <span class="">Gabriel Baca</span><span class="">McGraw-Hill</span>
+                                            </div>
+                                            <div
+                                                class="absolute bottom-1 left-1 z-30 bg-white text-slate-900 px-1 py-0.5 rounded-[2px] font-citation-code text-[6.5px] font-bold shadow">
+                                                HD69.P75</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <h3
+                                            class="font-headline-sm text-[16px] leading-snug text-primary group-hover:text-[#184580] line-clamp-2 transition-colors font-bold mt-0.5">
+                                            Evaluación de Proyectos de Inversión y Planta Industrial</h3>
+                                        <p class="font-body-md text-xs text-slate-600 mt-1 flex items-center gap-1">
+                                            <span class="font-semibold text-primary">Autor:</span> Gabriel Baca Urbina
+                                        </p>
+                                        <div class="mt-1.5 flex items-center"><span
+                                                class="font-citation-code text-[10.5px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium"><strong
+                                                    class="text-primary font-semibold">Nota:</strong> 7ma Edición</span>
+                                        </div>
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5"><span
+                                                class="font-citation-code text-[11px] text-primary font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Dewey:
+                                                HD69.P75</span><span
+                                                class="font-citation-code text-[11px] text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Cutter:
+                                                .B33 2023</span></div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-slate-600">
+                                    <div class="flex items-center gap-1.5 font-body-sm text-[11px]"><span
+                                            class="material-symbols-outlined text-[15px] text-tecnm-gold">shelves</span><span
+                                            class="font-medium text-slate-700 truncate max-w-[170px]">Estante:
+                                            4.1.3</span></div><button
+                                        class="px-2.5 py-1 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs rounded-lg transition-all flex items-center gap-1 shadow-sm"><span
+                                            class="">Gestionar</span><span
+                                            class="material-symbols-outlined text-[13px]">tune</span></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Integrated Academic Detail & Administrative Action Pane (Librarian Management Inspector) -->
+                        <aside
+                            class="lg:col-span-4 xl:col-span-4 bg-white rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,35,81,0.08)] border border-slate-200 sticky top-24 transition-all"
+                            id="bookDetailPanel">
+                            <!-- Header Strip -->
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+                                    <span
+                                        class="font-label-sm text-xs text-primary font-bold uppercase tracking-wider">FICHA
+                                        TÉCNICA / CONTROL DE EJEMPLAR</span>
+                                </div>
+                                <span
+                                    class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#C5A059]/20 text-[#7a5712] border border-[#C5A059]/40">
+                                    Campus Monclova
+                                </span>
+                            </div>
+                            <div class="mt-4 flex flex-col gap-4" id="panelContent">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-20 h-28 shrink-0 rounded-r-md rounded-l-[2px] bg-gradient-to-br from-[#0c264d] via-[#001f47] to-[#04142d] text-white p-2.5 flex flex-col justify-between shadow-lg relative overflow-hidden border-l-2 border-l-[#C5A059] border-y border-r border-white/20"
+                                        id="panelSpineCover">
+                                        <div class="book-spine-lighting absolute inset-0 pointer-events-none"></div>
+                                        <span class="font-citation-code text-[7.5px] font-bold text-tecnm-gold"
+                                            id="panelCode">QA303.2</span>
+                                        <p class="font-headline-sm text-[9px] leading-tight font-extrabold gold-foil-text text-center"
+                                            id="panelShortTitle">CÁLCULO</p><span
+                                            class="text-[6.5px] text-[#c7d9fb] text-center font-citation-code">ITSM
+                                            Monclova</span>
+                                    </div>
+                                    <div class="flex flex-col min-w-0 flex-1">
+                                        <div class="flex items-center gap-2 mb-1"><span
+                                                class="px-2 py-0.5 rounded text-[11px] font-bold bg-primary text-white font-citation-code"
+                                                id="panelFolioBadge">Folio: 4001</span></div>
+                                        <h4 class="font-headline-sm text-base text-primary leading-tight font-bold"
+                                            id="panelTitle">Cálculo de Trascendentes Tempranas</h4>
+                                        <div class="mt-2.5 flex items-center"><span
+                                                class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#D1FAE5] text-[#15803D] border border-[#15803D]/30 flex items-center gap-1.5"
+                                                id="panelStatusBadge"><span class="w-2 h-2 rounded-full bg-[#15803D]"
+                                                    id="panelStatusDot"></span><span class=""
+                                                    id="panelStatusLabel">Disponible</span></span></div>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col gap-3">
+                                    <div
+                                        class="text-[11px] font-bold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-1 flex items-center justify-between">
+                                        <span>Datos Técnicos de Catalogación</span><span
+                                            class="font-citation-code text-[11px] font-bold text-primary">Tec
+                                            Monclova</span>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col"><span
+                                            class="text-slate-400 font-medium text-[10px] uppercase">Autor /
+                                            Responsabilidad:</span><span
+                                            class="font-headline-sm font-bold text-primary text-xs mt-0.5"
+                                            id="panelAuthor">James Stewart • Cengage Learning</span></div>
+                                    <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col"><span
+                                            class="text-slate-400 font-medium text-[10px] uppercase">Nota (Edición /
+                                            Volumen):</span><span
+                                            class="font-citation-code font-bold text-slate-800 text-xs mt-0.5"
+                                            id="panelNote">8va Edición • Volumen 1 (Cálculo Multivariable y
+                                            Trascendentes)</span></div>
+                                    <div class="grid grid-cols-2 gap-2.5 pt-0.5">
+                                        <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col">
+                                            <span class="text-slate-400 font-medium text-[10px] uppercase">Código
+                                                Dewey:</span><span
+                                                class="font-citation-code font-bold text-primary text-xs mt-0.5"
+                                                id="panelDewey">QA303.2</span>
+                                        </div>
+                                        <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col">
+                                            <span class="text-slate-400 font-medium text-[10px] uppercase">Código
+                                                Cutter:</span><span
+                                                class="font-citation-code font-bold text-slate-800 text-xs mt-0.5"
+                                                id="panelCutter">.S74 2023</span>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col"><span
+                                            class="text-slate-400 font-medium text-[10px] uppercase">Estante
+                                            Físico:</span><span
+                                            class="font-citation-code font-bold text-primary text-xs mt-0.5 flex items-center gap-1.5"
+                                            id="panelShelf"><span
+                                                class="material-symbols-outlined text-sm text-tecnm-gold">shelves</span>
+                                            Estante 1.1.1</span></div>
+                                    <div class="flex flex-col gap-1.5 mt-0.5">
+                                        <div class="flex justify-between font-label-sm text-xs"><span
+                                                class="text-slate-500 font-medium">Disponibilidad en Acervo:</span><span
+                                                class="font-bold text-slate-800" id="panelAvailabilityText">6 de 8
+                                                copias libres</span></div>
+                                        <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                                                id="panelAvailabilityBar" style="width: 75%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-2 pt-1"><button
+                                        class="w-full h-11 bg-primary hover:bg-[#184580] text-white font-label-lg text-xs font-bold rounded-xl shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] border border-white/10"
+                                        onclick="openAdminActionModal('cambiar_estado')"><span
+                                            class="material-symbols-outlined text-base text-tecnm-gold-light">published_with_changes</span><span
+                                            class="">Cambiar Estado de Ejemplar</span></button>
+                                    <div class="grid grid-cols-2 gap-2"><button
+                                            class="h-10 bg-blue-50 hover:bg-blue-100 text-[#1D4ED8] border border-blue-200 font-label-sm text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+                                            onclick="openAdminActionModal('prestamo_devolucion')"><span
+                                                class="material-symbols-outlined text-sm text-[#1D4ED8]">swap_horizontal_circle</span><span
+                                                class="">Registrar Devolución / Préstamo</span></button><button
+                                            class="h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-label-sm text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+                                            onclick="openAdminActionModal('editar_ficha')"><span
+                                                class="material-symbols-outlined text-sm text-primary">edit_square</span><span
+                                                class="">Editar Ficha de Catalogación</span></button></div><button
+                                        class="w-full h-10 bg-[#FEF3C7] hover:bg-[#fde68a] text-[#B45309] border border-[#D97706]/40 font-label-sm text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                        onclick="openAdminActionModal('reportar_reparacion')"><span
+                                            class="material-symbols-outlined text-base text-[#D97706]">handyman</span><span
+                                            class="">Reportar a Reparación / Taller</span></button>
+                                </div>
+                                <div class="pt-3 border-t border-slate-100">
+                                    <p
+                                        class="font-label-sm text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                                        <span
+                                            class="material-symbols-outlined text-sm text-tecnm-gold">sticky_note_2</span>
+                                        Nota Interna de Catalogación ITSM:
+                                    </p>
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed"
+                                        id="panelRecommendation">Obra inventariada para el tronco común en Ciencias
+                                        Básicas del TecNM Campus Monclova. Ejemplar auditado en el ciclo semestral
+                                        vigente sin extravíos.</div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                    <!-- Pagination & Library Service Schedule Strip -->
+                    <div
+                        class="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 pt-5 border-t border-slate-200">
+                        <!-- Pagination controls -->
+                        <div class="flex items-center gap-1.5">
+                            <button
+                                class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-40"
+                                disabled="">
+                                <span class="material-symbols-outlined text-base">chevron_left</span>
+                            </button>
+                            <button
+                                class="w-9 h-9 rounded-lg bg-primary text-white font-label-md text-xs font-bold shadow-sm">1</button>
+                            <button
+                                class="w-9 h-9 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-label-md text-xs">2</button>
+                            <button
+                                class="w-9 h-9 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-label-md text-xs">3</button>
+                            <span class="px-1 text-slate-400 font-bold">...</span>
+                            <button
+                                class="w-9 h-9 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-label-md text-xs">8</button>
+                            <button
+                                class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700">
+                                <span class="material-symbols-outlined text-base">chevron_right</span>
+                            </button>
+                            <span class="ml-3 font-body-sm text-xs text-slate-500 font-medium">Página 1 de 8 (5,240
+                                Ejemplares Registrados)</span>
+                        </div>
+                        <!-- Library Campus Schedule Pill (Monclova Campus Specific) -->
+                        <div
+                            class="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm text-on-surface">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-amber-50 text-tecnm-gold border border-amber-200 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-lg">schedule</span>
+                            </div>
+                            <div class="flex flex-col text-left">
+                                <span class="font-label-sm text-xs font-bold text-primary">Horario Administrativo •
+                                    Biblioteca ITSM:</span>
+                                <span class="font-body-sm text-[11px] text-slate-500">Mostrador y Taller: Lunes a
+                                    Viernes 07:30 – 20:30 hrs • Sábados 08:30 – 13:30 hrs</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <!-- Administrative Interactive Modal -->
+            <div class="fixed inset-0 z-50 bg-[#001838]/60 backdrop-blur-sm hidden items-center justify-center p-4"
+                id="actionModal">
+                <div
+                    class="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 transform transition-all">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-primary font-bold">
+                            <span class="material-symbols-outlined text-2xl text-tecnm-gold"
+                                id="modalIcon">admin_panel_settings</span>
+                            <span class="font-headline-sm text-lg" id="modalHeaderTitle">Acción Administrativa
+                                ITSM</span>
+                        </div>
+                        <button class="p-1 text-slate-400 hover:text-slate-700 rounded-full" onclick="closeModal()">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <p class="font-body-md text-sm text-slate-600 leading-relaxed" id="modalBodyMessage">
+                        Gestión registrada para el ejemplar en el sistema institucional SIGB del Tec Monclova.
+                    </p>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <span
+                                class="font-label-sm text-[10px] text-slate-400 font-bold uppercase tracking-wider">Folio
+                                de Movimiento SIGB:</span>
+                            <p class="font-citation-code text-xl text-primary font-extrabold tracking-wide"
+                                id="modalTicketCode">SIGB-MCV-2025</p>
+                            <span class="text-[11px] text-emerald-700 font-semibold" id="modalSubstatus">Registrado por:
+                                Mtra. Carmen Valdés</span>
+                        </div>
+                        <div
+                            class="w-12 h-12 bg-[#001b3d] text-tecnm-gold rounded-lg flex items-center justify-center shadow-inner">
+                            <span class="material-symbols-outlined text-2xl">verified_user</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button
+                            class="px-5 py-2.5 bg-primary text-white font-label-lg text-xs font-bold rounded-xl hover:bg-[#184580] transition-colors shadow-md"
+                            onclick="closeModal()">
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            // Book Catalog Data with Official Statuses & Colors
+            const booksCatalogData = {
+                1: {
+                    title: "Cálculo de Trascendentes Tempranas (Edición Estudiantil ITSM)",
+                    author: "James Stewart • Cengage Learning",
+                    shelf: "Pasillo 2-A • Estante 04",
+                    dewey: "QA303.2 .S74 2023",
+                    barcode: "ITSM-2024-0012",
+                    available: "6 de 8 copias libres",
+                    barWidth: "75%",
+                    code: "QA303.2",
+                    shortTitle: "CÁLCULO",
+                    status: "disponible",
+                    statusLabel: "Disponible",
+                    statusClass: "bg-[#D1FAE5] text-[#15803D] border-[#15803D]/30",
+                    dotClass: "bg-[#15803D]",
+                    recommendation: "Obra inventariada para el tronco común en Ciencias Básicas del TecNM Campus Monclova. Ejemplar auditado en el ciclo semestral vigente sin extravíos."
+                },
+                2: {
+                    title: "Mecatrónica: Sistemas de Control Electrónico en la Industria",
+                    author: "William Bolton • Alfaomega Grupo Editor",
+                    shelf: "Módulo Mecatrónica • Estante 09",
+                    dewey: "TJ223 .B65 2023",
+                    barcode: "ITSM-2023-0188",
+                    available: "En préstamo (1 ejemplar)",
+                    barWidth: "25%",
+                    code: "TJ223.B65",
+                    shortTitle: "MECATRÓNICA",
+                    status: "prestado",
+                    statusLabel: "Prestado",
+                    statusClass: "bg-[#DBEAFE] text-[#1D4ED8] border-[#1D4ED8]/30",
+                    dotClass: "bg-[#1D4ED8]",
+                    recommendation: "Préstamo activo a estudiante Ana Sofía Morales (No. Control 20280491). Vencimiento estipulado el 28 de Noviembre de 2025."
+                },
+                3: {
+                    title: "Introducción a la Metalurgia Física y Procesos Siderúrgicos",
+                    author: "Sidney H. Avner • Revisión Técnica Docentes ITSM",
+                    shelf: "Pasillo Central • Estante Siderurgia",
+                    dewey: "TN665 .A86 2022",
+                    barcode: "ITSM-2022-0045",
+                    available: "3 de 4 copias libres",
+                    barWidth: "75%",
+                    code: "TN665.A86",
+                    shortTitle: "SIDERURGIA",
+                    status: "disponible",
+                    statusLabel: "Disponible",
+                    statusClass: "bg-[#D1FAE5] text-[#15803D] border-[#15803D]/30",
+                    dotClass: "bg-[#15803D]",
+                    recommendation: "Colección regional insignia del acervo de Monclova. Material de consulta para residencias y convenios con la industria acerera local."
+                },
+                4: {
+                    title: "Estructuras de Datos y Análisis de Algoritmos en Python",
+                    author: "Mark Allen Weiss • Pearson Educación",
+                    shelf: "Planta Alta • Pasillo Sistemas • Estante 07-B",
+                    dewey: "QA76.73 .W45 2024",
+                    barcode: "ITSM-2025-0914",
+                    available: "En revisión de catalogación",
+                    barWidth: "100%",
+                    code: "QA76.73",
+                    shortTitle: "ESTRUCTURAS",
+                    status: "catalogo",
+                    statusLabel: "En catálogo",
+                    statusClass: "bg-[#EDE9FE] text-[#7C3AED] border-[#7C3AED]/30",
+                    dotClass: "bg-[#7C3AED]",
+                    recommendation: "Nuevo título ingresado en Noviembre 2025 para la carrera de ISC. Ficha MARC-21 en revisión de encabezamientos por materia."
+                },
+                5: {
+                    title: "Análisis de Circuitos en Ingeniería Eléctrica y Electrónica",
+                    author: "William H. Hayt • Jack E. Kemmerly",
+                    shelf: "Taller Técnico • Mesa 2",
+                    dewey: "TK454 .H39 2023",
+                    barcode: "ITSM-2021-0309",
+                    available: "En taller de encuadernación",
+                    barWidth: "40%",
+                    code: "TK454",
+                    shortTitle: "CIRCUITOS",
+                    status: "reparacion",
+                    statusLabel: "En reparación",
+                    statusClass: "bg-[#FEF3C7] text-[#D97706] border-[#D97706]/30",
+                    dotClass: "bg-[#D97706]",
+                    recommendation: "Ejemplar transferido al taller de encuadernación de Edificio A por desprendimiento de lomo. Tiempo estimado de entrega: 4 días."
+                },
+                6: {
+                    title: "Termodinámica Técnica para Ingeniería y Procesos Industriales",
+                    author: "Yunus A. Çengel • Michael A. Boles",
+                    shelf: "Depósito de Descarte • Almacén A-1",
+                    dewey: "TJ265 .C46 2022",
+                    barcode: "ITSM-2019-0871",
+                    available: "0 disponibles (Baja definitiva)",
+                    barWidth: "10%",
+                    code: "TJ265",
+                    shortTitle: "TERMODINÁMICA",
+                    status: "baja",
+                    statusLabel: "En proceso de baja",
+                    statusClass: "bg-[#FEE2E2] text-[#DC2626] border-[#DC2626]/30",
+                    dotClass: "bg-[#DC2626]",
+                    recommendation: "Propuesta de baja por humedad y deshojado total. Pendiente firma de acta del Comité de Adquisiciones y Descarte de Biblioteca."
+                },
+                7: {
+                    title: "Física Universitaria con Física Moderna (Vol. 1 y 2)",
+                    author: "Hugh D. Young • Roger A. Freedman (Sears & Zemansky)",
+                    shelf: "Pasillo 1-B • Estante 02",
+                    dewey: "QC21.3 .Y68 2023",
+                    barcode: "ITSM-2023-0104",
+                    available: "8 de 10 copias libres",
+                    barWidth: "80%",
+                    code: "QC21.3",
+                    shortTitle: "FÍSICA",
+                    status: "disponible",
+                    statusLabel: "Disponible",
+                    statusClass: "bg-[#D1FAE5] text-[#15803D] border-[#15803D]/30",
+                    dotClass: "bg-[#15803D]",
+                    recommendation: "Volumen con alta rotación en sala general. Inventario físico verificado en Octubre de 2025 con sellos institucionales completos."
+                },
+                8: {
+                    title: "Evaluación de Proyectos de Inversión y Planta Industrial",
+                    author: "Gabriel Baca Urbina • McGraw-Hill Interamericana",
+                    shelf: "Pasillo 3-D • Estante 15",
+                    dewey: "HD69.P75 2023",
+                    barcode: "ITSM-2024-0552",
+                    available: "3 de 4 copias libres",
+                    barWidth: "75%",
+                    code: "HD69.P75",
+                    shortTitle: "PROYECTOS",
+                    status: "disponible",
+                    statusLabel: "Disponible",
+                    statusClass: "bg-[#D1FAE5] text-[#15803D] border-[#15803D]/30",
+                    dotClass: "bg-[#15803D]",
+                    recommendation: "Libro de texto base para residencias y formulación de proyectos en IGE e Industrial en el ITSM."
+                }
+            };
+
+            let currentBookId = 1;
+
+            function selectBook(id) {
+                const book = booksCatalogData[id];
+                if (!book) return;
+                currentBookId = id;
+
+                // Update panel fields cleanly for librarian
+                document.getElementById('panelTitle').textContent = book.title;
+                document.getElementById('panelAuthor').textContent = book.author;
+                document.getElementById('panelShelf').innerHTML = `<span class="material-symbols-outlined text-sm text-tecnm-gold">location_on</span> ${book.shelf}`;
+                document.getElementById('panelDewey').textContent = book.dewey;
+                document.getElementById('panelBarcode').textContent = book.barcode;
+                document.getElementById('panelAvailabilityText').textContent = book.available;
+                document.getElementById('panelAvailabilityBar').style.width = book.barWidth;
+                document.getElementById('panelCode').textContent = book.code;
+                document.getElementById('panelShortTitle').textContent = book.shortTitle;
+                document.getElementById('panelRecommendation').textContent = book.recommendation;
+
+                // Update panel status badge
+                const badge = document.getElementById('panelStatusBadge');
+                badge.className = `px-2.5 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${book.statusClass}`;
+                document.getElementById('panelStatusDot').className = `w-2 h-2 rounded-full ${book.dotClass}`;
+                document.getElementById('panelStatusLabel').textContent = book.statusLabel;
+
+                // Visual pulse
+                const aside = document.getElementById('bookDetailPanel');
+                aside.classList.add('ring-2', 'ring-tecnm-gold');
+                setTimeout(() => {
+                    aside.classList.remove('ring-2', 'ring-tecnm-gold');
+                }, 400);
+
+                if (window.innerWidth < 1024) {
+                    aside.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+
+            function filterBooks() {
+                const term = document.getElementById('searchKeyword').value.toLowerCase().trim();
+                const cards = document.querySelectorAll('.book-card');
+                let visibleCount = 0;
+
+                cards.forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    if (!term || text.includes(term)) {
+                        card.style.display = "flex";
+                        visibleCount++;
+                    } else {
+                        card.style.display = "none";
+                    }
+                });
+
+                document.getElementById('resultsCount').innerHTML =
+                    `Mostrando <span class="font-bold text-primary">${visibleCount}</span> obras encontradas en inventario • <strong class="text-primary font-semibold">Tec Monclova</strong>`;
+            }
+
+            function setStatusFilter(status, buttonEl) {
+                document.querySelectorAll('.status-pill').forEach(btn => {
+                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-primary', 'shadow-md');
+                });
+                buttonEl.classList.add('ring-2', 'ring-offset-2', 'ring-primary');
+
+                const cards = document.querySelectorAll('.book-card');
+                let count = 0;
+
+                cards.forEach(card => {
+                    const cardStatus = card.getAttribute('data-status');
+                    if (status === 'all' || cardStatus === status) {
+                        card.style.display = "flex";
+                        count++;
+                    } else {
+                        card.style.display = "none";
+                    }
+                });
+
+                document.getElementById('resultsCount').innerHTML =
+                    `Mostrando <span class="font-bold text-primary">${count}</span> obras con estado <strong>${status.toUpperCase()}</strong> en el sistema`;
+            }
+
+            function toggleLayout(type) {
+                const container = document.getElementById('booksGridContainer');
+                const btnGrid = document.getElementById('btnGrid');
+                const btnList = document.getElementById('btnList');
+
+                if (type === 'list') {
+                    container.classList.remove('md:grid-cols-2');
+                    container.classList.add('grid-cols-1');
+                    btnList.classList.add('bg-white', 'text-primary', 'shadow-sm');
+                    btnGrid.classList.remove('bg-white', 'text-primary', 'shadow-sm');
+                } else {
+                    container.classList.add('md:grid-cols-2');
+                    btnGrid.classList.add('bg-white', 'text-primary', 'shadow-sm');
+                    btnList.classList.remove('bg-white', 'text-primary', 'shadow-sm');
+                }
+            }
+
+            function openAdminActionModal(action) {
+                const book = booksCatalogData[currentBookId];
+                const modal = document.getElementById('actionModal');
+                const title = document.getElementById('modalHeaderTitle');
+                const msg = document.getElementById('modalBodyMessage');
+                const code = document.getElementById('modalTicketCode');
+                const icon = document.getElementById('modalIcon');
+
+                if (action === 'cambiar_estado') {
+                    title.textContent = "Actualizar Estado Administrativo";
+                    msg.textContent = `Seleccione el nuevo estatus para "${book.title}" (${book.barcode}). Los cambios impactarán el catálogo en tiempo real del Tec Monclova.`;
+                    code.textContent = "MOD-EST-" + Math.floor(1000 + Math.random() * 9000);
+                    icon.textContent = "published_with_changes";
+                } else if (action === 'prestamo_devolucion') {
+                    title.textContent = "Registro de Mostrador / Circulación";
+                    msg.textContent = `Registrar entrada o salida para el ejemplar ${book.barcode}. Escanee la credencial del alumno o docente en el lector óptico del Edificio A.`;
+                    code.textContent = "CIR-ITSM-" + Math.floor(1000 + Math.random() * 9000);
+                    icon.textContent = "swap_horizontal_circle";
+                } else if (action === 'editar_ficha') {
+                    title.textContent = "Edición Catalográfica MARC-21";
+                    msg.textContent = `Abriendo formulario técnico para actualizar Dewey (${book.dewey}), signatura topográfica, autores secundarios y etiquetas de estantería.`;
+                    code.textContent = "CAT-" + book.code;
+                    icon.textContent = "edit_square";
+                } else if (action === 'reportar_reparacion') {
+                    title.textContent = "Orden de Trabajo - Taller de Reparación";
+                    msg.textContent = `Se ha generado la boleta de envío al taller de conservación para el ejemplar "${book.title}". Entregar volumen en el cubículo de mantenimiento del Edificio A.`;
+                    code.textContent = "REP-" + Math.floor(1000 + Math.random() * 9000);
+                    icon.textContent = "handyman";
+                }
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function openNewBookModal() {
+                const modal = document.getElementById('actionModal');
+                document.getElementById('modalHeaderTitle').textContent = "Nuevo Registro de Ejemplar";
+                document.getElementById('modalBodyMessage').textContent = "Formulario de alta al Acervo Físico ITSM. Ingrese ISBN o escanee el código de barras comercial para prellenar la ficha catalográfica.";
+                document.getElementById('modalTicketCode').textContent = "ALTA-ITSM-" + new Date().getFullYear();
+                document.getElementById('modalIcon').textContent = "library_add";
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function closeModal() {
+                document.getElementById('actionModal').classList.add('hidden');
+                document.getElementById('actionModal').classList.remove('flex');
+            }
+        </script>
+        <footer class="w-full bg-[#00142e] text-white py-12 border-t border-white/10 mt-12">
+            <div class="max-w-[1440px] mx-auto px-margin">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center gap-2.5"><img alt="TecNM ITS Monclova Logo"
+                                class="h-9 w-auto object-contain brightness-110"
+                                src="https://lh3.googleusercontent.com/aida/AEtjO1W385pCpg6wXaY7Uhc-cJHcy1ozpNA2pmEHksKMzzR7CqMSqasfpuy3AbJPlo3fK6X9o6BFO6E_LW-bxZlaE-yOMd3axwgQWmJxG5xkdeuVGVzpGmsrjmVkH38qZPInq66Rs2fMMn32gouWrX_wga9poCpNLBbueGsdo7PfAsjIVecGxTYI7OhgZJtvGtIAipaRWOAa5aw2RpGkpelolWcGpVN-vDfetfeShmGFMpHp5qh0UQhGWzyzUMRU" /><span
+                                class="font-headline-sm text-base text-white font-bold">Tec Monclova</span></div>
+                        <p class="font-body-sm text-xs text-[#b0c8ee] leading-relaxed">Instituto Tecnológico Superior de
+                            Monclova. Módulo de Administración y Gestión Bibliotecaria. Control sistematizado del acervo
+                            físico institucional.</p>
+                    </div>
+                    <div class="flex flex-col gap-2.5">
+                        <h4 class="font-label-lg text-xs text-tecnm-gold uppercase tracking-wider font-bold">Módulos
+                            Administrativos</h4>
+                        <ul class="flex flex-col gap-1.5 font-body-sm text-xs text-[#b0c8ee]">
+                            <li class="hover:text-white transition-colors cursor-pointer">Circulación y Préstamos de
+                                Mostrador</li>
+                            <li class="hover:text-white transition-colors cursor-pointer">Catalogación y Clasificación
+                                Dewey</li>
+                            <li class="hover:text-white transition-colors cursor-pointer">Taller de Restauración y Bajas
+                            </li>
+                            <li class="hover:text-white transition-colors cursor-pointer">Inventario y Auditoría de
+                                Estantería</li>
+                        </ul>
+                    </div>
+                    <div class="flex flex-col gap-2.5">
+                        <h4 class="font-label-lg text-xs text-tecnm-gold uppercase tracking-wider font-bold">Políticas
+                            &amp; Catálogos</h4>
+                        <ul class="flex flex-col gap-1.5 font-body-sm text-xs text-[#b0c8ee]">
+                            <li class="hover:text-white transition-colors cursor-pointer">Normativa de Préstamos ITSM
+                            </li>
+                            <li class="hover:text-white transition-colors cursor-pointer">Manual de Procesos Técnicos
+                                MARC-21</li>
+                            <li class="hover:text-white transition-colors cursor-pointer">Protocolo de Bajas y Descarte
+                            </li>
+                            <li class="hover:text-white transition-colors cursor-pointer">Acervo Especializado
+                                Siderurgia</li>
+                        </ul>
+                    </div>
+                    <div class="flex flex-col gap-2.5">
+                        <h4 class="font-label-lg text-xs text-tecnm-gold uppercase tracking-wider font-bold">Soporte al
+                            Bibliotecario</h4>
+                        <ul class="flex flex-col gap-1.5 font-body-sm text-xs text-[#b0c8ee]">
+                            <li class="hover:text-white transition-colors cursor-pointer">Carretera 57 Km 4.5, Monclova,
+                                Coahuila</li>
+                            <li class="hover:text-white transition-colors cursor-pointer">soporte.sigb@monclova.tecnm.mx
+                            </li>
+                            <li class="hover:text-white transition-colors cursor-pointer">Ext. Mostrador: 114 /
+                                Catalogación: 116</li>
+                            <li class="hover:text-white transition-colors cursor-pointer">Mesa de Ayuda de Sistemas ITSM
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div
+                    class="pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#8ca8d4] font-label-sm">
+                    <p class="">© 2025 Instituto Tecnológico Superior de Monclova (ITSM) • Módulo de Gestión
+                        Bibliotecaria. Todos los derechos reservados.</p>
+                    <div class="flex items-center gap-4"><span
+                            class="hover:text-white transition-colors cursor-pointer">Manual de Usuario SIGB</span><span
+                            class="hover:text-white transition-colors cursor-pointer">Bitácora de Auditoría</span><span
+                            class="hover:text-white transition-colors cursor-pointer">Portal Institucional ITSM</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+</body>
+
+</html>
