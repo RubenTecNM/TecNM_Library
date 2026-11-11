@@ -4,6 +4,8 @@
 .agents/
 skills-lock.json
 .gemini/
+.aws
+.obsidian/
 
 # ==========================================
 # Frontend (Vue 3, Vite, TypeScript, Node)
@@ -57,3 +59,12 @@ appsettings.Local.json
 # ==========================================
 .DS_Store
 Thumbs.db
+
+# Local browser verification artifacts
+.playwright-mcp/
+
+# Generated Docker development certificates
+.docker/
+
+# Python helper caches
+__pycache__/

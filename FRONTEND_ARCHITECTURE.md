@@ -1,7 +1,7 @@
 # Proyecto Web Frontend
 
 ## ¿Qué es este proyecto?
-Es una aplicación web moderna de tipo **Single-Page Application (SPA)**. Su propósito es centralizar la gestión de múltiples módulos de negocio bajo una interfaz unificada, reactiva y modular.
+Es una aplicación web de tipo **Single-Page Application (SPA)**. Es una base agnóstica para incorporar los módulos que defina cada proyecto. Incluye inicio público, layout persistente, tema y componentes compartidos.
 
 ---
 
@@ -11,9 +11,7 @@ Es una aplicación web moderna de tipo **Single-Page Application (SPA)**. Su pro
 - **Lenguaje & Tipado:** [TypeScript](https://www.typescriptlang.org/)
 - **Empaquetador & Entorno de Construcción:** [Vite](https://vitejs.dev/)
 - **Enrutamiento:** [Vue Router](https://router.vuejs.org/)
-- **Iconografía:** [Lucide Vue Next](https://lucide.dev/)
-- **Visualización de Datos:** Chart.js & Vue-Chartjs
-- **Manipulación y Exportación de Documentos:** SheetJS (xlsx), jsPDF, jsPDF-AutoTable
+- **Cliente HTTP:** Axios con base URL configurable
 - **Estilos & UI:** CSS nativo basado en tokens de diseño semánticos globales y soporte de temas (Dark / Light)
 ---
 
@@ -29,6 +27,7 @@ root/
 ├── docker/                 # Archivos de configuración para contenedores (dev / prod)
 ├── src/
 │   ├── app/                # Inicialización y configuración raíz del SPA
+│   │   ├── layouts/        # MainLayout persistente y configuración de navegación
 │   │   ├── router/         # Configuración central y agregación de rutas modulares
 │   │   ├── App.vue         # Componente raíz de la aplicación
 │   │   └── main.ts         # Punto de entrada / bootstrap de Vue
@@ -47,11 +46,10 @@ root/
 │   │       └── index.ts    # Barrel export / API pública expuesta por el módulo
 │   │
 │   └── shared/             # Capa transversal compartida (Cross-Cutting Concerns)
-│       ├── api/            # Cliente HTTP base (instancia, interceptores JWT, manejo de errores)
+│       ├── api/            # Cliente HTTP base (instancia base y configuración HTTP)
 │       ├── assets/         # Recursos multimedia compartidos (logos, fuentes, gráficos)
 │       ├── components/     # Componentes del Design System (Botones, Modales, Tablas, etc.)
-│       ├── composables/    # Hooks reactivos reutilizables (useTheme, useAuth, useNotification)
-│       ├── layouts/        # Estructuras de diseño principales (MainLayout, AuthLayout, etc.)
+│       ├── composables/    # Hooks reactivos reutilizables (useTheme y extensiones del proyecto)
 │       ├── styles/         # Tokens semánticos globales, resets y variables de diseño
 │       ├── types/          # Tipos e interfaces globales compartidas
 │       ├── utils/          # Utilidades comunes (formatos de fecha, exportadores PDF/Excel)
@@ -70,7 +68,7 @@ root/
 - **Enrutamiento Descentralizado:** Cada slice define sus propias rutas (`routes.ts`) con lazy loading, desacoplando la configuración central del router.
 - **Límites Modulares (Public API):** Uso de `index.ts` en cada módulo para exponer únicamente los componentes, tipos o rutas autorizadas para el consumo externo.
 - **Estado Encapsulado:** Los stores y composables residen en el módulo correspondiente, evitando estados globales innecesarios.
-- **Cliente HTTP Centralizado con Interceptores:** Manejo unificado de autenticación (JWT), estados de carga y códigos de respuesta comunes (401, 403, 500) en `shared/api/`.
+- **Cliente HTTP Centralizado:** Instancia Axios en `shared/api/`. Cada proyecto añade el tratamiento de errores y transporte que requieran sus contratos.
 - **Prevención de Doble Petición (Unicidad de Acción):** Toda acción o mutación iniciada por el usuario debe ejecutarse de forma única sin permitir dobles peticiones. Las vistas y componentes deben deshabilitar visual y funcionalmente los elementos de disparo (`disabled`, `loading`) mientras la operación esté en curso, e incluir guardas de reentrancia en manejadores/composables (`if (isSubmitting.value) return;`) para evitar peticiones duplicadas por clics rápidos o eventos concurrentes.
 - **Co-localización de Tests:** Archivos de prueba (`*.spec.ts`) ubicados junto a sus respectivos componentes o utilidades para preservar la autonomía del slice.
 - **Idioma (Código vs. Interfaz):** Identificadores, componentes, composables, tipos y nombres de archivo se escriben en inglés. Todo texto presentado al usuario (etiquetas, botones, mensajes de error y de estado) se escribe en español de México (es-MX), sin mezclar idiomas en una misma cadena.

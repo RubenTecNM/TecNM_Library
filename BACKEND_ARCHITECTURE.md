@@ -1,7 +1,7 @@
 # Proyecto Web Backend
 
 ## Descripción
-**Proyecto Web Backend** es una API RESTful moderna desarrollada sobre el ecosistema .NET. Su propósito principal es desacoplar y centralizar la lógica de negocio empresarial, la persistencia de datos y los servicios transaccionales para alimentar clientes web frontend mediante una arquitectura modular, escalable y mantenible.
+**Proyecto Web Backend** es una API RESTful desarrollada sobre el ecosistema .NET. Es una base agnóstica para incorporar la lógica y persistencia de cada microservicio mediante una arquitectura modular. Incluye health check y un DbContext sin entidades.
 
 ---
 
@@ -50,3 +50,7 @@ Proyecto Web Backend/
 - **Nomenclatura de Base de Datos (snake_case):** Todo objeto de persistencia nuevo en PostgreSQL (tablas, columnas, índices, constraints, vistas) usa `snake_case` en minúsculas, tanto en scripts `CREATE` como en el mapeo de EF Core, para mantener paridad entre código y BD.
 - **Idioma (Código vs. Usuario):** El código (clases, métodos, variables, DTOs, rutas y nombres de archivo) se escribe en inglés. Los textos dirigidos al usuario final (mensajes de error, validaciones y respuestas legibles) se escriben en español de México (es-MX). La API devuelve mensajes de negocio controlados, nunca trazas de excepción.
 - **Aislamiento Modular:** Alta cohesión interna por módulo y mínimo acoplamiento transversal.
+
+## Inicialización y extensiones
+
+El esquema de cada microservicio se define en [`database.sql`](database.sql), ejecutado por PostgreSQL al inicializar un volumen nuevo. No se aplican migraciones ni se crean tablas desde el backend. Cada equipo completa el SQL y los mapeos EF o adapta ese mecanismo; ver [setup](docs/setup.md).

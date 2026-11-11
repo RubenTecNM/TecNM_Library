@@ -7,8 +7,7 @@ Esta carpeta contiene biblioteca UI compartida del frontend. Toda vista debe reu
 Fuentes visuales obligatorias:
 
 - `frontend/DESIGN.md`: colores, tipografía, espaciado, geometría, elevación y temas.
-- `frontend/dummy/index.html`: referencia visual interactiva.
-- `frontend/src/modules/auth/views/SessionView.vue`: catálogo integrado con componentes reales.
+- `frontend/src/modules/home/views/HomeView.vue`: composición mínima de inicio.
 - `frontend/src/shared/styles/global.css`: tokens y estilos comunes.
 
 Conservar identidad TecNM, soporte claro/oscuro y CSS nativo. No agregar dependencias para comportamiento cubierto por Vue, HTML o CSS.
@@ -25,7 +24,7 @@ Conservar identidad TecNM, soporte claro/oscuro y CSS nativo. No agregar depende
 
 ## Página base
 
-Todas las vistas de página, públicas o autenticadas, deben usar `UiBasePage` como contenedor de contenido raíz.
+Las vistas de página dentro del layout deben usar `UiBasePage` como contenedor de contenido raíz.
 
 ```vue
 <UiBasePage fluid title="Bienvenida" description="Tu plataforma institucional">
@@ -42,7 +41,7 @@ Todas las vistas de página, públicas o autenticadas, deben usar `UiBasePage` c
 - `UiBasePage` no crea otro `main`. Layout propietario debe aportar landmark principal.
 - Usar modo centrado solo cuando requerimiento solicite lectura estrecha, formulario compacto o contenido tipo artículo.
 
-`SessionView` usa `fluid=true` y demuestra ancho completo.
+`HomeView` usa `fluid=true` y demuestra ancho completo.
 
 ## Catálogo y contratos
 
@@ -79,12 +78,12 @@ Todas las vistas de página, públicas o autenticadas, deben usar `UiBasePage` c
 - `UiPageHeader`: `title`, `description`, `version`, `eyebrow` y slot de acciones.
 - `UiLayout`: `kind="stack|grid|row|fields"`, `as` para elemento semántico.
 
-Ejemplo mínimo:
+Ejemplo mínimo desde una vista en `src/modules/<feature>/views/`:
 
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import { UiBasePage, UiButton, UiCard, UiField } from '@/shared/components'
+import { UiBasePage, UiButton, UiCard, UiField } from '../../../shared/components'
 
 const name = ref('')
 </script>
@@ -101,14 +100,14 @@ const name = ref('')
 
 ## Layout persistente
 
-- `MainLayout` vive en ruta padre autenticada. `RouterView` cambia únicamente contenido. Login queda fuera.
+- `MainLayout` vive en ruta padre pública. `RouterView` cambia únicamente contenido.
 - `UiShell` acepta `showHeader` y `showSidebar`; permite ambos, cualquiera o ninguno.
 - `UiHeader` y `UiSidebar` son independientes. Ambos aceptan `showTitle`, `showLogo`, `title`, `subtitle` y `logo`.
 - Logo predeterminado: `shared/assets/tecnm-isologo.svg`.
 - Navegación acepta enlaces `{ label, to }` y grupos `{ label, children }` sin destino propio.
 - `to` acepta cualquier `RouteLocationRaw` de Vue Router.
 - Desplegables funcionan con teclado; Escape cierra grupo. Estado lateral permanece entre páginas hijas.
-- Configuración y guía completa: `frontend/src/app/layouts/MAINLAYOUT.md`.
+- Configuración y guía completa: [spec de MainLayout](../../../app/layouts/mainLayout.spec.md).
 
 ## Barra lateral en escritorio
 
@@ -119,10 +118,9 @@ const name = ref('')
 
 ## Integración actual
 
-- `LoginView`: acceso institucional, validación, estados de carga y errores.
-- `SessionView`: datos reales de usuario, logout y catálogo de componentes.
+- `HomeView`: bienvenida pública sin datos ni operaciones de negocio.
 - `MainLayout`: navegación persistente y tema.
-- No almacenar JWT en componentes. Auth conserva contrato de cookies y API.
+- `NotFoundView`: página 404 con navegación al inicio y selector de tema compartido.
 
 ## Verificación
 

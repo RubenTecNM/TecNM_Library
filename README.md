@@ -1,71 +1,75 @@
-# TecNM Campus Monclova — Plantilla Base de Proyectos
+# TecNM Campus Monclova — Plantilla base de proyectos
 
-Este repositorio sirve como la **plantilla oficial de referencia (template)** para el desarrollo de todas las aplicaciones web y servicios del **TecNM Campus Monclova**.
+Base agnóstica para aplicaciones web y microservicios institucionales. Incluye arquitectura modular, backend .NET 10 con EF Core/PostgreSQL, frontend Vue 3/TypeScript y componentes visuales TecNM.
 
-Su propósito es estandarizar la arquitectura, calidad de código y patrones de diseño en el desarrollo de software institucional, asegurando mantenibilidad, escalabilidad e interoperabilidad entre proyectos.
+Cada proyecto define su dominio, datos e integraciones. El template incluye una página pública de inicio, componentes reutilizables y un health check del backend.
 
----
+## Arranque con Docker
 
-## 🤖 Desarrollo Guiado por Especificaciones (Spec-Driven Development - SDD)
-
-El trabajo y colaboración con **Agentes de Inteligencia Artificial** en este ecosistema se rige estrictamente bajo **SDD (Spec-Driven Development)**:
-
-1. **Especificación Primero:** Antes de generar o modificar código en cualquier módulo, se deben redactar o actualizar los documentos en su carpeta local `specs/`.
-2. **Contexto Aislado:** Las especificaciones funcionales, casos de uso, contratos y criterios de aceptación residen dentro del propio módulo/slice para dar contexto preciso a los agentes.
-3. **Validación Continua:** Los agentes implementan código y pruebas contrastando directamente contra las especificaciones del slice correspondiente.
-4. **Regla de Redacción:** Toda especificación y documentación generada por IA debe redactarse utilizando la skill **caveman** para garantizar máxima concisión técnica y eliminar contenido redundante.
-
-### Centralización y Contexto Maestro (`AGENTS.md`)
-
-Para inicializar y mantener la sincronización del contexto global, cada repositorio/proyecto (Backend y Frontend por separado) debe contar con un archivo **`AGENTS.md`** en su raíz:
-
-- **Punto de Entrada del Agente:** Es el primer documento que la IA debe consultar para comprender el sistema.
-- **Contenido Requerido:**
-  - Resumen y objetivos del proyecto.
-  - Reglas operativas, convenciones de código y estándares del campus.
-  - Índice / mapa centralizado que referencia a todos los módulos (`Modules/` o `src/modules/`), sus componentes clave y sus carpetas `specs/`.
-- **Mantenimiento:** Al inicializar un proyecto o crear un nuevo slice/módulo, debe registrarse y enlazarse inmediatamente en `AGENTS.md`.
-
-### Skills Recomendadas para Agentes
-
-Se recomienda el uso de las siguientes skills para optimizar el flujo de desarrollo, diseño e implementación:
-
-- **caveman:** Reducción de ruido y documentación ultra concisa. *(Obligatoria para generar specs)*.
-- **frontend-design:** Dirección estética y diseño visual intencional.
-- **ui-ux-pro-max:** Sistema de diseño UI/UX, patrones de interacción, accesibilidad y paletas.
-- **ponytail:** Simplicidad pragmática y código minimalista (evita sobreingeniería).
-
-#### Comandos de Instalación de Skills
+Requisitos: Docker con Compose, Python 3 y OpenSSL. No requiere Node ni .NET en el host.
 
 ```bash
-npx skills add https://github.com/juliusbrussee/caveman --skill caveman
-npx skills add https://github.com/anthropics/skills --skill frontend-design
-npx skills add https://github.com/nextlevelbuilder/ui-ux-pro-max-skill --skill ui-ux-pro-max
-npx skills add https://github.com/dietrichgebert/ponytail --skill ponytail
+bash scripts/setup-dev.sh
 ```
 
----
+| Servicio | Acceso predeterminado |
+| --- | --- |
+| `tecnm-template-frontend` | https://localhost:5173 |
+| `tecnm-template-backend` | https://localhost:7001/api/health |
+| `tecnm-template-postgres` | `db:5432`, solo en la red privada de datos |
 
-## 🏛️ Especificaciones y Arquitecturas
+Frontend y backend publican en `127.0.0.1`; el proxy frontend reenvía `/api` al backend. HTTPS usa un certificado local autofirmado generado en `.docker/certs/`; el navegador puede pedir aceptarlo.
 
-El proyecto se rige por los siguientes estándares arquitectónicos:
+```bash
+bash scripts/setup-dev.sh --frontend-port 5180 --backend-port 7010
+bash scripts/setup-dev.sh --frontend-port 5180 --backend-port 7010 --check-ports
+docker compose ps
+docker compose logs -f
+docker compose stop
+```
 
-- **[Estándar de Autenticación y Sesiones](./AUTH.md):** Especificación de seguridad, cookies `HttpOnly`, ciclo de vida del JWT y soporte para login local y federado (Microsoft Entra / Google).
-- **[Arquitectura Backend (.NET 10)](./BACKEND_ARCHITECTURE.md):** Estructura y lineamientos para la API REST, persistencia con EF Core y PostgreSQL, y módulos de negocio con especificaciones locales.
-- **[Arquitectura Frontend (Vue 3 + TypeScript)](./FRONTEND_ARCHITECTURE.md):** Estructura y lineamientos para la aplicación SPA con Vite, rutas modulares descentralizadas, componentes reutilizables y especificaciones por slice.
+El script guarda puertos y contraseña PostgreSQL en `.env`. `--project-name tecnm-mi-servicio` permite separar contenedores y volumen por proyecto. Los conflictos de puertos se reportan antes de construir o arrancar.
 
----
+## Base de datos de cada microservicio
 
-## 🌐 Convenciones Transversales
+El setup carga PostgreSQL desde **[`database.sql`](database.sql) en la raíz**, mediante el inicializador de la imagen PostgreSQL. El archivo incluido solo tiene comentarios: no crea tablas ni datos.
 
-- **Nomenclatura de Base de Datos:** `snake_case` en tablas, columnas, índices, constraints y vistas de PostgreSQL.
-- **Idioma del Código:** inglés para todo identificador, archivo, ruta y API.
-- **Idioma de la Interfaz:** español de México (es-MX) para todo texto visible al usuario, mensajes de error y de estado.
+**Cada equipo debe completar ese SQL o modificar el mecanismo de inicialización** según su microservicio. El backend incluye un DbContext sin entidades para extenderlo con el modelo propio.
 
----
+El SQL se ejecuta únicamente al inicializar un volumen nuevo. Editarlo y repetir el setup no modifica una base existente: esos cambios requieren la estrategia de migraciones elegida por el proyecto. El volumen `postgres_data` conserva los datos entre reinicios.
 
-## 📋 Planes de Implementación (`plans/`)
+Consultar [documentación del setup](docs/setup.md) para opciones, inicialización, errores SQL y persistencia.
 
-Las hojas de ruta, fases de ejecución técnica y planes de trabajo generados para agentes o desarrolladores se centralizan en el directorio `plans/`:
+## Desarrollo y verificación
 
-- **[01. Plan de Autenticación Local](./plans/01-auth-implementation.md):** Plan inicial de construcción del esqueleto Backend, Frontend y flujo de autenticación local con PostgreSQL y JWT en cookies.
+```bash
+# Con el stack activo:
+API_URL=https://localhost:7001 bash scripts/smoke-template.sh
+
+# Comprobaciones locales:
+python3 scripts/check-dev-ports.py
+python3 scripts/check-setup.py
+npm --prefix frontend ci
+npm --prefix frontend run build
+(cd frontend && node scripts/check-layout.mjs)
+dotnet build backend/TecNM.Api.csproj
+```
+
+Para ejecutar sin Docker, consultar los `.env.example` de backend/frontend. La ejecución manual del backend requiere una conexión PostgreSQL propia; el contenedor de base de datos no publica puerto.
+
+## Arquitectura y contribución
+
+- [Reglas compartidas de desarrollo](AGENTS.md): punto de entrada desde la raíz; complementa las reglas locales de backend y frontend.
+- [Guía de contribución](CONTRIBUTING.md): flujo ODD con SDD, verificaciones por alcance y contribuciones desde un fork.
+- [Alcance del template](specs/template.spec.md).
+- [Arquitectura backend](BACKEND_ARCHITECTURE.md) y [reglas de desarrollo backend](backend/AGENTS.md).
+- [Arquitectura frontend](FRONTEND_ARCHITECTURE.md) y [reglas de desarrollo frontend](frontend/AGENTS.md).
+- [Sistema de diseño](frontend/DESIGN.md) y [componentes compartidos](frontend/src/shared/components/specs/components.spec.md).
+- [Layout persistente](frontend/src/app/layouts/mainLayout.spec.md), [tema](frontend/src/shared/composables/useTheme.spec.md), [inicio](frontend/src/modules/home/specs/home.spec.md) y [página 404](frontend/src/shared/views/specs/notFound.spec.md).
+- [Contrato Docker](specs/docker.spec.md) y [health check](specs/health.spec.md).
+
+Aplicar SDD: actualizar la especificación correspondiente antes de modificar comportamiento o contratos. Documentar funcionalidades y criterios de aceptación en `specs/`; mantener los `AGENTS.md` centrados en patrones de diseño y reglas de desarrollo.
+
+Convenciones: objetos PostgreSQL en `snake_case`; código, rutas y archivos en inglés; interfaz, errores y documentación en español de México. Reutilizar componentes antes de crear controles o estilos locales.
+
+Leer primero el `AGENTS.md` raíz y después el de cada área afectada. Para cambios transversales, revisar ambos.
