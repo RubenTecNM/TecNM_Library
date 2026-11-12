@@ -1,79 +1,68 @@
-name: ${COMPOSE_PROJECT_NAME:-tecnm-template}
+name: tecnm-library
+
 services:
   db:
-    image: postgres:15
-    container_name: ${COMPOSE_PROJECT_NAME:-tecnm-template}-postgres
+    image: postgres:17.4
+    container_name: tecnm-library-postgres
     environment:
-      POSTGRES_DB: tecnm_template
-      POSTGRES_USER: tecnm_app
-      POSTGRES_PASSWORD: ${TECNM_DB_PASSWORD:?Ejecuta scripts/setup-dev.sh primero}
+      POSTGRES_DB: tecnm_library
+      POSTGRES_USER: tecnm_admin
+      POSTGRES_PASSWORD: TecNM_Postgres_Password_2026!
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - type: bind
-        source: ./database.sql
-        target: /docker-entrypoint-initdb.d/01-schema.sql
-        read_only: true
-        bind:
-          create_host_path: false
-    networks: [data]
+      - ./database.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    networks:
+      - internal_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U tecnm_app -d tecnm_template"]
-      interval: 2s
+      test: ["CMD-SHELL", "pg_isready -U tecnm_admin -d tecnm_library"]
+      interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 10
     restart: unless-stopped
 
   backend:
-    build: ./backend
-    image: ${COMPOSE_PROJECT_NAME:-tecnm-template}-backend:local
-    container_name: ${COMPOSE_PROJECT_NAME:-tecnm-template}-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: tecnm-library-backend:local
+    container_name: tecnm-library-backend
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: https://+:8081
-      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/localhost.crt
-      ASPNETCORE_Kestrel__Certificates__Default__KeyPath: /https/localhost.key
-      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=tecnm_template;Username=tecnm_app;Password=${TECNM_DB_PASSWORD:?Ejecuta scripts/setup-dev.sh primero}
-      Cors__AllowedOrigins: https://localhost:${TECNM_FRONTEND_PORT:-5173},https://127.0.0.1:${TECNM_FRONTEND_PORT:-5173}
-    ports:
-      - "127.0.0.1:${TECNM_BACKEND_PORT:-7001}:8081"
-    volumes:
-      - ./.docker/certs:/https:ro
-    networks: [web, data]
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:6050
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=tecnm_library;Username=tecnm_admin;Password=TecNM_Postgres_Password_2026!
+      Cors__AllowedOrigins: http://localhost:6060,http://127.0.0.1:6060
+    expose:
+      - "6050"
+    networks:
+      - internal_network
+      - public_network
     depends_on:
       db:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "--insecure", "https://localhost:8081/api/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 10s
     restart: unless-stopped
 
-  frontend:
-    build: ./frontend
-    image: ${COMPOSE_PROJECT_NAME:-tecnm-template}-frontend:local
-    container_name: ${COMPOSE_PROJECT_NAME:-tecnm-template}-frontend
+  nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    image: tecnm-library-nginx:local
+    container_name: tecnm-library-nginx
     ports:
-      - "127.0.0.1:${TECNM_FRONTEND_PORT:-5173}:443"
-    volumes:
-      - ./.docker/certs:/https:ro
-    networks: [web]
+      - "6060:6060"
+    networks:
+      - public_network
     depends_on:
       backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--no-check-certificate", "--output-document=/dev/null", "https://127.0.0.1/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
+        condition: service_started
     restart: unless-stopped
 
 networks:
-  web:
-    name: ${COMPOSE_PROJECT_NAME:-tecnm-template}-web
-  data:
-    name: ${COMPOSE_PROJECT_NAME:-tecnm-template}-data
+  public_network:
+    name: tecnm-library-public
+  internal_network:
+    name: tecnm-library-internal
     internal: true
+
 volumes:
   postgres_data:
+    name: tecnm-library-postgres-data

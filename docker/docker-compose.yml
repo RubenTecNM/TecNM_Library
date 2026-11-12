@@ -1,0 +1,68 @@
+name: tecnm-library
+
+services:
+  db:
+    image: postgres:17.4
+    container_name: tecnm-library-postgres
+    environment:
+      POSTGRES_DB: tecnm_library
+      POSTGRES_USER: tecnm_admin
+      POSTGRES_PASSWORD: TecNM_Postgres_Password_2026!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../database.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    networks:
+      - internal_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U tecnm_admin -d tecnm_library" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: tecnm-library-backend:local
+    container_name: tecnm-library-backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:6050
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=tecnm_library;Username=tecnm_admin;Password=TecNM_Postgres_Password_2026!
+      Cors__AllowedOrigins: http://localhost:6060,http://127.0.0.1:6060
+    expose:
+      - "6050"
+    networks:
+      - internal_network
+      - public_network
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    image: tecnm-library-nginx:local
+    container_name: tecnm-library-nginx
+    ports:
+      - "6060:6060"
+    networks:
+      - public_network
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+networks:
+  public_network:
+    name: tecnm-library-public
+  internal_network:
+    name: tecnm-library-internal
+    internal: true
+
+volumes:
+  postgres_data:
+    name: tecnm-library-postgres-data
