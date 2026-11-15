@@ -3,14 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1E3A5F" />
+    <meta name="theme-color" content="#001b3d" />
     <meta
       name="description"
-      content="Plantilla de proyectos del Tecnológico Nacional de México"
+      content="Sistema Integral de Gestión Bibliotecaria · TecNM Campus Monclova"
     />
-    <title>Inicio | TecNM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#002351",
+              "primary-container": "#1b396a",
+              "on-primary": "#ffffff",
+              "tecnm-gold": "#C5A059",
+              "tecnm-gold-light": "#ecd49c",
+              "surface": "#f8f9ff"
+            }
+          }
+        }
+      }
+    </script>
+    <title>Biblioteca Central • Panel Administrativo | TecNM Monclova</title>
   </head>
-  <body>
+  <body class="bg-[#f5f7fc] m-0 p-0">
     <div id="app"></div>
     <script type="module" src="/src/app/main.ts"></script>
   </body>

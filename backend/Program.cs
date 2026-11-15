@@ -52,7 +52,10 @@ builder.Services.AddCors(options => options.AddPolicy(FrontendCors, policy =>
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors(FrontendCors);
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
