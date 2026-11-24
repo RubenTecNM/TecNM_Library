@@ -114,6 +114,7 @@ CREATE TABLE Borrower (
     studentid VARCHAR(30) NOT NULL UNIQUE,
     major VARCHAR(100) NOT NULL,
     time VARCHAR(50) NOT NULL,
+    gender VARCHAR(20) NOT NULL,
     phoneNumber VARCHAR(25) NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     -- Campos de Auditoría Obligatorios
@@ -124,8 +125,10 @@ CREATE TABLE Borrower (
     idUserDelete INT NULL,
     dateDelete TIMESTAMP NULL,
     idStatus BIT(1) NOT NULL DEFAULT B'1'
+    CONSTRAINT chk_borrower_gender
+        CHECK (gender IN ('Masculino', 'Femenino'))
 );
-
+--asas
 -- ----------------------------------------------------------------------------
 -- 7. Tabla: Loan (Préstamos)
 -- ----------------------------------------------------------------------------
