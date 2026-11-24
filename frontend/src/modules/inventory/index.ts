@@ -1,0 +1,1 @@
+export { inventoryRoutes } from './routes'

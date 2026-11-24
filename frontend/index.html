@@ -1,45 +1,94 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#001b3d" />
-    <meta
-      name="description"
-      content="Sistema Integral de Gestión Bibliotecaria · TecNM Campus Monclova"
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-      rel="stylesheet"
-    />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              "primary": "#002351",
-              "primary-container": "#1b396a",
-              "on-primary": "#ffffff",
-              "tecnm-gold": "#C5A059",
-              "tecnm-gold-light": "#ecd49c",
-              "surface": "#f8f9ff"
-            }
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#001b3d" />
+  <meta name="description" content="Sistema Integral de Gestión Bibliotecaria · TecNM Campus Monclova" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#002351",
+            "primary-container": "#1b396a",
+            "primary-fixed": "#d7e2ff",
+            "primary-fixed-dim": "#acc7ff",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#89a4dc",
+            "secondary": "#775a19",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#fed488",
+            "on-secondary-container": "#785a1a",
+            "tertiary": "#002a26",
+            "tertiary-container": "#00423c",
+            "on-tertiary": "#ffffff",
+            "surface": "#f8f9ff",
+            "surface-container-low": "#eff4ff",
+            "surface-container": "#e5eeff",
+            "surface-container-high": "#dce9ff",
+            "surface-container-highest": "#d3e4fe",
+            "on-surface": "#0b1c30",
+            "on-surface-variant": "#44474f",
+            "outline": "#747780",
+            "outline-variant": "#c4c6d0",
+            "tecnm-gold": "#C5A059",
+            "tecnm-gold-light": "#ecd49c"
+          },
+          spacing: {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2.5rem"
+          },
+          fontFamily: {
+            "body-lg": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "label-lg": ["Inter", "sans-serif"],
+            "label-md": ["Inter", "sans-serif"],
+            "label-sm": ["Inter", "sans-serif"],
+            "citation-code": ["Inter", "sans-serif"],
+            "display-hero": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-md": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-sm": ["Plus Jakarta Sans", "sans-serif"]
+          },
+          fontSize: {
+            "body-lg": ["16px", { lineHeight: "26px", fontWeight: "400" }],
+            "body-md": ["14px", { lineHeight: "22px", fontWeight: "400" }],
+            "body-sm": ["12px", { lineHeight: "18px", fontWeight: "400" }],
+            "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }],
+            "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }],
+            "citation-code": ["13px", { lineHeight: "20px", letterSpacing: "0", fontWeight: "400" }],
+            "headline-sm": ["18px", { lineHeight: "26px", fontWeight: "600" }],
+            "headline-md": ["22px", { lineHeight: "30px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "headline-lg": ["30px", { lineHeight: "38px", letterSpacing: "-0.015em", fontWeight: "600" }],
+            "display-hero": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }]
           }
         }
       }
-    </script>
-    <title>Biblioteca Central • Panel Administrativo | TecNM Monclova</title>
-  </head>
-  <body class="bg-[#f5f7fc] m-0 p-0">
-    <div id="app"></div>
-    <script type="module" src="/src/app/main.ts"></script>
-  </body>
+    }
+  </script>
+  <title>Biblioteca Central • Panel Administrativo | TecNM Monclova</title>
+</head>
+
+<body class="bg-[#f5f7fc] m-0 p-0">
+  <div id="app"></div>
+  <script type="module" src="/src/app/main.ts"></script>
+</body>
+
 </html>
