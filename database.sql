@@ -113,6 +113,7 @@ CREATE TABLE Borrower (
     name VARCHAR(150) NOT NULL,
     studentid VARCHAR(30) NOT NULL UNIQUE,
     major VARCHAR(100) NOT NULL,
+    semester VARCHAR(20) NULL,
     time VARCHAR(50) NOT NULL,
     gender VARCHAR(20) NOT NULL,
     phoneNumber VARCHAR(25) NULL,
@@ -124,7 +125,7 @@ CREATE TABLE Borrower (
     dateUpdate TIMESTAMP NULL,
     idUserDelete INT NULL,
     dateDelete TIMESTAMP NULL,
-    idStatus BIT(1) NOT NULL DEFAULT B'1'
+    idStatus BIT(1) NOT NULL DEFAULT B'1',
     CONSTRAINT chk_borrower_gender
         CHECK (gender IN ('Masculino', 'Femenino'))
 );
@@ -280,13 +281,13 @@ INSERT INTO Book_Topic (book_id, topic_id, idUserCreate, dateCreate, idStatus) V
 (8, 1, 1, CURRENT_TIMESTAMP, B'1'); -- Ingeniería de Software
 
 -- 8. Prestamistas / Usuarios (Borrower) con correos institucionales '@monclova.tecnm.mx'
-INSERT INTO Borrower (id, name, studentid, major, time, phoneNumber, email, idUserCreate, dateCreate, idStatus) VALUES
-(1, 'Carlos Alberto Mendoza Rivas', '21280541', 'Ingeniería en Sistemas Computacionales', 'Matutino - 7mo Semestre', '8661234567', 'l21280541@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(2, 'Ana Sofía Garza Villalobos', '22280312', 'Ingeniería en Sistemas Computacionales', 'Matutino - 5to Semestre', '8662345678', 'l22280312@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(3, 'Luis Fernando Treviño Peña', '20280199', 'Ingeniería Industrial', 'Vespertino - 9no Semestre', '8663456789', 'l20280199@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(4, 'Valeria Guadalupe Castillo Morales', '23280820', 'Ingeniería en Gestión Empresarial', 'Matutino - 3er Semestre', '8664567890', 'l23280820@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(5, 'Ing. Roberto Hernández Dávila', 'DOC-ISC-014', 'Docente - Departamento de Sistemas', 'Tiempo Completo', '8665678901', 'roberto.hernandez@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(6, 'Lic. Martha Elena Vázquez Torres', 'ADM-BIB-003', 'Administrador de Biblioteca', 'Turno Completo', '8666789012', 'martha.vazquez@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1');
+INSERT INTO Borrower (id, name, studentid, major, semester, time, gender, phoneNumber, email, idUserCreate, dateCreate, idStatus) VALUES
+(1, 'Carlos Alberto Mendoza Rivas', '21280541', 'Ingeniería en Sistemas Computacionales', '7mo Semestre', 'Matutino', 'Masculino', '8661234567', 'l21280541@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
+(2, 'Ana Sofía Garza Villalobos', '22280312', 'Ingeniería en Sistemas Computacionales', '5to Semestre', 'Matutino', 'Femenino', '8662345678', 'l22280312@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
+(3, 'Luis Fernando Treviño Peña', '20280199', 'Ingeniería Industrial', '9no Semestre', 'Vespertino', 'Masculino', '8663456789', 'l20280199@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
+(4, 'Valeria Guadalupe Castillo Morales', '23280820', 'Ingeniería en Gestión Empresarial', '3er Semestre', 'Matutino', 'Femenino', '8664567890', 'l23280820@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
+(5, 'Ing. Roberto Hernández Dávila', 'DOC-ISC-014', 'Docente - Departamento de Sistemas', NULL, 'Tiempo Completo', 'Masculino', '8665678901', 'roberto.hernandez@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
+(6, 'Lic. Martha Elena Vázquez Torres', 'ADM-BIB-003', 'Administrador de Biblioteca', NULL, 'Turno Completo', 'Femenino', '8666789012', 'martha.vazquez@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Borrower_id_seq', (SELECT MAX(id) FROM Borrower));
 
 -- 9. Préstamos de prueba (Loan)

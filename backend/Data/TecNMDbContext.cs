@@ -70,7 +70,9 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
             entity.Property(e => e.StudentId).HasColumnName("studentid").HasMaxLength(30).IsRequired();
             entity.Property(e => e.Major).HasColumnName("major").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Semester).HasColumnName("semester").HasMaxLength(20);
             entity.Property(e => e.Time).HasColumnName("time").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Gender).HasColumnName("gender").HasMaxLength(20).IsRequired();
             entity.Property(e => e.PhoneNumber).HasColumnName("phonenumber").HasMaxLength(25);
             entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(150).IsRequired();
             ConfigureAuditFields(entity);
