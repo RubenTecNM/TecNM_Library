@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS Book_Author CASCADE;
 DROP TABLE IF EXISTS Loan CASCADE;
 DROP TABLE IF EXISTS Book CASCADE;
 DROP TABLE IF EXISTS Borrower CASCADE;
+DROP TABLE IF EXISTS Role CASCADE;
 DROP TABLE IF EXISTS Topic CASCADE;
 DROP TABLE IF EXISTS Shelf CASCADE;
 DROP TABLE IF EXISTS BookStatus CASCADE;
@@ -108,7 +109,24 @@ CREATE TABLE Book (
 );
 
 -- ----------------------------------------------------------------------------
--- 6. Tabla: Borrower (Prestamistas / Usuarios de Biblioteca)
+-- 6. Tabla: Role (Catálogo de Roles del Módulo de Biblioteca)
+-- ----------------------------------------------------------------------------
+CREATE TABLE Role (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(255) NULL,
+    -- Campos de Auditoría Obligatorios
+    idUserCreate INT NOT NULL DEFAULT 1,
+    dateCreate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    idUserUpdate INT NULL,
+    dateUpdate TIMESTAMP NULL,
+    idUserDelete INT NULL,
+    dateDelete TIMESTAMP NULL,
+    idStatus BIT(1) NOT NULL DEFAULT B'1'
+);
+
+-- ----------------------------------------------------------------------------
+-- 7. Tabla: Borrower (Prestamistas / Usuarios de Biblioteca)
 -- ----------------------------------------------------------------------------
 CREATE TABLE Borrower (
     id SERIAL PRIMARY KEY,
@@ -120,6 +138,7 @@ CREATE TABLE Borrower (
     gender VARCHAR(20) NOT NULL,
     phoneNumber VARCHAR(25) NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
+    role_id INT NOT NULL DEFAULT 3,
     -- Campos de Auditoría Obligatorios
     idUserCreate INT NOT NULL DEFAULT 1,
     dateCreate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -128,12 +147,14 @@ CREATE TABLE Borrower (
     idUserDelete INT NULL,
     dateDelete TIMESTAMP NULL,
     idStatus BIT(1) NOT NULL DEFAULT B'1',
+    -- Llaves Foráneas y Restricciones
+    CONSTRAINT fk_borrower_role FOREIGN KEY (role_id) REFERENCES Role(id) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_borrower_gender
         CHECK (gender IN ('Masculino', 'Femenino'))
 );
 --asas
 -- ----------------------------------------------------------------------------
--- 7. Tabla: Loan (Préstamos)
+-- 8. Tabla: Loan (Préstamos)
 -- ----------------------------------------------------------------------------
 CREATE TABLE Loan (
     id SERIAL PRIMARY KEY,
@@ -157,7 +178,7 @@ CREATE TABLE Loan (
 );
 
 -- ----------------------------------------------------------------------------
--- 8. Tabla Intermedia N:M: Book_Author
+-- 9. Tabla Intermedia N:M: Book_Author
 -- ----------------------------------------------------------------------------
 CREATE TABLE Book_Author (
     id SERIAL PRIMARY KEY,
@@ -178,7 +199,7 @@ CREATE TABLE Book_Author (
 );
 
 -- ----------------------------------------------------------------------------
--- 9. Tabla Intermedia N:M: Book_Topic
+-- 10. Tabla Intermedia N:M: Book_Topic
 -- ----------------------------------------------------------------------------
 CREATE TABLE Book_Topic (
     id SERIAL PRIMARY KEY,
@@ -199,7 +220,7 @@ CREATE TABLE Book_Topic (
 );
 
 -- ----------------------------------------------------------------------------
--- 10. Tabla: Service (Catálogo de Servicios de Biblioteca)
+-- 11. Tabla: Service (Catálogo de Servicios de Biblioteca)
 -- ----------------------------------------------------------------------------
 CREATE TABLE Service (
     id SERIAL PRIMARY KEY,
@@ -216,7 +237,7 @@ CREATE TABLE Service (
 );
 
 -- ----------------------------------------------------------------------------
--- 11. Tabla: Visit (Registro de Visitas / Uso de Servicios)
+-- 12. Tabla: Visit (Registro de Visitas / Uso de Servicios)
 -- ----------------------------------------------------------------------------
 CREATE TABLE Visit (
     id SERIAL PRIMARY KEY,
@@ -325,24 +346,32 @@ INSERT INTO Book_Topic (book_id, topic_id, idUserCreate, dateCreate, idStatus) V
 (7, 5, 1, CURRENT_TIMESTAMP, B'1'), -- Algoritmos y Estructuras de Datos
 (8, 1, 1, CURRENT_TIMESTAMP, B'1'); -- Ingeniería de Software
 
--- 8. Prestamistas / Usuarios (Borrower) con correos institucionales '@monclova.tecnm.mx'
-INSERT INTO Borrower (id, name, studentid, major, semester, time, gender, phoneNumber, email, idUserCreate, dateCreate, idStatus) VALUES
-(1, 'Carlos Alberto Mendoza Rivas', '21280541', 'Ingeniería en Sistemas Computacionales', '7mo Semestre', 'Matutino', 'Masculino', '8661234567', 'l21280541@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(2, 'Ana Sofía Garza Villalobos', '22280312', 'Ingeniería en Sistemas Computacionales', '5to Semestre', 'Matutino', 'Femenino', '8662345678', 'l22280312@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(3, 'Luis Fernando Treviño Peña', '20280199', 'Ingeniería Industrial', '9no Semestre', 'Vespertino', 'Masculino', '8663456789', 'l20280199@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(4, 'Valeria Guadalupe Castillo Morales', '23280820', 'Ingeniería en Gestión Empresarial', '3er Semestre', 'Matutino', 'Femenino', '8664567890', 'l23280820@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(5, 'Ing. Roberto Hernández Dávila', 'DOC-ISC-014', 'Docente - Departamento de Sistemas', NULL, 'Tiempo Completo', 'Masculino', '8665678901', 'roberto.hernandez@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1'),
-(6, 'Lic. Martha Elena Vázquez Torres', 'ADM-BIB-003', 'Administrador de Biblioteca', NULL, 'Turno Completo', 'Femenino', '8666789012', 'martha.vazquez@monclova.tecnm.mx', 1, CURRENT_TIMESTAMP, B'1');
+-- 8. Catálogo de Roles del Módulo de Biblioteca (Role)
+INSERT INTO Role (id, name, description, idUserCreate, dateCreate, idStatus) VALUES
+(1, 'Admin', 'Gestión total del sistema de biblioteca, catálogos, roles y reportes', 1, CURRENT_TIMESTAMP, B'1'),
+(2, 'Bibliotecario', 'Gestión operativa de acervo, préstamos, devoluciones y registro de visitas', 1, CURRENT_TIMESTAMP, B'1'),
+(3, 'Lector', 'Consulta de catálogo e historial propio de préstamos y visitas', 1, CURRENT_TIMESTAMP, B'1');
+SELECT setval('Role_id_seq', (SELECT MAX(id) FROM Role));
+
+-- 9. Prestamistas / Usuarios (Borrower) con correos institucionales '@monclova.tecnm.mx'
+INSERT INTO Borrower (id, name, studentid, major, semester, time, gender, phoneNumber, email, role_id, idUserCreate, dateCreate, idStatus) VALUES
+(1, 'Carlos Alberto Mendoza Rivas', '21280541', 'Ingeniería en Sistemas Computacionales', '7mo Semestre', 'Matutino', 'Masculino', '8661234567', 'l21280541@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+(2, 'Ana Sofía Garza Villalobos', '22280312', 'Ingeniería en Sistemas Computacionales', '5to Semestre', 'Matutino', 'Femenino', '8662345678', 'l22280312@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+(3, 'Luis Fernando Treviño Peña', '20280199', 'Ingeniería Industrial', '9no Semestre', 'Vespertino', 'Masculino', '8663456789', 'l20280199@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+(4, 'Valeria Guadalupe Castillo Morales', '23280820', 'Ingeniería en Gestión Empresarial', '3er Semestre', 'Matutino', 'Femenino', '8664567890', 'l23280820@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+(5, 'Ing. Roberto Hernández Dávila', 'DOC-ISC-014', 'Docente - Departamento de Sistemas', NULL, 'Tiempo Completo', 'Masculino', '8665678901', 'roberto.hernandez@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+(6, 'Lic. Martha Elena Vázquez Torres', 'ADM-BIB-003', 'Administrador de Biblioteca', NULL, 'Turno Completo', 'Femenino', '8666789012', 'martha.vazquez@monclova.tecnm.mx', 1, 1, CURRENT_TIMESTAMP, B'1'),
+(7, 'Lic. Jorge Eduardo Morales Cruz', 'BIB-MON-005', 'Bibliotecario - Área de Circulación', NULL, 'Turno Vespertino', 'Masculino', '8667890123', 'jorge.morales@monclova.tecnm.mx', 2, 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Borrower_id_seq', (SELECT MAX(id) FROM Borrower));
 
--- 9. Préstamos de prueba (Loan)
+-- 10. Préstamos de prueba (Loan)
 INSERT INTO Loan (id, book_id, borrower_id, startDate, dueDate, returnDate, responsible, idUserCreate, dateCreate, idStatus) VALUES
 (1, 3, 1, CURRENT_TIMESTAMP - INTERVAL '5 days', CURRENT_TIMESTAMP + INTERVAL '2 days', NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '5 days', B'1'),
 (2, 5, 2, CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP + INTERVAL '4 days', NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '3 days', B'1'),
 (3, 1, 3, CURRENT_TIMESTAMP - INTERVAL '14 days', CURRENT_TIMESTAMP - INTERVAL '7 days', CURRENT_TIMESTAMP - INTERVAL '6 days', 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '14 days', B'1');
 SELECT setval('Loan_id_seq', (SELECT MAX(id) FROM Loan));
 
--- 10. Catálogo de Servicios de Biblioteca (Service)
+-- 11. Catálogo de Servicios de Biblioteca (Service)
 INSERT INTO Service (id, name, description, idUserCreate, dateCreate, idStatus) VALUES
 (1, 'Física', 'Consulta o estudio presencial en sala de biblioteca', 1, CURRENT_TIMESTAMP, B'1'),
 (2, 'Virtual', 'Uso de biblioteca digital o equipo de cómputo', 1, CURRENT_TIMESTAMP, B'1'),
@@ -350,7 +379,7 @@ INSERT INTO Service (id, name, description, idUserCreate, dateCreate, idStatus) 
 (4, 'Clase', 'Sesión o clase impartida en instalaciones de biblioteca', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Service_id_seq', (SELECT MAX(id) FROM Service));
 
--- 11. Visitas de prueba (Visit)
+-- 12. Visitas de prueba (Visit)
 INSERT INTO Visit (id, borrower_id, service_id, entryDate, exitDate, notes, idUserCreate, dateCreate, idStatus) VALUES
 (1, 1, 1, CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days' + INTERVAL '2 hours', 'Consulta de bibliografía para proyecto de Sistemas Operativos', 1, CURRENT_TIMESTAMP, B'1'),
 (2, 2, 2, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day' + INTERVAL '1 hour', 'Acceso a base de datos digital IEEE', 1, CURRENT_TIMESTAMP, B'1'),

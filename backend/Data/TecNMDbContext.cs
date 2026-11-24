@@ -11,6 +11,7 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
     public DbSet<Shelf> Shelves => Set<Shelf>();
     public DbSet<Author> Authors => Set<Author>();
     public DbSet<Topic> Topics => Set<Topic>();
+    public DbSet<Role> Roles => Set<Role>();
     public DbSet<Borrower> Borrowers => Set<Borrower>();
     public DbSet<Loan> Loans => Set<Loan>();
     public DbSet<BookAuthor> BookAuthors => Set<BookAuthor>();
@@ -63,6 +64,18 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
             ConfigureAuditFields(entity);
         });
 
+        // Role
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.ToTable("role");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(50).IsRequired();
+            entity.HasIndex(e => e.Name).IsUnique();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(255);
+            ConfigureAuditFields(entity);
+        });
+
         // Borrower
         modelBuilder.Entity<Borrower>(entity =>
         {
@@ -77,6 +90,12 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
             entity.Property(e => e.Gender).HasColumnName("gender").HasMaxLength(20).IsRequired();
             entity.Property(e => e.PhoneNumber).HasColumnName("phonenumber").HasMaxLength(25);
             entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(150).IsRequired();
+            entity.Property(e => e.RoleId).HasColumnName("role_id").HasDefaultValue(3);
+
+            entity.HasOne(e => e.Role)
+                  .WithMany(r => r.Borrowers)
+                  .HasForeignKey(e => e.RoleId);
+
             ConfigureAuditFields(entity);
         });
 
