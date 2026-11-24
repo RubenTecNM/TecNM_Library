@@ -21,5 +21,6 @@ public class Borrower
     public bool IdStatus { get; set; } = true;
 
     public ICollection<Loan> Loans { get; set; } = new List<Loan>();
+    public ICollection<Visit> Visits { get; set; } = new List<Visit>();
 }
 

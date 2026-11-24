@@ -15,6 +15,8 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
     public DbSet<Loan> Loans => Set<Loan>();
     public DbSet<BookAuthor> BookAuthors => Set<BookAuthor>();
     public DbSet<BookTopic> BookTopics => Set<BookTopic>();
+    public DbSet<Service> Services => Set<Service>();
+    public DbSet<Visit> Visits => Set<Visit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -168,6 +170,45 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
                   .HasForeignKey(e => e.TopicId);
 
             ConfigureAuditFields(entity);
+        });
+
+        // Service
+        modelBuilder.Entity<Service>(entity =>
+        {
+            entity.ToTable("service");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.HasIndex(e => e.Name).IsUnique();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(255);
+            ConfigureAuditFields(entity);
+        });
+
+        // Visit
+        modelBuilder.Entity<Visit>(entity =>
+        {
+            entity.ToTable("visit");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.BorrowerId).HasColumnName("borrower_id");
+            entity.Property(e => e.ServiceId).HasColumnName("service_id");
+            entity.Property(e => e.EntryDate).HasColumnName("entrydate");
+            entity.Property(e => e.ExitDate).HasColumnName("exitdate");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+
+            entity.HasOne(e => e.Borrower)
+                  .WithMany(b => b.Visits)
+                  .HasForeignKey(e => e.BorrowerId);
+
+            entity.HasOne(e => e.Service)
+                  .WithMany(s => s.Visits)
+                  .HasForeignKey(e => e.ServiceId);
+
+            entity.HasIndex(e => new { e.ServiceId, e.EntryDate }).HasDatabaseName("idx_visit_service_entry");
+            entity.HasIndex(e => new { e.BorrowerId, e.EntryDate }).HasDatabaseName("idx_visit_borrower_entry");
+
+            ConfigureAuditFields(entity);
+            entity.HasQueryFilter(e => e.IdStatus);
         });
     }
 

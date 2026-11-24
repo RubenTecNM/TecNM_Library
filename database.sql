@@ -4,6 +4,8 @@
 -- ============================================================================
 
 -- Eliminar tablas en orden inverso si ya existen para evitar conflictos de FK
+DROP TABLE IF EXISTS Visit CASCADE;
+DROP TABLE IF EXISTS Service CASCADE;
 DROP TABLE IF EXISTS Book_Topic CASCADE;
 DROP TABLE IF EXISTS Book_Author CASCADE;
 DROP TABLE IF EXISTS Loan CASCADE;
@@ -196,6 +198,49 @@ CREATE TABLE Book_Topic (
     CONSTRAINT uq_book_topic UNIQUE (book_id, topic_id)
 );
 
+-- ----------------------------------------------------------------------------
+-- 10. Tabla: Service (Catálogo de Servicios de Biblioteca)
+-- ----------------------------------------------------------------------------
+CREATE TABLE Service (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255) NULL,
+    -- Campos de Auditoría Obligatorios
+    idUserCreate INT NOT NULL DEFAULT 1,
+    dateCreate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    idUserUpdate INT NULL,
+    dateUpdate TIMESTAMP NULL,
+    idUserDelete INT NULL,
+    dateDelete TIMESTAMP NULL,
+    idStatus BIT(1) NOT NULL DEFAULT B'1'
+);
+
+-- ----------------------------------------------------------------------------
+-- 11. Tabla: Visit (Registro de Visitas / Uso de Servicios)
+-- ----------------------------------------------------------------------------
+CREATE TABLE Visit (
+    id SERIAL PRIMARY KEY,
+    borrower_id INT NOT NULL,
+    service_id INT NOT NULL,
+    entryDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    exitDate TIMESTAMP NULL,
+    notes TEXT NULL,
+    -- Campos de Auditoría Obligatorios
+    idUserCreate INT NOT NULL DEFAULT 1,
+    dateCreate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    idUserUpdate INT NULL,
+    dateUpdate TIMESTAMP NULL,
+    idUserDelete INT NULL,
+    dateDelete TIMESTAMP NULL,
+    idStatus BIT(1) NOT NULL DEFAULT B'1',
+    -- Llaves Foráneas
+    CONSTRAINT fk_visit_borrower FOREIGN KEY (borrower_id) REFERENCES Borrower(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_visit_service FOREIGN KEY (service_id) REFERENCES Service(id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_visit_service_entry ON Visit (service_id, entryDate);
+CREATE INDEX idx_visit_borrower_entry ON Visit (borrower_id, entryDate);
+
 -- ============================================================================
 -- POBLACIÓN DE DATOS INICIALES Y DE PRUEBA (INSERTS)
 -- ============================================================================
@@ -296,3 +341,19 @@ INSERT INTO Loan (id, book_id, borrower_id, startDate, dueDate, returnDate, resp
 (2, 5, 2, CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP + INTERVAL '4 days', NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '3 days', B'1'),
 (3, 1, 3, CURRENT_TIMESTAMP - INTERVAL '14 days', CURRENT_TIMESTAMP - INTERVAL '7 days', CURRENT_TIMESTAMP - INTERVAL '6 days', 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '14 days', B'1');
 SELECT setval('Loan_id_seq', (SELECT MAX(id) FROM Loan));
+
+-- 10. Catálogo de Servicios de Biblioteca (Service)
+INSERT INTO Service (id, name, description, idUserCreate, dateCreate, idStatus) VALUES
+(1, 'Física', 'Consulta o estudio presencial en sala de biblioteca', 1, CURRENT_TIMESTAMP, B'1'),
+(2, 'Virtual', 'Uso de biblioteca digital o equipo de cómputo', 1, CURRENT_TIMESTAMP, B'1'),
+(3, 'Reunión', 'Uso de espacio para reunión o trabajo en equipo', 1, CURRENT_TIMESTAMP, B'1'),
+(4, 'Clase', 'Sesión o clase impartida en instalaciones de biblioteca', 1, CURRENT_TIMESTAMP, B'1');
+SELECT setval('Service_id_seq', (SELECT MAX(id) FROM Service));
+
+-- 11. Visitas de prueba (Visit)
+INSERT INTO Visit (id, borrower_id, service_id, entryDate, exitDate, notes, idUserCreate, dateCreate, idStatus) VALUES
+(1, 1, 1, CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days' + INTERVAL '2 hours', 'Consulta de bibliografía para proyecto de Sistemas Operativos', 1, CURRENT_TIMESTAMP, B'1'),
+(2, 2, 2, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP - INTERVAL '1 day' + INTERVAL '1 hour', 'Acceso a base de datos digital IEEE', 1, CURRENT_TIMESTAMP, B'1'),
+(3, 3, 3, CURRENT_TIMESTAMP - INTERVAL '4 hours', CURRENT_TIMESTAMP - INTERVAL '2 hours', 'Reunión de equipo para proyecto integrador', 1, CURRENT_TIMESTAMP, B'1'),
+(4, 5, 4, CURRENT_TIMESTAMP - INTERVAL '1 hour', NULL, 'Clase de Bases de Datos en sala audiovisual', 1, CURRENT_TIMESTAMP, B'1');
+SELECT setval('Visit_id_seq', (SELECT MAX(id) FROM Visit));
