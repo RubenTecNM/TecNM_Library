@@ -19,7 +19,7 @@ RUN curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 1
 ENV DOTNET_ROOT=/usr/share/dotnet \
     PATH=$PATH:/usr/share/dotnet \
     DOTNET_RUNNING_IN_CONTAINER=true \
-    ASPNETCORE_URLS=http://+:6050
+    ASPNETCORE_URLS=http://+:6060
 
 # 4. Copiar código fuente y compilar la aplicación dentro de Debian 13
 COPY TecNM.Api.csproj ./
@@ -31,7 +31,7 @@ RUN dotnet publish TecNM.Api.csproj -c Release -o /app/out
 WORKDIR /app/out
 
 # Puerto interno solicitado
-EXPOSE 6050
+EXPOSE 6060
 
 # Comando para arrancar el backend en Debian 13
 ENTRYPOINT ["dotnet", "TecNM.Api.dll"]

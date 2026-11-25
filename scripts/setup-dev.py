@@ -152,8 +152,8 @@ def certificates():
 def main():
     settings = read_settings()
     parser = argparse.ArgumentParser(description='Levanta frontend, backend y PostgreSQL privados con Docker Compose.')
-    parser.add_argument('--frontend-port', type=port_number, default=settings.get('TECNM_FRONTEND_PORT', '5173'))
-    parser.add_argument('--backend-port', type=port_number, default=settings.get('TECNM_BACKEND_PORT', '7001'))
+    parser.add_argument('--frontend-port', type=port_number, default=settings.get('TECNM_FRONTEND_PORT', '6050'))
+    parser.add_argument('--backend-port', type=port_number, default=settings.get('TECNM_BACKEND_PORT', '6060'))
     parser.add_argument('--project-name', type=project_name, default=settings.get('COMPOSE_PROJECT_NAME', 'tecnm-template'))
     parser.add_argument('--check-ports', action='store_true', help='Solo comprueba puertos; no modifica archivos ni contenedores.')
     args = parser.parse_args()

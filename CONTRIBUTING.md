@@ -91,7 +91,7 @@ docker compose config --quiet
 Con el backend disponible, ejecutar la comprobación HTTP básica; ajustar la URL si se cambió el puerto:
 
 ```bash
-API_URL=https://localhost:7001 bash scripts/smoke-template.sh
+API_URL=https://localhost:6060 bash scripts/smoke-template.sh
 ```
 
 Esta prueba requiere curl y Python 3. Comprueba el health check y un `404` para una ruta no registrada; añadir las verificaciones funcionales que necesite cada módulo.

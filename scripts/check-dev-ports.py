@@ -21,7 +21,7 @@ for value in ['0', '-1', '65536', 'abc', '1.5']:
         pass
     else:
         raise AssertionError(f'Invalid port accepted: {value}')
-assert setup.port_number('5173') == 5173
+assert setup.port_number('6050') == 6050
 
 with socket.socket() as busy:
     busy.bind(('127.0.0.1', 0))

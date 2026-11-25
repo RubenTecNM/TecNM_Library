@@ -4,7 +4,10 @@ public class Borrower
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string StudentId { get; set; } = string.Empty;
+    public string BorrowerType { get; set; } = "Alumno";
+    public string? StudentId { get; set; }
+    public string? EmployeeId { get; set; }
+    public string InstitutionalId { get; private set; } = string.Empty;
     public string Major { get; set; } = string.Empty;
     public string? Semester { get; set; }
     public string Time { get; set; } = string.Empty;
