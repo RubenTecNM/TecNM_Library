@@ -364,6 +364,118 @@ const initialBooks: BookItem[] = [
       'Libro de texto base para residencias profesionales y materias de formulación de proyectos en Gestión Empresarial e Industrial.',
     ...DEFAULT_COVER_STYLES[7],
   },
+  {
+    id: 9,
+    title: 'Inteligencia Artificial: Un Enfoque Moderno',
+    author: 'Stuart Russell & Peter Norvig',
+    shelf: '3.2.1',
+    shelfId: 3,
+    dewey: 'QA76.87',
+    cutter: '.R87',
+    note: '3ra Edición • Pearson Educación',
+    folio: '#4009',
+    available: '4 de 5 copias libres',
+    barWidth: 80,
+    code: 'QA76.87',
+    shortTitle: 'I. ARTIFICIAL',
+    coverSubtitle: 'Enfoque Moderno',
+    coverAuthor: 'Russell & Norvig',
+    coverEdition: '3ª Ed.',
+    status: 'disponible',
+    recommendation:
+      'Texto de referencia para Inteligencia Artificial, Aprendizaje Automático y Sistemas Inteligentes en Ingeniería Informática y Sistemas.',
+    coverIcon: 'smart_toy',
+    coverGradient: 'from-[#003b35] via-[#042421] to-[#011413]',
+    coverBorderColor: 'border-l-[#d2a858]',
+    coverTagColor: 'text-[#89f5e7]',
+    coverSubtitleColor: 'text-[#eed394]',
+    coverBarColor: 'bg-[#89f5e7]',
+    deweyBadgeClass: 'text-primary bg-blue-50 border-blue-100',
+  },
+  {
+    id: 10,
+    title: 'Química General y Orgánica',
+    author: 'Raymond Chang',
+    shelf: '6.1.2',
+    shelfId: 5,
+    dewey: 'QD31.3',
+    cutter: '.C43',
+    note: '11va Edición • McGraw-Hill',
+    folio: '#4010',
+    available: 'En préstamo (1 ejemplar)',
+    barWidth: 25,
+    code: 'QD31.3',
+    shortTitle: 'QUÍMICA',
+    coverSubtitle: 'General y Orgánica',
+    coverAuthor: 'R. Chang',
+    coverEdition: '11ª Ed.',
+    status: 'prestado',
+    recommendation:
+      'Bibliografía fundamental para Química de tronco común en ingenierías del TecNM Campus Monclova.',
+    coverIcon: 'science',
+    coverGradient: 'from-[#0c264d] via-[#001f47] to-[#04142d]',
+    coverBorderColor: 'border-l-[#C5A059]',
+    coverTagColor: 'text-[#ecd49c]',
+    coverSubtitleColor: 'text-[#cadbff]',
+    coverBarColor: 'bg-[#C5A059]',
+    deweyBadgeClass: 'text-primary bg-blue-50 border-blue-100',
+  },
+  {
+    id: 11,
+    title: 'Investigación de Operaciones',
+    author: 'Hamdy A. Taha',
+    shelf: '4.3.2',
+    shelfId: 6,
+    dewey: 'T57.6',
+    cutter: '.T34',
+    note: '9na Edición • Optimización e Industria',
+    folio: '#4011',
+    available: '5 de 6 copias libres',
+    barWidth: 83,
+    code: 'T57.6',
+    shortTitle: 'OPERACIONES',
+    coverSubtitle: 'Investigación & Mod.',
+    coverAuthor: 'H. A. Taha',
+    coverEdition: '9ª Ed.',
+    status: 'disponible',
+    recommendation:
+      'Obra base para programación lineal, modelos de redes y optimización en Ingeniería Industrial y Gestión Empresarial.',
+    coverIcon: 'analytics',
+    coverGradient: 'from-[#3b2a05] via-[#241a02] to-[#120d00]',
+    coverBorderColor: 'border-l-[#d2a858]',
+    coverTagColor: 'text-[#f5d99b]',
+    coverSubtitleColor: 'text-[#f2e1bd]',
+    coverBarColor: 'bg-[#C5A059]',
+    deweyBadgeClass: 'text-primary bg-amber-50 border-amber-200',
+  },
+  {
+    id: 12,
+    title: 'Sistemas Digitales: Principios y Aplicaciones',
+    author: 'Ronald J. Tocci, Neal S. Widmer',
+    shelf: '2.4.1',
+    shelfId: 4,
+    dewey: 'TK7868',
+    cutter: '.T63',
+    note: '10ma Edición • Lógica Digital y Circuitos',
+    folio: '#4012',
+    available: 'En revisión de catalogación',
+    barWidth: 100,
+    code: 'TK7868',
+    shortTitle: 'SISTEMAS DIG.',
+    coverSubtitle: 'Lógica y Microproc.',
+    coverAuthor: 'R. J. Tocci',
+    coverEdition: '10ª Ed.',
+    status: 'catalogo',
+    recommendation:
+      'Ejemplar reciente en revisión catalográfica para Electrónica, Mecatrónica y Sistemas Computacionales.',
+    coverIcon: 'memory',
+    coverGradient: 'from-[#121e3d] via-[#091326] to-[#040812]',
+    coverBorderColor: 'border-l-[#C5A059]',
+    coverTagColor: 'text-[#a8c3f8]',
+    coverSubtitleColor: 'text-[#cadbff]',
+    coverBarColor: 'bg-blue-400',
+    deweyBadgeClass: 'text-primary bg-purple-50 border-purple-200',
+  },
 ]
 
 const books = ref<BookItem[]>(initialBooks.map((item) => ({ ...item })))
@@ -481,13 +593,9 @@ const filteredBooks = computed(() => {
   return sorted
 })
 
-const statusFilterOrder: BookStatusKey[] = [
-  'disponible',
-  'prestado',
-  'reparacion',
-  'baja',
-  'catalogo',
-]
+function toggleStatusFilter(status: 'all' | BookStatusKey) {
+  selectedStatus.value = selectedStatus.value === status ? 'all' : status
+}
 
 function availabilityByStatus(status: BookStatusKey): { text: string; width: number } {
   switch (status) {
@@ -858,114 +966,122 @@ onBeforeUnmount(() => {
                   <span class="font-bold tracking-wide">Buscar</span>
                 </button>
               </form>
-
-              <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-0.5 text-on-surface">
-                <span class="font-label-sm text-[11px] text-slate-500 whitespace-nowrap pl-1 font-semibold flex items-center gap-1">
-                  <span class="material-symbols-outlined text-xs text-tecnm-gold">filter_alt</span>
-                  Estado del Ejemplar:
-                </span>
-
-                <button
-                  type="button"
-                  :class="[
-                    'px-3 py-1 bg-primary text-white rounded-lg font-label-sm text-xs whitespace-nowrap transition-all shadow-sm flex items-center gap-1.5',
-                    selectedStatus === 'all' ? 'ring-2 ring-offset-2 ring-primary' : 'opacity-85 hover:opacity-100',
-                  ]"
-                  @click="setStatusFilter('all')"
-                >
-                  <span>Todos</span>
-                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-white/20 font-bold">{{ statusCounts.all }}</span>
-                </button>
-
-                <button
-                  v-for="statusKey in statusFilterOrder"
-                  :key="statusKey"
-                  type="button"
-                  :class="[
-                    'px-3 py-1 rounded-lg font-label-sm text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5',
-                    STATUS_META[statusKey].pillBgClass,
-                    selectedStatus === statusKey ? 'ring-2 ring-offset-2 ring-primary' : '',
-                  ]"
-                  @click="setStatusFilter(statusKey)"
-                >
-                  <span :class="['w-2 h-2 rounded-full', STATUS_META[statusKey].dotClass]"></span>
-                  <span>{{ STATUS_META[statusKey].label }}</span>
-                  <span :class="['px-1.5 py-0.5 rounded text-[10px] font-bold', STATUS_META[statusKey].badgeBgClass]">
-                    {{ statusCounts[statusKey] }}
-                  </span>
-                </button>
-              </div>
             </div>
           </div>
         </section>
 
         <!-- Metric & Inventory Quick Status Strip -->
         <section class="w-full px-4 sm:px-space-xl pt-5 pb-1 relative z-20">
-          <div class="max-w-[1600px] mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-            <!-- Metric 1: Total Ejemplares -->
-            <div class="bg-white p-3.5 rounded-xl shadow-[0_4px_18px_rgba(0,35,81,0.06)] border border-slate-200/80 flex items-center gap-3 hover:border-tecnm-gold/40 transition-colors">
-              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#002351] to-[#1b396a] text-[#ecd49c] flex items-center justify-center shrink-0 shadow-md">
-                <span class="material-symbols-outlined text-xl">menu_book</span>
+          <div class="max-w-[1600px] mx-auto inventory-metrics-grid">
+            <!-- Metric 1: Total -->
+            <button
+              type="button"
+              :class="[
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-tecnm-gold/50 transition-all',
+                selectedStatus === 'all' ? 'border-primary/40 ring-2 ring-primary/15' : 'border-slate-200/80',
+              ]"
+              @click="setStatusFilter('all')"
+            >
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#002351] to-[#1b396a] text-[#ecd49c] flex items-center justify-center shrink-0 shadow-sm">
+                <span class="material-symbols-outlined text-[24px]">menu_book</span>
               </div>
               <div class="flex flex-col min-w-0">
-                <span class="font-headline-md text-[22px] text-primary leading-tight font-extrabold tracking-tight">
+                <span class="font-headline-md text-xl xl:text-2xl text-primary font-bold leading-tight tracking-tight whitespace-nowrap">
                   {{ displayMetrics.totalBooks.toLocaleString('es-MX') }}
                 </span>
-                <span class="font-body-sm text-[11px] text-slate-500 font-medium">Total Ejemplares</span>
+                <span class="font-label-md text-[11px] xl:text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 whitespace-nowrap">
+                  Total
+                </span>
               </div>
-            </div>
+            </button>
 
-            <!-- Metric 2: Prestados en Circulación -->
-            <div class="bg-white p-3.5 rounded-xl shadow-[0_4px_18px_rgba(0,35,81,0.06)] border border-blue-100 flex items-center gap-3 hover:border-blue-400/40 transition-colors">
-              <div class="w-11 h-11 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] border border-[#1D4ED8]/20 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-xl">sync_alt</span>
+            <!-- Metric 2: Prestados -->
+            <button
+              type="button"
+              :class="[
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-blue-400/50 transition-all',
+                selectedStatus === 'prestado' ? 'border-[#1D4ED8] ring-2 ring-[#1D4ED8]/20' : 'border-slate-200/80',
+              ]"
+              @click="toggleStatusFilter('prestado')"
+            >
+              <div class="w-10 h-10 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[20px]">sync_alt</span>
               </div>
               <div class="flex flex-col min-w-0">
-                <span class="font-headline-md text-[22px] text-[#1D4ED8] leading-tight font-extrabold tracking-tight">
+                <span class="font-headline-md text-xl xl:text-2xl text-[#1D4ED8] font-bold leading-tight tracking-tight whitespace-nowrap">
                   {{ displayMetrics.borrowedCount }}
                 </span>
-                <span class="font-body-sm text-[11px] text-slate-500 font-medium">Prestados en Circulación</span>
+                <span class="font-label-md text-[11px] xl:text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 whitespace-nowrap">
+                  Prestados
+                </span>
               </div>
-            </div>
+            </button>
 
-            <!-- Metric 3: En Reparación -->
-            <div class="bg-white p-3.5 rounded-xl shadow-[0_4px_18px_rgba(0,35,81,0.06)] border border-amber-100 flex items-center gap-3 hover:border-amber-400/40 transition-colors">
-              <div class="w-11 h-11 rounded-xl bg-[#FEF3C7] text-[#D97706] border border-[#D97706]/20 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-xl">build_circle</span>
+            <!-- Metric 3: Reparación -->
+            <button
+              type="button"
+              :class="[
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-amber-400/50 transition-all',
+                selectedStatus === 'reparacion' ? 'border-[#D97706] ring-2 ring-[#D97706]/20' : 'border-slate-200/80',
+              ]"
+              @click="toggleStatusFilter('reparacion')"
+            >
+              <div class="w-10 h-10 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[20px]">build_circle</span>
               </div>
               <div class="flex flex-col min-w-0">
-                <span class="font-headline-md text-[22px] text-[#D97706] leading-tight font-extrabold tracking-tight">
+                <span class="font-headline-md text-xl xl:text-2xl text-[#D97706] font-bold leading-tight tracking-tight whitespace-nowrap">
                   {{ displayMetrics.repairCount }}
                 </span>
-                <span class="font-body-sm text-[11px] text-slate-500 font-medium">En Reparación</span>
+                <span class="font-label-md text-[11px] xl:text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 whitespace-nowrap">
+                  Reparación
+                </span>
               </div>
-            </div>
+            </button>
 
-            <!-- Metric 4: En Proceso de Baja -->
-            <div class="bg-white p-3.5 rounded-xl shadow-[0_4px_18px_rgba(0,35,81,0.06)] border border-rose-100 flex items-center gap-3 hover:border-rose-400/40 transition-colors">
-              <div class="w-11 h-11 rounded-xl bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/20 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-xl">delete_forever</span>
+            <!-- Metric 4: En Baja -->
+            <button
+              type="button"
+              :class="[
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-rose-400/50 transition-all',
+                selectedStatus === 'baja' ? 'border-[#DC2626] ring-2 ring-[#DC2626]/20' : 'border-slate-200/80',
+              ]"
+              @click="toggleStatusFilter('baja')"
+            >
+              <div class="w-10 h-10 rounded-xl bg-[#FEE2E2] text-[#DC2626] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[20px]">delete_forever</span>
               </div>
               <div class="flex flex-col min-w-0">
-                <span class="font-headline-md text-[22px] text-[#DC2626] leading-tight font-extrabold tracking-tight">
+                <span class="font-headline-md text-xl xl:text-2xl text-[#DC2626] font-bold leading-tight tracking-tight whitespace-nowrap">
                   {{ displayMetrics.discardCount }}
                 </span>
-                <span class="font-body-sm text-[11px] text-slate-500 font-medium">En Proceso de Baja</span>
+                <span class="font-label-md text-[11px] xl:text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 whitespace-nowrap">
+                  En Baja
+                </span>
               </div>
-            </div>
+            </button>
 
-            <!-- Metric 5: En Catalogación Reciente -->
-            <div class="bg-white p-3.5 rounded-xl shadow-[0_4px_18px_rgba(0,35,81,0.06)] border border-purple-100 flex items-center gap-3 hover:border-purple-400/40 transition-colors col-span-2 sm:col-span-1">
-              <div class="w-11 h-11 rounded-xl bg-[#EDE9FE] text-[#7C3AED] border border-[#7C3AED]/20 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-xl">auto_stories</span>
+            <!-- Metric 5: Catálogo -->
+            <button
+              type="button"
+              :class="[
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-purple-400/50 transition-all inventory-metric-last',
+                selectedStatus === 'catalogo' ? 'border-[#7C3AED] ring-2 ring-[#7C3AED]/20' : 'border-slate-200/80',
+              ]"
+              @click="toggleStatusFilter('catalogo')"
+            >
+              <div class="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[20px]">auto_stories</span>
               </div>
               <div class="flex flex-col min-w-0">
-                <span class="font-headline-md text-[22px] text-[#7C3AED] leading-tight font-extrabold tracking-tight">
+                <span class="font-headline-md text-xl xl:text-2xl text-[#7C3AED] font-bold leading-tight tracking-tight whitespace-nowrap">
                   {{ displayMetrics.catalogCount }}
                 </span>
-                <span class="font-body-sm text-[11px] text-slate-500 font-medium">En Catalogación Reciente</span>
+                <span class="font-label-md text-[11px] xl:text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 whitespace-nowrap">
+                  Catálogo
+                </span>
               </div>
-            </div>
+            </button>
           </div>
         </section>
 
@@ -977,8 +1093,7 @@ onBeforeUnmount(() => {
               <div class="flex items-center gap-space-sm w-full md:w-auto">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100 shrink-0"></span>
                 <p class="font-body-md text-sm !text-slate-700 !max-w-none">
-                  Mostrando <span class="font-bold text-primary">{{ filteredBooks.length }}</span> obras registradas en inventario •
-                  <strong class="text-primary font-semibold">Tec Monclova</strong>
+                  Mostrando <span class="font-bold text-primary">{{ filteredBooks.length }}</span> obras registradas
                 </p>
               </div>
 
@@ -1062,10 +1177,8 @@ onBeforeUnmount(() => {
             <div
               v-else
               :class="[
-                'grid transition-all duration-300',
-                layoutMode === 'list'
-                  ? 'grid-cols-1 gap-4'
-                  : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5',
+                'transition-all duration-300',
+                layoutMode === 'list' ? 'inventory-books-list' : 'inventory-books-grid',
               ]"
             >
               <article
@@ -1182,8 +1295,8 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Pagination Strip -->
-            <div class="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 pt-5 border-t border-slate-200">
-              <div class="flex items-center flex-wrap gap-1.5">
+            <div class="mt-8 flex flex-col md:flex-row items-center justify-center gap-4 pt-5 border-t border-slate-200">
+              <div class="flex items-center justify-center flex-wrap gap-1.5">
                 <button
                   type="button"
                   class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-40"
@@ -1230,7 +1343,7 @@ onBeforeUnmount(() => {
                   <span class="material-symbols-outlined text-base">chevron_right</span>
                 </button>
                 <span class="ml-3 font-body-sm text-xs text-slate-500 font-medium">
-                  Página {{ currentPage }} de 8 ({{ displayMetrics.totalBooks.toLocaleString('es-MX') }} Ejemplares Registrados)
+                  Página {{ currentPage }} de 8 ({{ filteredBooks.length }} mostrados de {{ displayMetrics.totalBooks.toLocaleString('es-MX') }} Registrados)
                 </span>
               </div>
             </div>
@@ -1306,7 +1419,7 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="inv-grid-3">
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                   <span class="text-slate-400 font-medium text-[10.5px] uppercase tracking-wider block">
                     Código Dewey:
@@ -1362,7 +1475,7 @@ onBeforeUnmount(() => {
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   Acciones del Ejemplar:
                 </span>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="inv-grid-2">
                   <button
                     type="button"
                     class="h-11 px-4 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md hover:shadow-lg active:scale-[0.99]"
@@ -1431,7 +1544,7 @@ onBeforeUnmount(() => {
             </div>
 
             <form class="p-6 overflow-y-auto flex flex-col gap-4 text-xs" @submit.prevent="saveFichaEdits">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="inv-grid-2">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1" for="editFolio">
                     Folio / Número de Inventario:
@@ -1495,7 +1608,7 @@ onBeforeUnmount(() => {
                 />
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="inv-grid-3">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1" for="editDewey">Clasificación Dewey:</label>
                   <input
@@ -1723,7 +1836,7 @@ onBeforeUnmount(() => {
             </div>
 
             <form class="p-6 overflow-y-auto flex flex-col gap-4 text-xs" @submit.prevent="saveNewBook(false)">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="inv-grid-3">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1" for="newFolio">Folio / No. Inventario:</label>
                   <input
@@ -1763,7 +1876,7 @@ onBeforeUnmount(() => {
                 />
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="inv-grid-3">
                 <div>
                   <label class="block font-bold text-slate-700 mb-1" for="newShelf">
                     Estante Físico: <span class="text-rose-600">*</span>
@@ -1820,7 +1933,7 @@ onBeforeUnmount(() => {
 
               <div>
                 <span class="block font-bold text-slate-700 mb-1.5">Estatus Inicial del Ejemplar:</span>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div class="inv-grid-4">
                   <label class="flex items-center gap-2 p-2 rounded-lg border border-emerald-200 bg-emerald-50/60 cursor-pointer hover:bg-emerald-100/50 transition-colors">
                     <input v-model="newBookForm.status" class="text-primary focus:ring-primary" name="nuevo_status" type="radio" value="disponible" />
                     <span class="font-bold text-[#15803D] text-[11px]">Disponible</span>
@@ -1873,6 +1986,90 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* Isolated grids to avoid collision with global.css .grid */
+.inventory-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.inventory-metric-last {
+  grid-column: span 2 / span 2;
+}
+
+@media (min-width: 640px) {
+  .inventory-metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .inventory-metric-last {
+    grid-column: span 1 / span 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .inventory-metrics-grid {
+    grid-template-columns: 1.25fr 1fr 1fr 1fr 1fr;
+  }
+}
+
+.inventory-books-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .inventory-books-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .inventory-books-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .inventory-books-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.inventory-books-list {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.inv-grid-2,
+.inv-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.inv-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .inv-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inv-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .inv-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* 3D Book Jacket Perspective & Realistic Physics */
 .book-stage {
   perspective: 700px;
