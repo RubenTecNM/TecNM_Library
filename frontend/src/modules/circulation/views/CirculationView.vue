@@ -32,6 +32,16 @@ interface TodayReturn {
   hasFine: boolean
 }
 
+const CAREER_OPTIONS = [
+  { key: 'sistemas', label: 'Ing. en Sistemas' },
+  { key: 'industrial', label: 'Ing. Industrial' },
+  { key: 'mecatronica', label: 'Ing. Mecatrónica' },
+  { key: 'mecanica', label: 'Ing. Mecánica' },
+  { key: 'gestion', label: 'Ing. en Gestión Empresarial' },
+  { key: 'energias', label: 'Ing. en Energías Renovables' },
+  { key: 'electronica', label: 'Ing. Electrónica' },
+]
+
 const initialLoans: LoanRecord[] = [
   {
     id: 1,
@@ -171,13 +181,23 @@ const activeTab = ref<LoanTab>('activos')
 const tableSearch = ref('')
 const globalSearch = ref('')
 const selectedCareer = ref('all')
-const scannerValue = ref('')
 const currentPage = ref(1)
 const feedbackMessage = ref('')
 const feedbackTone = ref<'info' | 'success' | 'warning'>('info')
 const selectedLoanDetail = ref<LoanRecord | null>(null)
+const showNewLoanModal = ref(false)
+const showReturnModal = ref(false)
+const selectedReturnLoanId = ref<number | null>(null)
 const isProcessing = ref(false)
 const headerSearchRef = ref<HTMLInputElement | null>(null)
+
+const newLoanForm = ref({
+  folio: '',
+  bookTitle: '',
+  studentName: '',
+  controlNumber: '',
+  careerKey: 'sistemas',
+})
 
 const metricsBase = ref({
   activeLoans: 142,
@@ -187,6 +207,10 @@ const metricsBase = ref({
   receivedToday: 19,
   historyCount: 45,
 })
+
+const activeLoanRecords = computed(() =>
+  loans.value.filter((loan) => loan.state !== 'devuelto'),
+)
 
 const filteredLoans = computed(() => {
   const query = (tableSearch.value.trim() || globalSearch.value.trim()).toLowerCase()
@@ -296,46 +320,41 @@ function sendReminder(loan: LoanRecord) {
   )
 }
 
-function processQuickScan(action: 'loan' | 'return') {
-  if (isProcessing.value) return
-  const code = scannerValue.value.trim()
-  if (!code) {
-    notify(
-      action === 'loan'
-        ? 'Escanea o ingresa un folio o número de control para procesar el préstamo.'
-        : 'Escanea o ingresa un folio o número de control para registrar la devolución.',
-      'warning',
-    )
-    return
+function openNewLoanModal() {
+  newLoanForm.value = {
+    folio: '',
+    bookTitle: '',
+    studentName: '',
+    controlNumber: '',
+    careerKey: 'sistemas',
   }
+  showNewLoanModal.value = true
+}
 
-  const normalized = code.toLowerCase()
-  const matched = loans.value.find(
-    (loan) =>
-      loan.state !== 'devuelto' &&
-      (loan.folio.toLowerCase().includes(normalized) ||
-        loan.controlNumber.toLowerCase().includes(normalized)),
-  )
+function submitNewLoan() {
+  if (isProcessing.value) return
+  const folioRaw = newLoanForm.value.folio.trim()
+  const bookTitle = newLoanForm.value.bookTitle.trim()
+  const studentName = newLoanForm.value.studentName.trim()
+  const controlNumber = newLoanForm.value.controlNumber.trim()
+  if (!folioRaw || !bookTitle || !studentName || !controlNumber) return
 
-  if (action === 'return') {
-    if (matched) {
-      receiveLoan(matched)
-    } else {
-      notify(`No se encontró un préstamo activo con el código "${code}".`, 'warning')
-    }
-  } else {
+  isProcessing.value = true
+  try {
+    const career = CAREER_OPTIONS.find((item) => item.key === newLoanForm.value.careerKey)
+    const folioFormatted = folioRaw.startsWith('#') ? folioRaw : `#${folioRaw.toUpperCase()}`
     const newId = Math.max(0, ...loans.value.map((item) => item.id)) + 1
-    const folioFormatted = code.startsWith('#') ? code : `#${code.toUpperCase()}`
+
     loans.value.unshift({
       id: newId,
       folio: folioFormatted,
-      bookTitle: 'Ejemplar registrado en terminal',
-      bookFullTitle: `Ejemplar ${folioFormatted} • Préstamo de mostrador`,
-      bookSubtitle: 'Registro rápido • Acervo TecNM Monclova',
-      studentName: 'Estudiante TecNM Monclova',
-      controlNumber: /^\d{8}$/.test(code) ? code : '21050999',
-      careerKey: 'sistemas',
-      careerLabel: 'Ing. en Sistemas',
+      bookTitle,
+      bookFullTitle: bookTitle,
+      bookSubtitle: 'Préstamo de mostrador • TecNM Monclova',
+      studentName,
+      controlNumber,
+      careerKey: newLoanForm.value.careerKey,
+      careerLabel: career?.label ?? 'Ing. en Sistemas',
       loanDate: '08/Ago/24',
       dueDate: '15/Ago/24',
       state: 'en_tiempo',
@@ -345,10 +364,25 @@ function processQuickScan(action: 'loan' | 'return') {
     })
     metricsBase.value.activeLoans += 1
     activeTab.value = 'activos'
-    notify(`Préstamo registrado desde terminal para el código ${folioFormatted}.`, 'success')
+    showNewLoanModal.value = false
+    notify(`Préstamo ${folioFormatted} registrado correctamente para ${studentName}.`, 'success')
+  } finally {
+    isProcessing.value = false
   }
+}
 
-  scannerValue.value = ''
+function openReturnModal() {
+  selectedReturnLoanId.value = activeLoanRecords.value[0]?.id ?? null
+  showReturnModal.value = true
+}
+
+function confirmModalReturn() {
+  if (selectedReturnLoanId.value === null) return
+  const target = loans.value.find((loan) => loan.id === selectedReturnLoanId.value)
+  if (target) {
+    receiveLoan(target)
+  }
+  showReturnModal.value = false
 }
 
 function printExitPass() {
@@ -359,8 +393,10 @@ function handleKeydown(event: KeyboardEvent) {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
     event.preventDefault()
     headerSearchRef.value?.focus()
-  } else if (event.key === 'Escape' && selectedLoanDetail.value) {
-    selectedLoanDetail.value = null
+  } else if (event.key === 'Escape') {
+    if (showNewLoanModal.value) showNewLoanModal.value = false
+    else if (showReturnModal.value) showReturnModal.value = false
+    else if (selectedLoanDetail.value) selectedLoanDetail.value = null
   }
 }
 
@@ -376,38 +412,38 @@ onBeforeUnmount(() => {
 <template>
   <div class="circulation-view flex flex-col flex-1 min-h-screen bg-background">
     <!-- Top Sticky Header -->
-    <header class="sticky top-0 z-30 w-full h-16 bg-surface-container-lowest/95 backdrop-blur shadow-[0_1px_8px_rgba(27,57,106,0.05)] border-b border-surface-container-high px-4 sm:px-space-xl flex items-center justify-between gap-3">
-      <div class="flex items-center gap-space-md min-w-0">
-        <div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm truncate">
+    <header class="sticky top-0 z-30 w-full h-16 bg-surface-container-lowest/95 backdrop-blur shadow-[0_1px_8px_rgba(27,57,106,0.05)] border-b border-surface-container-high px-4 sm:px-8 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm truncate">
           <span class="hover:text-primary transition-colors hidden sm:inline">TecNM Monclova</span>
           <span class="material-symbols-outlined text-[14px] hidden sm:inline">chevron_right</span>
           <span class="text-primary font-semibold truncate">Centro de Información y Biblioteca</span>
         </div>
       </div>
 
-      <div class="flex items-center gap-space-md shrink-0">
-        <div class="hidden md:flex items-center gap-space-xs bg-surface-container-low px-space-md py-1.5 rounded-lg border border-outline-variant/40 w-72">
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="hidden md:flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant/40 w-72">
           <span class="material-symbols-outlined text-outline text-[18px] shrink-0">search</span>
           <input
             ref="headerSearchRef"
             v-model="globalSearch"
             type="text"
             class="circulation-bare-input w-full !min-h-0 !p-0 !border-0 !bg-transparent !shadow-none text-on-surface font-body-sm !text-body-sm placeholder:text-on-surface-variant focus:outline-none"
-            placeholder="Buscar por título, Dewey o matrícula..."
-            aria-label="Buscar por título, Dewey o matrícula"
+            placeholder="Buscar por título, folio o matrícula..."
+            aria-label="Buscar por título, folio o matrícula"
           />
           <kbd class="bg-surface-container-lowest text-outline font-citation-code text-[10px] px-1.5 py-0.5 rounded border border-outline-variant/60 shadow-xs shrink-0">
             ⌘K
           </kbd>
         </div>
 
-        <div class="flex items-center gap-space-xs">
+        <div class="flex items-center gap-1.5">
           <button
             type="button"
             class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors"
             title="Notificaciones"
             aria-label="Notificaciones"
-            @click="notify('Tienes 7 préstamos vencidos y 12 solicitudes de renovación pendientes.', 'warning')"
+            @click="notify(`Tienes ${metricsBase.overdueLoans} préstamos vencidos y ${metricsBase.webRenewals} solicitudes de renovación pendientes.`, 'warning')"
           >
             <span class="material-symbols-outlined text-[20px]">notifications</span>
           </button>
@@ -420,8 +456,8 @@ onBeforeUnmount(() => {
           >
             <span class="material-symbols-outlined text-[20px]">help_outline</span>
           </button>
-          <div class="h-5 w-px bg-surface-container-high ml-1 mr-1 hidden sm:block"></div>
-          <div class="hidden sm:flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1 rounded-full text-secondary font-label-sm text-label-sm font-semibold">
+          <div class="h-5 w-px bg-surface-container-high mx-1 hidden sm:block"></div>
+          <div class="hidden sm:flex items-center gap-1.5 bg-surface-container-low px-3 py-1 rounded-full text-secondary font-label-sm text-label-sm font-semibold">
             <span class="material-symbols-outlined text-[16px]">school</span>
             <span>Campus Monclova</span>
           </div>
@@ -429,10 +465,10 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <main class="w-full flex-1 px-4 sm:px-space-xl py-space-lg bg-background">
-      <div class="flex flex-col w-full gap-space-lg">
+    <main class="w-full flex-1 px-4 sm:px-8 py-6 bg-background">
+      <div class="max-w-[1520px] mx-auto flex flex-col gap-6">
         <!-- Header Title & Action Toolbar -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pb-space-xs border-b border-surface-container-high/60">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-surface-container-high/70">
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-secondary"></span>
@@ -440,7 +476,7 @@ onBeforeUnmount(() => {
                 Circulación Activa • Semestre Ago-Dic 2024
               </span>
             </div>
-            <h1 class="font-headline-lg !text-headline-lg font-bold text-primary tracking-tight">
+            <h1 class="font-headline-lg !text-[26px] sm:!text-[30px] font-bold text-primary tracking-tight">
               Módulo de Circulación y Préstamos
             </h1>
             <p class="font-body-md text-body-md !text-on-surface-variant !max-w-none">
@@ -448,8 +484,8 @@ onBeforeUnmount(() => {
             </p>
           </div>
 
-          <div class="flex items-center gap-space-sm flex-wrap">
-            <div class="flex items-center gap-space-xs bg-surface-container-lowest px-space-md py-2 rounded-xl shadow-sm border border-surface-container-high">
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-2.5 bg-surface-container-lowest px-4 py-2 rounded-xl shadow-sm border border-surface-container-high">
               <span class="material-symbols-outlined text-secondary text-[20px]">calendar_today</span>
               <div class="flex flex-col">
                 <span class="text-[11px] text-on-surface-variant font-medium leading-none">Fecha Actual</span>
@@ -460,7 +496,7 @@ onBeforeUnmount(() => {
             </div>
             <button
               type="button"
-              class="flex items-center gap-space-xs bg-surface-container-lowest hover:bg-surface-container text-primary border border-surface-container-high px-space-md py-2.5 rounded-xl transition-all font-label-md text-label-md shadow-sm"
+              class="flex items-center gap-2 bg-surface-container-lowest hover:bg-surface-container text-primary border border-surface-container-high px-4 py-2.5 rounded-xl transition-all font-label-md text-label-md shadow-sm"
               @click="printExitPass"
             >
               <span class="material-symbols-outlined text-[18px]">print</span>
@@ -498,78 +534,64 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <!-- Streamlined Quick Scanning Terminal -->
-        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high/80 p-space-md">
-          <div class="flex flex-col lg:flex-row items-center justify-between gap-space-md">
-            <div class="flex items-center gap-space-md w-full lg:w-auto shrink-0">
+        <!-- Counter Quick Operations Bar (without scanner input) -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high/80 px-5 py-4">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-surface-container-low text-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[22px]">sync_alt</span>
+              </div>
               <div class="flex flex-col">
-                <span class="font-headline-sm text-[16px] font-bold text-primary">
-                  Terminal de Escaneo Rápido
+                <span class="font-headline-sm text-[15px] font-bold text-primary">
+                  Operaciones de Mostrador
                 </span>
                 <span class="font-body-sm text-[12px] text-on-surface-variant">
-                  Pase el lector óptico sobre el código de la credencial o el lomo del libro
+                  Registre una nueva salida de libro o procese la devolución de un ejemplar activo
                 </span>
               </div>
             </div>
 
-            <div class="flex-1 flex flex-col sm:flex-row items-center gap-space-sm w-full">
-              <div class="relative flex-1 w-full">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px] pointer-events-none">
-                  qr_code_scanner
-                </span>
-                <input
-                  id="quick-scanner-input"
-                  v-model="scannerValue"
-                  type="text"
-                  class="circulation-input w-full !h-9 !min-h-0 !pl-9 !pr-3 !py-0 bg-surface-container-low text-on-surface font-body-sm !text-[12px] !rounded-lg border border-outline-variant/40 focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Escanear folio (#4002) o matrícula (20051189) y presionar Enter..."
-                  aria-label="Folio o matrícula para escaneo rápido"
-                  @keydown.enter.prevent="processQuickScan('loan')"
-                />
-              </div>
-
-              <div class="flex items-center gap-space-xs w-full sm:w-auto shrink-0">
-                <button
-                  type="button"
-                  class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md px-space-md py-2 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-60"
-                  :disabled="isProcessing"
-                  @click="processQuickScan('loan')"
-                >
-                  <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  <span class="whitespace-nowrap">Procesar Préstamo</span>
-                </button>
-                <button
-                  type="button"
-                  class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-surface-container-high hover:bg-surface-container text-primary font-label-md text-label-md px-space-md py-2 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-60"
-                  :disabled="isProcessing"
-                  @click="processQuickScan('return')"
-                >
-                  <span class="material-symbols-outlined text-[16px]">keyboard_return</span>
-                  <span class="whitespace-nowrap">Devolución</span>
-                </button>
-              </div>
+            <div class="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
+              <button
+                type="button"
+                class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-semibold px-4 py-2.5 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-60"
+                :disabled="isProcessing"
+                @click="openNewLoanModal"
+              >
+                <span class="material-symbols-outlined text-[17px]">arrow_forward</span>
+                <span class="whitespace-nowrap">Procesar Préstamo</span>
+              </button>
+              <button
+                type="button"
+                class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-surface-container-high hover:bg-surface-container text-primary font-label-md text-label-md font-semibold px-4 py-2.5 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-60"
+                :disabled="isProcessing"
+                @click="openReturnModal"
+              >
+                <span class="material-symbols-outlined text-[17px]">keyboard_return</span>
+                <span class="whitespace-nowrap">Devolución</span>
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- 4 Metric Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+        <!-- 4 Metric Cards (isolated grid class to prevent global.css collision) -->
+        <div class="circulation-metrics-grid">
           <!-- Préstamos Activos -->
-          <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm border border-surface-container-high flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
+          <div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-surface-container-high flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between gap-2">
               <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
                 Préstamos Activos
               </span>
-              <div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
+              <div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
                 <span class="material-symbols-outlined text-[22px]">auto_stories</span>
               </div>
             </div>
-            <div class="mt-2">
-              <div class="flex items-baseline gap-2">
-                <span class="font-headline-lg text-[32px] font-bold text-primary leading-none">
+            <div class="mt-3">
+              <div class="flex items-baseline gap-2 flex-wrap">
+                <span class="font-headline-lg text-[30px] font-bold text-primary leading-none">
                   {{ metricsBase.activeLoans }}
                 </span>
-                <span class="font-body-sm text-[13px] text-on-surface-variant font-medium">
+                <span class="font-body-sm text-[12px] text-on-surface-variant font-medium">
                   ejemplares en préstamo
                 </span>
               </div>
@@ -580,21 +602,21 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Entregas Programadas -->
-          <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm border border-surface-container-high flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
+          <div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-surface-container-high flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between gap-2">
               <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
                 Entregas Programadas
               </span>
-              <div class="w-10 h-10 rounded-xl bg-secondary-container/30 flex items-center justify-center text-secondary">
+              <div class="w-10 h-10 rounded-xl bg-secondary-container/30 flex items-center justify-center text-secondary shrink-0">
                 <span class="material-symbols-outlined text-[22px]">pending_actions</span>
               </div>
             </div>
-            <div class="mt-2">
-              <div class="flex items-baseline gap-2">
-                <span class="font-headline-lg text-[32px] font-bold text-primary leading-none">
+            <div class="mt-3">
+              <div class="flex items-baseline gap-2 flex-wrap">
+                <span class="font-headline-lg text-[30px] font-bold text-primary leading-none">
                   {{ metricsBase.scheduledToday }}
                 </span>
-                <span class="font-body-sm text-[13px] text-on-surface-variant font-medium">
+                <span class="font-body-sm text-[12px] text-on-surface-variant font-medium">
                   para hoy 08/Ago
                 </span>
               </div>
@@ -611,21 +633,21 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Préstamos Vencidos -->
-          <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm border border-error-container/60 flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
+          <div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-error-container/60 flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between gap-2">
               <span class="font-label-sm text-label-sm text-error uppercase tracking-wider font-bold">
                 Préstamos Vencidos
               </span>
-              <div class="w-10 h-10 rounded-xl bg-error-container/40 flex items-center justify-center text-error">
+              <div class="w-10 h-10 rounded-xl bg-error-container/40 flex items-center justify-center text-error shrink-0">
                 <span class="material-symbols-outlined text-[22px]">warning</span>
               </div>
             </div>
-            <div class="mt-2">
-              <div class="flex items-baseline gap-2">
-                <span class="font-headline-lg text-[32px] font-bold text-error leading-none">
+            <div class="mt-3">
+              <div class="flex items-baseline gap-2 flex-wrap">
+                <span class="font-headline-lg text-[30px] font-bold text-error leading-none">
                   {{ metricsBase.overdueLoans }}
                 </span>
-                <span class="font-body-sm text-[13px] text-error font-medium">
+                <span class="font-body-sm text-[12px] text-error font-medium">
                   alertas con demora
                 </span>
               </div>
@@ -642,21 +664,21 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Renovaciones Web -->
-          <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm border border-surface-container-high flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
+          <div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-surface-container-high flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between gap-2">
               <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
                 Renovaciones Web
               </span>
-              <div class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary">
+              <div class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary shrink-0">
                 <span class="material-symbols-outlined text-[22px]">autorenew</span>
               </div>
             </div>
-            <div class="mt-2">
-              <div class="flex items-baseline gap-2">
-                <span class="font-headline-lg text-[32px] font-bold text-primary leading-none">
+            <div class="mt-3">
+              <div class="flex items-baseline gap-2 flex-wrap">
+                <span class="font-headline-lg text-[30px] font-bold text-primary leading-none">
                   {{ metricsBase.webRenewals }}
                 </span>
-                <span class="font-body-sm text-[13px] text-on-surface-variant font-medium">
+                <span class="font-body-sm text-[12px] text-on-surface-variant font-medium">
                   solicitudes pendientes
                 </span>
               </div>
@@ -673,11 +695,12 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <!-- Main Workspace: Balanced 8/4 Grid Layout -->
-        <div class="flex flex-col gap-space-lg w-full lg:flex-row items-start">
-          <div class="flex flex-col gap-space-md w-full flex-1 min-w-0">
+        <!-- Main Workspace: Spacious table + vertical Devoluciones de Hoy panel -->
+        <div class="flex flex-col 2xl:flex-row items-start gap-6 w-full">
+          <!-- Left / Primary Table Column -->
+          <div class="flex flex-col gap-4 w-full flex-1 min-w-0">
             <!-- Operational Tabs & Filters -->
-            <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high p-space-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-sm">
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high p-3 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
               <div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-lg overflow-x-auto" role="tablist">
                 <button
                   type="button"
@@ -780,14 +803,14 @@ onBeforeUnmount(() => {
                 </button>
               </div>
 
-              <div class="flex items-center gap-space-xs">
-                <div class="relative flex-1 sm:w-48">
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div class="relative flex-1 sm:w-52">
                   <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[16px] pointer-events-none">
                     search
                   </span>
                   <input
                     v-model="tableSearch"
-                    class="circulation-input w-full !h-8 !min-h-0 !pl-8 !pr-3 !py-0 bg-surface-container-low text-on-surface font-body-sm !text-[12px] !rounded-lg border border-outline-variant/40 focus:outline-none focus:ring-1 focus:ring-primary"
+                    class="circulation-input w-full !h-9 !min-h-0 !pl-8 !pr-3 !py-0 bg-surface-container-low text-on-surface font-body-sm !text-[12px] !rounded-lg border border-outline-variant/40 focus:outline-none focus:ring-1 focus:ring-primary"
                     placeholder="Filtrar tabla..."
                     type="text"
                     aria-label="Filtrar tabla de préstamos"
@@ -799,17 +822,13 @@ onBeforeUnmount(() => {
                   </span>
                   <select
                     v-model="selectedCareer"
-                    class="circulation-select !w-auto !h-8 !min-h-0 bg-surface-container-low text-on-surface font-label-sm !text-label-sm !pl-7 !pr-6 !py-0 !rounded-lg border border-outline-variant/40 appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+                    class="circulation-select w-full sm:!w-auto !h-9 !min-h-0 bg-surface-container-low text-on-surface font-label-sm !text-label-sm !pl-7 !pr-7 !py-0 !rounded-lg border border-outline-variant/40 appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
                     aria-label="Filtrar por carrera"
                   >
                     <option value="all">Todas las Carreras</option>
-                    <option value="sistemas">Ing. en Sistemas</option>
-                    <option value="industrial">Ing. Industrial</option>
-                    <option value="mecatronica">Ing. Mecatrónica</option>
-                    <option value="mecanica">Ing. Mecánica</option>
-                    <option value="gestion">Ing. en Gestión Empresarial</option>
-                    <option value="energias">Ing. en Energías Renovables</option>
-                    <option value="electronica">Ing. Electrónica</option>
+                    <option v-for="career in CAREER_OPTIONS" :key="career.key" :value="career.key">
+                      {{ career.label }}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -821,17 +840,17 @@ onBeforeUnmount(() => {
                 <table class="w-full text-left border-collapse">
                   <thead>
                     <tr class="bg-surface-container-low/80 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider border-b border-surface-container-high">
-                      <th class="!py-3 !px-space-md font-semibold !bg-transparent">Folio &amp; Ejemplar</th>
-                      <th class="!py-3 !px-space-md font-semibold !bg-transparent">Estudiante Solicitante</th>
-                      <th class="!py-3 !px-space-md font-semibold whitespace-nowrap !bg-transparent">Préstamo</th>
-                      <th class="!py-3 !px-space-md font-semibold whitespace-nowrap !bg-transparent">Vencimiento</th>
-                      <th class="!py-3 !px-space-md font-semibold !bg-transparent">Estatus</th>
-                      <th class="!py-3 !px-space-md font-semibold text-right !bg-transparent">Acciones</th>
+                      <th class="!py-3.5 !px-4 font-semibold !bg-transparent">Folio &amp; Ejemplar</th>
+                      <th class="!py-3.5 !px-4 font-semibold !bg-transparent">Estudiante Solicitante</th>
+                      <th class="!py-3.5 !px-4 font-semibold whitespace-nowrap !bg-transparent">Préstamo</th>
+                      <th class="!py-3.5 !px-4 font-semibold whitespace-nowrap !bg-transparent">Vencimiento</th>
+                      <th class="!py-3.5 !px-4 font-semibold !bg-transparent">Estatus</th>
+                      <th class="!py-3.5 !px-4 font-semibold text-right !bg-transparent">Acciones</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-surface-container-high font-body-sm text-body-sm">
                     <tr v-if="filteredLoans.length === 0">
-                      <td colspan="6" class="!py-10 !px-space-md text-center text-on-surface-variant">
+                      <td colspan="6" class="!py-10 !px-4 text-center text-on-surface-variant">
                         No hay registros que coincidan con el filtro seleccionado.
                       </td>
                     </tr>
@@ -848,8 +867,8 @@ onBeforeUnmount(() => {
                             : 'hover:bg-surface-container-low/50',
                       ]"
                     >
-                      <td class="!py-3.5 !px-space-md align-middle">
-                        <div class="flex items-center gap-space-sm">
+                      <td class="!py-3.5 !px-4 align-middle">
+                        <div class="flex items-center gap-3">
                           <div
                             :class="[
                               'px-2 py-1 border rounded-md font-citation-code text-xs font-bold shrink-0',
@@ -862,7 +881,7 @@ onBeforeUnmount(() => {
                           >
                             {{ loan.folio }}
                           </div>
-                          <div class="flex flex-col min-w-0 max-w-[200px]">
+                          <div class="flex flex-col min-w-0 max-w-[230px]">
                             <span
                               :class="[
                                 'font-headline-sm text-sm truncate cursor-pointer',
@@ -882,7 +901,7 @@ onBeforeUnmount(() => {
                         </div>
                       </td>
 
-                      <td class="!py-3.5 !px-space-md align-middle">
+                      <td class="!py-3.5 !px-4 align-middle">
                         <div class="flex flex-col min-w-0">
                           <span
                             :class="[
@@ -906,13 +925,13 @@ onBeforeUnmount(() => {
                         </div>
                       </td>
 
-                      <td class="!py-3.5 !px-space-md align-middle whitespace-nowrap text-on-surface-variant font-citation-code text-[12px]">
+                      <td class="!py-3.5 !px-4 align-middle whitespace-nowrap text-on-surface-variant font-citation-code text-[12px]">
                         {{ loan.loanDate }}
                       </td>
 
                       <td
                         :class="[
-                          '!py-3.5 !px-space-md align-middle whitespace-nowrap font-citation-code text-[12px]',
+                          '!py-3.5 !px-4 align-middle whitespace-nowrap font-citation-code text-[12px]',
                           loan.isOverdue
                             ? 'font-bold text-error'
                             : loan.isDueToday
@@ -923,39 +942,39 @@ onBeforeUnmount(() => {
                         {{ loan.dueDate }}
                       </td>
 
-                      <td class="!py-3.5 !px-space-md align-middle whitespace-nowrap">
+                      <td class="!py-3.5 !px-4 align-middle whitespace-nowrap">
                         <span
                           v-if="loan.isOverdue"
-                          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-error-container text-error"
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-error-container text-error"
                         >
                           <span class="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span>
                           {{ loan.statusText }}
                         </span>
                         <span
                           v-else-if="loan.isDueToday"
-                          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container"
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container"
                         >
                           <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
                           {{ loan.statusText }}
                         </span>
                         <span
                           v-else-if="loan.state === 'devuelto'"
-                          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-container text-primary"
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-container text-primary"
                         >
                           <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
                           {{ loan.statusText }}
                         </span>
                         <span
                           v-else
-                          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700"
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700"
                         >
                           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                           {{ loan.statusText }}
                         </span>
                       </td>
 
-                      <td class="!py-3.5 !px-space-md align-middle text-right whitespace-nowrap">
-                        <div class="flex items-center justify-end gap-1">
+                      <td class="!py-3.5 !px-4 align-middle text-right whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1.5">
                           <template v-if="loan.state !== 'devuelto'">
                             <button
                               type="button"
@@ -1030,7 +1049,7 @@ onBeforeUnmount(() => {
                 </table>
               </div>
 
-              <div class="p-space-md bg-surface-container-low/40 border-t border-surface-container-high/60 flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+              <div class="px-5 py-3.5 bg-surface-container-low/40 border-t border-surface-container-high/60 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div class="font-body-sm text-[12px] text-on-surface-variant flex items-center gap-2">
                   <span>
                     Mostrando <strong>{{ filteredLoans.length }}</strong> de
@@ -1040,10 +1059,10 @@ onBeforeUnmount(() => {
                   <span class="w-1 h-1 rounded-full bg-outline-variant"></span>
                   <span>Página {{ currentPage }} de 29</span>
                 </div>
-                <div class="flex items-center gap-space-xs">
+                <div class="flex items-center gap-2">
                   <button
                     type="button"
-                    class="px-space-md py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold transition-colors disabled:opacity-50"
+                    class="px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold transition-colors disabled:opacity-50"
                     :disabled="currentPage <= 1"
                     @click="currentPage = Math.max(1, currentPage - 1)"
                   >
@@ -1051,7 +1070,7 @@ onBeforeUnmount(() => {
                   </button>
                   <button
                     type="button"
-                    class="px-space-md py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold transition-colors shadow-xs disabled:opacity-50"
+                    class="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold transition-colors shadow-xs disabled:opacity-50"
                     :disabled="currentPage >= 29"
                     @click="currentPage = Math.min(29, currentPage + 1)"
                   >
@@ -1062,50 +1081,50 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <!-- Right Panel: Devoluciones de Hoy -->
-          <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high p-space-md flex flex-col gap-space-md w-full lg:w-80 shrink-0">
-            <div class="flex items-center justify-between">
+          <!-- Right / Bottom Panel: Devoluciones de Hoy (strictly stacked one below another) -->
+          <aside class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high p-5 flex flex-col gap-4 w-full 2xl:w-[340px] shrink-0">
+            <div class="flex items-center justify-between gap-2 pb-3 border-b border-surface-container-high/70">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-secondary text-[22px]">assignment_turned_in</span>
                 <h2 class="font-headline-sm !text-[16px] font-bold text-primary">Devoluciones de Hoy</h2>
               </div>
-              <span class="font-citation-code text-xs text-secondary font-semibold bg-secondary-container/20 px-2.5 py-0.5 rounded-full">
+              <span class="font-citation-code text-xs text-secondary font-semibold bg-secondary-container/25 px-2.5 py-0.5 rounded-full shrink-0">
                 {{ metricsBase.receivedToday }} recibidos
               </span>
             </div>
 
-            <div class="grid grid-cols-1 gap-space-md">
+            <div class="flex flex-col gap-3 w-full">
               <div
                 v-for="item in todayReturns"
                 :key="item.id"
                 :class="[
-                  'p-space-sm rounded-lg border flex items-start gap-space-sm',
+                  'w-full p-3.5 rounded-xl border flex items-start gap-3 transition-colors',
                   item.hasFine
                     ? 'bg-secondary-container/15 border-secondary/30'
-                    : 'bg-surface-container-low border-surface-container-high/60',
+                    : 'bg-surface-container-low border-surface-container-high/70',
                 ]"
               >
                 <div
                   :class="[
-                    'w-2.5 h-2.5 rounded-full mt-1 shrink-0 ring-4 ring-surface-container-lowest',
+                    'w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ring-4 ring-surface-container-lowest',
                     item.hasFine ? 'bg-secondary' : 'bg-emerald-500',
                   ]"
                 ></div>
-                <div class="flex flex-col flex-1 min-w-0">
-                  <div class="flex items-center justify-between gap-1">
-                    <span class="font-label-sm text-label-sm font-bold text-primary truncate">
+                <div class="flex flex-col flex-1 min-w-0 gap-0.5">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="font-label-sm text-[13px] font-bold text-primary truncate">
                       {{ item.bookTitle }}
                     </span>
-                    <span class="font-citation-code text-[10px] text-on-surface-variant shrink-0">
+                    <span class="font-citation-code text-[11px] text-on-surface-variant shrink-0">
                       {{ item.time }}
                     </span>
                   </div>
-                  <span class="font-body-sm text-[11px] text-on-surface-variant truncate">
+                  <span class="font-body-sm text-[12px] text-on-surface-variant truncate">
                     {{ item.studentInfo }}
                   </span>
                   <span
                     :class="[
-                      'font-medium text-[11px] mt-0.5',
+                      'font-semibold text-[11.5px] mt-0.5',
                       item.hasFine ? 'text-secondary' : 'text-emerald-700',
                     ]"
                   >
@@ -1114,10 +1133,188 @@ onBeforeUnmount(() => {
                 </div>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </main>
+
+    <!-- Modal: Procesar Préstamo -->
+    <div
+      v-if="showNewLoanModal"
+      class="fixed inset-0 z-50 bg-[#001838]/70 backdrop-blur-sm flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="newLoanModalTitle"
+      @click.self="showNewLoanModal = false"
+    >
+      <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="bg-primary text-on-primary px-6 py-4 flex items-center justify-between border-b border-tecnm-gold/40">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-tecnm-gold">auto_stories</span>
+            <h3 id="newLoanModalTitle" class="font-headline-sm !text-sm font-bold text-white">
+              Registrar Nuevo Préstamo
+            </h3>
+          </div>
+          <button
+            type="button"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center"
+            aria-label="Cerrar"
+            @click="showNewLoanModal = false"
+          >
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+
+        <form class="p-6 flex flex-col gap-4 text-xs" @submit.prevent="submitNewLoan">
+          <div class="circulation-form-grid">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1" for="loanFolio">Folio del Ejemplar *</label>
+              <input
+                id="loanFolio"
+                v-model="newLoanForm.folio"
+                type="text"
+                required
+                placeholder="Ej. #4015"
+                class="circulation-input w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 font-citation-code font-semibold !text-xs"
+              />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1" for="loanControl">Número de Control *</label>
+              <input
+                id="loanControl"
+                v-model="newLoanForm.controlNumber"
+                type="text"
+                required
+                placeholder="Ej. 21280541"
+                class="circulation-input w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 font-citation-code font-semibold !text-xs"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1" for="loanBookTitle">Título del Ejemplar *</label>
+            <input
+              id="loanBookTitle"
+              v-model="newLoanForm.bookTitle"
+              type="text"
+              required
+              placeholder="Ej. Sistemas Operativos Modernos"
+              class="circulation-input w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 !text-xs"
+            />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1" for="loanStudentName">Nombre del Estudiante *</label>
+            <input
+              id="loanStudentName"
+              v-model="newLoanForm.studentName"
+              type="text"
+              required
+              placeholder="Ej. Carlos Alberto Mendoza Rivas"
+              class="circulation-input w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 !text-xs"
+            />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1" for="loanCareer">Carrera</label>
+            <select
+              id="loanCareer"
+              v-model="newLoanForm.careerKey"
+              class="circulation-select w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 !text-xs"
+            >
+              <option v-for="career in CAREER_OPTIONS" :key="career.key" :value="career.key">
+                {{ career.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="pt-3 border-t border-surface-container-high flex justify-end gap-2">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold"
+              @click="showNewLoanModal = false"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="px-5 py-2 rounded-lg bg-primary text-on-primary font-semibold hover:bg-primary-container transition-colors"
+            >
+              Registrar Préstamo
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Registrar Devolución -->
+    <div
+      v-if="showReturnModal"
+      class="fixed inset-0 z-50 bg-[#001838]/70 backdrop-blur-sm flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="returnModalTitle"
+      @click.self="showReturnModal = false"
+    >
+      <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="bg-primary text-on-primary px-6 py-4 flex items-center justify-between border-b border-tecnm-gold/40">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-tecnm-gold">keyboard_return</span>
+            <h3 id="returnModalTitle" class="font-headline-sm !text-sm font-bold text-white">
+              Registrar Devolución
+            </h3>
+          </div>
+          <button
+            type="button"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center"
+            aria-label="Cerrar"
+            @click="showReturnModal = false"
+          >
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+
+        <div class="p-6 flex flex-col gap-4 text-xs">
+          <p v-if="activeLoanRecords.length === 0" class="!text-on-surface-variant">
+            No hay préstamos activos pendientes de devolución.
+          </p>
+          <template v-else>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1.5" for="returnLoanSelect">
+                Selecciona el préstamo a recibir:
+              </label>
+              <select
+                id="returnLoanSelect"
+                v-model="selectedReturnLoanId"
+                class="circulation-select w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 !text-xs"
+              >
+                <option v-for="loan in activeLoanRecords" :key="loan.id" :value="loan.id">
+                  {{ loan.folio }} — {{ loan.bookTitle }} ({{ loan.studentName }})
+                </option>
+              </select>
+            </div>
+          </template>
+
+          <div class="pt-3 border-t border-surface-container-high flex justify-end gap-2">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold"
+              @click="showReturnModal = false"
+            >
+              Cancelar
+            </button>
+            <button
+              v-if="activeLoanRecords.length > 0"
+              type="button"
+              class="px-5 py-2 rounded-lg bg-primary text-on-primary font-semibold hover:bg-primary-container transition-colors"
+              @click="confirmModalReturn"
+            >
+              Confirmar Devolución
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal Detalle de Préstamo -->
     <div
@@ -1146,13 +1343,13 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <div class="p-6 flex flex-col gap-3 text-xs">
+        <div class="p-6 flex flex-col gap-4 text-xs">
           <div>
             <span class="text-on-surface-variant block">Ejemplar</span>
             <strong class="text-primary text-sm">{{ selectedLoanDetail.bookFullTitle }}</strong>
             <p class="!text-on-surface-variant text-xs mt-0.5">{{ selectedLoanDetail.bookSubtitle }}</p>
           </div>
-          <div class="grid grid-cols-2 gap-3 pt-2 border-t border-surface-container-high">
+          <div class="circulation-detail-grid pt-3 border-t border-surface-container-high">
             <div>
               <span class="text-on-surface-variant block">Solicitante</span>
               <strong class="text-on-surface">{{ selectedLoanDetail.studentName }}</strong>
@@ -1170,7 +1367,7 @@ onBeforeUnmount(() => {
               <strong class="font-citation-code">{{ selectedLoanDetail.dueDate }}</strong>
             </div>
           </div>
-          <div class="pt-2 border-t border-surface-container-high flex items-center justify-between">
+          <div class="pt-3 border-t border-surface-container-high flex items-center justify-between">
             <span class="text-on-surface-variant">Estatus actual:</span>
             <strong class="text-primary">{{ selectedLoanDetail.statusText }}</strong>
           </div>
@@ -1189,3 +1386,37 @@ onBeforeUnmount(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.circulation-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .circulation-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .circulation-metrics-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.circulation-form-grid,
+.circulation-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .circulation-form-grid,
+  .circulation-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+</style>
