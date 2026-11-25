@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { attendanceRoutes } from '../../modules/attendance'
 import { circulationRoutes } from '../../modules/circulation'
 import { inventoryRoutes } from '../../modules/inventory'
 
@@ -16,6 +17,7 @@ const router = createRouter({
         },
         ...inventoryRoutes,
         ...circulationRoutes,
+        ...attendanceRoutes,
       ],
     },
     {

@@ -28,6 +28,8 @@ const navItems: NavItem[] = [
   {
     label: 'Registro de Asistencia',
     icon: 'checklist',
+    to: '/attendance',
+    routeName: 'attendance',
   },
 ]
 

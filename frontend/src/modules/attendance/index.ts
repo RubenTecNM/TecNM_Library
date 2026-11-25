@@ -1,0 +1,1 @@
+export { attendanceRoutes } from './routes'
