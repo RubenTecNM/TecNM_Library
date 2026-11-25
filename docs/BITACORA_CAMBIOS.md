@@ -1,5 +1,6 @@
 # Bitácora de Cambios del Proyecto (Sistema de Biblioteca — TecNM Campus Monclova)
 
+
 > **Propósito de este documento:** Registrar de forma clara y detallada cada cambio, archivo modificado y nueva funcionalidad implementada para que todo el equipo (Odeth y compañera) tenga visibilidad exacta de qué se modificó antes y después de subir cambios al repositorio.
 
 ---

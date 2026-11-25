@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # Script de Verificación Interactiva — Tópicos de Base de Datos (IFF-1026)
 # Ejecución desde C:\PROYECTOFINAL\TecNM_Limpio:
 #   powershell -ExecutionPolicy Bypass -File .\database\scripts\verify-topicos-bd.ps1
