@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import { http } from '../../../shared/api/http'
 
 type BookStatusKey = 'disponible' | 'prestado' | 'reparacion' | 'baja' | 'catalogo'
@@ -373,7 +372,6 @@ const selectedStatus = ref<'all' | BookStatusKey>('all')
 const sortBy = ref<'dewey' | 'status' | 'relevance' | 'barcode'>('dewey')
 const layoutMode = ref<'grid' | 'list'>('grid')
 const currentPage = ref(1)
-const mobileMenuOpen = ref(false)
 const isSubmitting = ref(false)
 const usingApiData = ref(false)
 
@@ -786,8 +784,6 @@ function handleEscapeKey(event: KeyboardEvent) {
     closeNewBookModal()
   } else if (showFichaModal.value) {
     closeFichaModal()
-  } else if (mobileMenuOpen.value) {
-    mobileMenuOpen.value = false
   }
 }
 
@@ -802,124 +798,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="inventory-view bg-[#f5f7fc] font-body-md text-body-md text-on-surface min-h-screen antialiased selection:bg-tecnm-gold/30 selection:text-primary">
-    <!-- Mobile Top Bar (only on < lg screens) -->
-    <div class="lg:hidden sticky top-0 z-30 bg-primary text-on-primary px-4 py-3 flex items-center justify-between shadow-md">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center text-on-secondary font-headline-sm font-bold shadow-sm">
-          TN
-        </div>
-        <div class="flex flex-col">
-          <span class="font-headline-sm text-sm font-bold text-on-primary leading-tight">Tec Monclova</span>
-          <span class="font-label-sm text-[10px] text-primary-fixed-dim uppercase tracking-wider">Sistema Bibliotecario</span>
-        </div>
-      </div>
-      <button
-        type="button"
-        class="p-2 rounded-lg bg-primary-container text-on-primary"
-        aria-label="Abrir menú de navegación"
-        @click="mobileMenuOpen = !mobileMenuOpen"
-      >
-        <span class="material-symbols-outlined text-[22px]">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
-      </button>
-    </div>
-
-    <!-- Mobile Drawer Backdrop -->
-    <div
-      v-if="mobileMenuOpen"
-      class="fixed inset-0 z-30 bg-[#001838]/60 backdrop-blur-xs lg:hidden"
-      @click="mobileMenuOpen = false"
-    />
-
-    <!-- Fixed Sidebar -->
-    <aside
-      :class="[
-        'fixed left-0 top-0 bottom-0 w-72 bg-primary text-on-primary z-40 flex flex-col justify-between p-space-lg shadow-[0_1px_8px_rgba(0,0,0,0.06)] transition-transform duration-200',
-        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-      ]"
-    >
-      <div class="flex flex-col gap-space-lg">
-        <div class="flex items-center gap-space-sm pb-space-md border-b border-on-primary/10">
-          <div class="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-on-secondary font-headline-sm font-bold shadow-sm">
-            TN
-          </div>
-          <div class="flex flex-col">
-            <span class="font-headline-sm text-headline-sm font-bold text-on-primary leading-tight tracking-tight">
-              Tec Monclova
-            </span>
-            <span class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-wider">
-              TecNM • Sistema Bibliotecario
-            </span>
-          </div>
-        </div>
-
-        <div class="px-space-xs">
-          <span class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-widest font-semibold">
-            Módulos de Gestión
-          </span>
-        </div>
-
-        <nav class="flex flex-col gap-space-xs" aria-label="Módulos de Gestión">
-          <RouterLink
-            to="/inventory"
-            aria-current="page"
-            class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg transition-colors bg-primary-container text-on-primary font-semibold shadow-sm"
-            @click="mobileMenuOpen = false"
-          >
-            <span class="material-symbols-outlined text-[20px]">shelves</span>
-            <span>Inventario</span>
-          </RouterLink>
-          <a
-            href="#circulacion-y-prestamos"
-            class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary-container hover:text-on-primary transition-colors font-label-lg text-label-lg"
-            @click.prevent="mobileMenuOpen = false"
-          >
-            <span class="material-symbols-outlined text-[20px]">sync_alt</span>
-            <span>Circulación y Préstamos</span>
-          </a>
-          <a
-            href="#registro-de-asistencia"
-            class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-primary-container hover:bg-primary-container hover:text-on-primary transition-colors font-label-lg text-label-lg"
-            @click.prevent="mobileMenuOpen = false"
-          >
-            <span class="material-symbols-outlined text-[20px]">checklist</span>
-            <span>Registro de Asistencia</span>
-          </a>
-        </nav>
-      </div>
-
-      <div class="pt-space-md border-t border-on-primary/10 flex flex-col gap-space-sm">
-        <div class="flex items-center gap-space-sm">
-          <div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary border border-on-primary/20">
-            <span class="material-symbols-outlined text-[18px]">admin_panel_settings</span>
-          </div>
-          <div class="flex flex-col overflow-hidden">
-            <span class="font-label-md text-label-md text-on-primary font-medium truncate">
-              Lic. M. Rodríguez
-            </span>
-            <span class="font-label-sm text-label-sm text-primary-fixed-dim truncate">
-              Administradora del Sistema
-            </span>
-          </div>
-        </div>
-        <div class="flex items-center justify-between text-primary-fixed-dim font-label-sm text-label-sm pt-space-xs">
-          <span class="flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            En línea
-          </span>
-          <span
-            class="material-symbols-outlined text-[18px] cursor-pointer hover:text-on-primary transition-colors"
-            title="Cerrar sesión"
-          >
-            logout
-          </span>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main Container with left padding for fixed sidebar -->
-    <div class="lg:pl-72 flex flex-col min-h-screen bg-[#f5f7fc]">
-      <main class="w-full flex-1 bg-[#f5f7fc]">
+  <main class="inventory-view w-full flex-1 bg-[#f5f7fc]">
         <!-- Top Hero Banner Section -->
         <section class="relative w-full bg-gradient-to-b from-[#001838] via-[#00285a] to-[#0c3770] px-4 sm:px-space-xl pt-7 pb-7 text-on-primary overflow-hidden shadow-md">
           <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#C5A059_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"></div>
@@ -1991,8 +1870,6 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </main>
-    </div>
-  </div>
 </template>
 
 <style scoped>

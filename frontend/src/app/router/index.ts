@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { circulationRoutes } from '../../modules/circulation'
 import { inventoryRoutes } from '../../modules/inventory'
 
 const router = createRouter({
@@ -14,6 +15,7 @@ const router = createRouter({
           redirect: '/inventory',
         },
         ...inventoryRoutes,
+        ...circulationRoutes,
       ],
     },
     {
