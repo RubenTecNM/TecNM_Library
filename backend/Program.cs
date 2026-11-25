@@ -24,7 +24,7 @@ if (allowedOrigins is null || allowedOrigins.Length == 0)
 {
     if (builder.Environment.IsDevelopment())
     {
-        allowedOrigins = ["https://localhost:5173", "http://localhost:5173"];
+        allowedOrigins = ["https://localhost:6050", "http://localhost:6050"];
     }
     else
     {

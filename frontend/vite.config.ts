@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     host: 'localhost',
-    port: 5173,
+    port: 6050,
     strictPort: true,
     proxy: {
       '/api': { target: 'http://localhost:6060', changeOrigin: true },

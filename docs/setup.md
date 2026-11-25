@@ -6,7 +6,7 @@ Ejecutar desde cualquier directorio:
 
 ```bash
 bash scripts/setup-dev.sh
-bash scripts/setup-dev.sh --frontend-port 5180 --backend-port 7010 --project-name tecnm-mi-servicio
+bash scripts/setup-dev.sh --frontend-port 6050 --backend-port 6060 --project-name tecnm-mi-servicio
 bash scripts/setup-dev.sh --check-ports
 ```
 
@@ -14,8 +14,8 @@ Requiere Docker con Compose y daemon activo, Python 3 y OpenSSL. Frontend y back
 
 | Opción | Predeterminado | Función |
 | --- | --- | --- |
-| `--frontend-port` | `5173` | Puerto HTTPS local de Nginx |
-| `--backend-port` | `7001` | Puerto HTTPS local de la API |
+| `--frontend-port` | `6050` | Puerto HTTPS local de Nginx |
+| `--backend-port` | `6060` | Puerto HTTPS local de la API |
 | `--project-name` | `tecnm-template` | Nombre de proyecto Compose, contenedores y volumen |
 | `--check-ports` | Desactivado | Solo comprueba puertos; no crea archivos ni cambia contenedores |
 
@@ -71,7 +71,7 @@ docker compose exec db psql -U tecnm_app -d tecnm_template
 Para ensayar otra inicialización sin tocar el volumen anterior, usar un nombre de proyecto y puertos libres diferentes:
 
 ```bash
-bash scripts/setup-dev.sh --project-name tecnm-prueba --frontend-port 5180 --backend-port 7010
+bash scripts/setup-dev.sh --project-name tecnm-prueba --frontend-port 6050 --backend-port 6060
 ```
 
 ## Errores de SQL
@@ -85,7 +85,7 @@ Una base ya inicializada puede arrancar tras un reinicio automático o en un int
 ```bash
 python3 scripts/check-dev-ports.py
 python3 scripts/check-setup.py
-API_URL=https://localhost:7001 bash scripts/smoke-template.sh
+API_URL=https://localhost:6060 bash scripts/smoke-template.sh
 ```
 
 La prueba HTTP requiere curl y Python 3. Verifica la respuesta del health check y un `404` para una ruta de API no registrada.

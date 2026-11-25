@@ -28,11 +28,13 @@ services:
     container_name: tecnm-library-backend
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:6050
+      ASPNETCORE_URLS: http://+:6060
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=tecnm_library;Username=tecnm_admin;Password=TecNM_Postgres_Password_2026!
-      Cors__AllowedOrigins: http://localhost:6060,http://127.0.0.1:6060
+      Cors__AllowedOrigins: http://localhost:6050,http://127.0.0.1:6050
+    ports:
+      - "6060:6060"
     expose:
-      - "6050"
+      - "6060"
     networks:
       - internal_network
       - public_network
@@ -43,12 +45,12 @@ services:
 
   nginx:
     build:
-      context: ./docker/nginx
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/nginx/Dockerfile
     image: tecnm-library-nginx:local
     container_name: tecnm-library-nginx
     ports:
-      - "6060:6060"
+      - "6050:6050"
     networks:
       - public_network
     depends_on:

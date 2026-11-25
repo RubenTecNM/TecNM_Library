@@ -14,15 +14,15 @@ bash scripts/setup-dev.sh
 
 | Servicio | Acceso predeterminado |
 | --- | --- |
-| `tecnm-template-frontend` | https://localhost:5173 |
-| `tecnm-template-backend` | https://localhost:7001/api/health |
+| `tecnm-template-frontend` | https://localhost:6050 |
+| `tecnm-template-backend` | https://localhost:6060/api/health |
 | `tecnm-template-postgres` | `db:5432`, solo en la red privada de datos |
 
 Frontend y backend publican en `127.0.0.1`; el proxy frontend reenvía `/api` al backend. HTTPS usa un certificado local autofirmado generado en `.docker/certs/`; el navegador puede pedir aceptarlo.
 
 ```bash
-bash scripts/setup-dev.sh --frontend-port 5180 --backend-port 7010
-bash scripts/setup-dev.sh --frontend-port 5180 --backend-port 7010 --check-ports
+bash scripts/setup-dev.sh --frontend-port 6050 --backend-port 6060
+bash scripts/setup-dev.sh --frontend-port 6050 --backend-port 6060 --check-ports
 docker compose ps
 docker compose logs -f
 docker compose stop
@@ -44,7 +44,7 @@ Consultar [documentación del setup](docs/setup.md) para opciones, inicializaci�
 
 ```bash
 # Con el stack activo:
-API_URL=https://localhost:7001 bash scripts/smoke-template.sh
+API_URL=https://localhost:6060 bash scripts/smoke-template.sh
 
 # Comprobaciones locales:
 python3 scripts/check-dev-ports.py

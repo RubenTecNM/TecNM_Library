@@ -83,7 +83,10 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
-            entity.Property(e => e.StudentId).HasColumnName("studentid").HasMaxLength(30).IsRequired();
+            entity.Property(e => e.BorrowerType).HasColumnName("borrower_type").HasMaxLength(20).HasDefaultValue("Alumno").IsRequired();
+            entity.Property(e => e.StudentId).HasColumnName("studentid").HasMaxLength(30);
+            entity.Property(e => e.EmployeeId).HasColumnName("employeeid").HasMaxLength(30);
+            entity.Property(e => e.InstitutionalId).HasColumnName("institutional_id").HasMaxLength(30).ValueGeneratedOnAddOrUpdate();
             entity.Property(e => e.Major).HasColumnName("major").HasMaxLength(100).IsRequired();
             entity.Property(e => e.Semester).HasColumnName("semester").HasMaxLength(20);
             entity.Property(e => e.Time).HasColumnName("time").HasMaxLength(50).IsRequired();

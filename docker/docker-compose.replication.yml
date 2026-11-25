@@ -1,0 +1,61 @@
+name: tecnm-library-replication
+
+services:
+  db_master:
+    image: postgres:17.4
+    container_name: tecnm-library-postgres-master
+    environment:
+      POSTGRES_DB: tecnm_library
+      POSTGRES_USER: tecnm_admin
+      POSTGRES_PASSWORD: TecNM_Postgres_Password_2026!
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=replica"
+      - "-c"
+      - "hot_standby=on"
+      - "-c"
+      - "max_wal_senders=10"
+      - "-c"
+      - "max_replication_slots=10"
+      - "-c"
+      - "hot_standby_feedback=on"
+    volumes:
+      - postgres_master_data:/var/lib/postgresql/data
+      - ../database.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tecnm_admin -d tecnm_library"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  db_replica:
+    image: postgres:17.4
+    container_name: tecnm-library-postgres-replica
+    environment:
+      POSTGRES_DB: tecnm_library
+      POSTGRES_USER: tecnm_admin
+      POSTGRES_PASSWORD: TecNM_Postgres_Password_2026!
+      PGPASSWORD: TecNM_Postgres_Password_2026!
+    command:
+      - "postgres"
+      - "-c"
+      - "hot_standby=on"
+    networks:
+      - internal_network
+    depends_on:
+      db_master:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  internal_network:
+    name: tecnm-library-internal
+    internal: true
+
+volumes:
+  postgres_master_data:
+    name: tecnm-library-postgres-master-data

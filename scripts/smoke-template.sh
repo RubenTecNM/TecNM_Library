@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_URL="${API_URL:-https://localhost:7001}"
+API_URL="${API_URL:-https://localhost:6060}"
 API_URL="${API_URL%/}"
 smoke_directory=$(mktemp -d)
 trap 'rm -rf "$smoke_directory"' EXIT
