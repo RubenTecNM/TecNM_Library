@@ -64,4 +64,5 @@ Se invirtieron y estandarizaron los puertos en todo el proyecto para que el **Fr
 | `database/scripts/backup-incremental.sh` | Script automatizado de respaldo incremental (`pg_switch_wal` + `pg_basebackup`) y exportación diferencial de `AuditLog`. |
 | `database/scripts/restore-disaster-recovery.sh` | Script automatizado de restauración y recuperación ante desastres (`pg_restore --clean`) con validación post-recuperación. |
 | `docker/docker-compose.replication.yml` | Orquestación de esquema Maestro-Esclavo (`db_master` con `wal_level=replica` y `db_replica` con `hot_standby=on`) para lectura de reportes sin afectar la transaccionalidad. |
+| `database/scripts/verify-topicos-bd.ps1` | Script automatizado en PowerShell para comprobar en vivo `Borrower` (Alumnos/Docentes), Triggers de Auditoría (`AuditLog`), Particiones, Vistas y Respaldo en Windows. |
 | `docs/TOPICOS_BASE_DE_DATOS.md` | Documentación técnica completa de todos los puntos de la asignatura `IFF-1026` lista para la defensa técnica en plenaria. |
