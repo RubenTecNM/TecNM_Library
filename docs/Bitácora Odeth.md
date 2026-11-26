@@ -1,12 +1,203 @@
 # Bitácora Odeth — Sistema de Biblioteca TecNM Campus Monclova
 
-> **Propósito:** Documentar de forma detallada cada cambio realizado en el proyecto (archivos creados, modificados o movidos, clases, métodos, cómo funciona la API y cómo se conecta el Frontend con el Backend) para tener referencia técnica clara y comprensible en todo momento.
+> **Propósito:** Documentar en orden cronológico y con detalle técnico cada cambio realizado en el proyecto (archivos creados, modificados o movidos, clases, métodos, entidades de base de datos, rutas, cómo funciona la API y cómo se conecta el Frontend con el Backend).
 
 ---
 
-## Entrada 1 — Buscador en tiempo real del módulo Inventario (Backend + Frontend)
+## Línea Temporal (Índice Rápido)
 
-**Fecha:** 2026-11-25  
+| Entrada | Fecha | Commit | Área | Resumen |
+| :---: | :---: | :---: | :--- | :--- |
+| Base | 2026-11-11 a 15 | `f43c0a9`..`a894bdf` | Infra / BD / API | Plantilla TecNM, Docker (PostgreSQL + .NET 10 + Nginx), esquema inicial y primera API de libros |
+| **1** | 2026-11-23 | `da86b5b`, `cbe01c8` | BD + Backend | Campos `gender` (con `CHECK`) y `semester` en `Borrower` |
+| **2** | 2026-11-23 | `b71dcbb` | BD + Backend | Tablas y entidades `Service` y `Visit` (modelo 1 servicio por visita) |
+| **3** | 2026-11-24 | `105decb` | BD + Backend | Catálogo `Role` (Admin, Bibliotecario, Lector) y relación `role_id` en `Borrower` |
+| **4** | 2026-11-24 | `1f62088` | Frontend | Módulo **Inventario** en Vue 3 (`/inventory`), portadas 3D y modales |
+| **5** | 2026-11-24 | `c1ecb67` | Frontend | Menú lateral compartido (`MainLayout.vue`) y módulo **Circulación y Préstamos** (`/circulation`) |
+| **6** | 2026-11-24 | `fae24cb` | Frontend | Operaciones de Mostrador en Circulación y solución a colisión CSS con `.grid` |
+| **7** | 2026-11-24 | `89095b0` | Frontend | Módulo **Registro de Asistencia** (`/attendance`) con gráficas SVG, matriz mensual y CSV |
+| **8** | 2026-11-24 | `8e6a273` | Frontend | Rediseño de **Inventario** (5 métricas filtro rápido, 12 libros, cuadrículas aisladas) |
+| *Merge* | 2026-11-24 | `45b2fb4` (PR #1) | Equipo | Integración de cambios de Rositapro (puertos 6050/6060, `Borrower` docente/admin, `AuditLog`, vistas y respaldos) |
+| **9** | 2026-11-25 | `3879257` | Frontend | Módulo **Dashboard** como 4ta pestaña (`/dashboard`) con KPIs y gráficas interactivas |
+| **10** | 2026-11-25 | `d6a31b7` | Frontend | Franja de 3 botones en Inventario y modales simples de Estante y Tema |
+| **11** | 2026-11-25 | `5935d32` | Backend + Frontend | **Buscador de libros en tiempo real** (`BooksService`, API parametrizada y cliente reactivo) |
+
+---
+
+## Contexto Base (2026-11-11 a 2026-11-15)
+
+**Commits de referencia:** `f43c0a9`, `b701ce6`, `dd3796a`, `841a852`, `a894bdf`
+
+Sobre la plantilla institucional `TecNM_Project_Template` (sin login local, delegando autenticación a `TecNM_LoginControl`), se estableció la base del proyecto:
+- **Contenedores (`compose.yaml`, `backend/Dockerfile`, `docker/nginx/Dockerfile`, `docker/nginx/nginx.conf`):** PostgreSQL 17.4, API .NET 10 y Nginx sobre Debian 13 como proxy inverso.
+- **Base de datos inicial (`database.sql`):** tablas base `BookStatus`, `Shelf`, `Topic`, `Author`, `Book`, `Borrower`, `Loan`, `Book_Author` y `Book_Topic` con campos de auditoría obligatorios (`idUserCreate`, `dateCreate`, `idUserUpdate`, `dateUpdate`, `idUserDelete`, `dateDelete`, `idStatus BIT(1)`).
+- **Backend inicial (`backend/Features/Books/` y `backend/Data/TecNMDbContext.cs`):** entidades EF Core con conversión de `BIT(1)` mediante `BitArray`, filtro global de soft-delete (`HasQueryFilter(e => e.IdStatus)`) y primer `BooksController` en `/api/books`.
+
+---
+
+## Entrada 1 — Campos `gender` y `semester` en `Borrower`
+
+**Fecha:** 2026-11-23 | **Commits:** `da86b5b`, `cbe01c8`
+
+### Qué se agregó y modificó
+- **`database.sql`:**
+  - Se agregó `gender VARCHAR(20) NOT NULL` en la tabla `Borrower` con restricción `CONSTRAINT chk_borrower_gender CHECK (gender IN ('Masculino', 'Femenino'))` para asegurar integridad de datos en reportes y gráficas por género.
+  - Se agregó `semester VARCHAR(20) NULL` en `Borrower` (nullable para contemplar usuarios sin semestre como docentes/administrativos).
+  - Se corrigió una coma faltante antes de la restricción `chk_borrower_gender` y se actualizaron los `INSERT` semilla de `Borrower` con sus valores de género y semestre.
+- **`backend/Features/Books/Borrower.cs`:** se añadieron las propiedades `Gender` (`string`) y `Semester` (`string?`).
+- **`backend/Data/TecNMDbContext.cs`:** se mapearon las columnas `gender` (`HasMaxLength(20).IsRequired()`) y `semester` (`HasMaxLength(20)`).
+
+---
+
+## Entrada 2 — Modelo de Registro de Visitas y Servicios (`Service` y `Visit`)
+
+**Fecha:** 2026-11-23 | **Commit:** `b71dcbb`
+
+### Cómo funciona el diseño
+Se modeló el registro de asistencia a la biblioteca con relación **1 servicio por visita** (`Visit` referencia a `Borrower` y a `Service`), evitando tablas intermedias innecesarias y facilitando reportes por fecha, turno, género y carrera.
+
+### Qué se agregó y modificó
+- **`database.sql`:**
+  - **Tabla `Service`:** catálogo con `id`, `name VARCHAR(100) NOT NULL UNIQUE`, `description` y campos de auditoría. Se poblaron los 4 servicios base: `1: Física`, `2: Virtual`, `3: Reunión`, `4: Clase`.
+  - **Tabla `Visit`:** registra `borrower_id` (`FK -> Borrower`), `service_id` (`FK -> Service`), `entryDate`, `exitDate` (nullable mientras el usuario sigue en sala), `notes` y auditoría.
+  - **Índices de consulta:** `idx_visit_service_entry (service_id, entryDate)` e `idx_visit_borrower_entry (borrower_id, entryDate)` para acelerar reportes por rango de fechas.
+  - Datos semilla iniciales en `Visit` para pruebas.
+- **`backend/Features/Books/Service.cs` (nuevo):** entidad `Service` con colección de navegación `Visits`.
+- **`backend/Features/Books/Visit.cs` (nuevo):** entidad `Visit` con navegación a `Borrower` y `Service`.
+- **`backend/Features/Books/Borrower.cs`:** se agregó colección `ICollection<Visit> Visits`.
+- **`backend/Data/TecNMDbContext.cs`:** se registraron `DbSet<Service>` y `DbSet<Visit>`, sus relaciones `HasOne/WithMany`, índices compuestos, campos de auditoría y filtro de soft-delete en `Visit`.
+
+---
+
+## Entrada 3 — Catálogo de Roles (`Role`) y relación `role_id` en `Borrower`
+
+**Fecha:** 2026-11-24 | **Commit:** `105decb`
+
+### Qué se agregó y modificó
+- **`database.sql`:**
+  - **Tabla `Role`:** catálogo con `id`, `name VARCHAR(50) NOT NULL UNIQUE`, `description` y auditoría.
+  - Roles iniciales: `1: Admin`, `2: Bibliotecario`, `3: Lector`.
+  - En **`Borrower`**: se agregó `role_id INT NOT NULL DEFAULT 3` y la llave foránea `CONSTRAINT fk_borrower_role FOREIGN KEY (role_id) REFERENCES Role(id)`.
+  - Se actualizaron los usuarios semilla de `Borrower` asignando roles (incluyendo un usuario de prueba con rol `Bibliotecario` y otro `Admin`).
+- **`backend/Features/Books/Role.cs` (nuevo):** entidad `Role` con navegación `Borrowers`.
+- **`backend/Features/Books/Borrower.cs`:** se agregaron `RoleId` (default `3`) y navegación `Role`.
+- **`backend/Data/TecNMDbContext.cs`:** se registró `DbSet<Role>`, índice único en `name`, mapeo `role_id` con `HasDefaultValue(3)` y relación `1:N` entre `Role` y `Borrower`.
+
+---
+
+## Entrada 4 — Implementación inicial del módulo Frontend **Inventario** (Vue 3)
+
+**Fecha:** 2026-11-24 | **Commit:** `1f62088`
+
+### Qué se creó y configuró
+- **`frontend/index.html`:** se cargaron los tokens de tema institucional TecNM en Tailwind (`primary: #002351`, `primary-container: #1b396a`, `tecnm-gold: #C5A059`, tipografías *Plus Jakarta Sans* e *Inter*) y la hoja de íconos *Material Symbols Outlined*.
+- **Vertical slice `frontend/src/modules/inventory/`:**
+  - `views/InventoryView.vue`: vista completa de gestión del acervo con buscador, tira de métricas, vista en cuadrícula/lista con portadas 3D (`.book-stage`, `.book-cover-3d`, `.gold-foil-text`) y 4 modales interactivos:
+    1. **Ficha Técnica y Control de Ejemplar** (vista detallada de clasificación Dewey, Cutter, estante y disponibilidad).
+    2. **Editar Ficha Técnica** (formulario completo con guardado reactivo).
+    3. **Cambiar Estado del Ejemplar** (selector directo conectado a `PUT /api/books/{id}/status`).
+    4. **Registrar Nuevo Ejemplar** (alta con folio autogenerado, vista previa de etiqueta topográfica y conexión a `POST /api/books`).
+  - `routes.ts` e `index.ts`: ruta `/inventory` (con alias `/inventario`) cargada de forma diferida (*lazy-loading*).
+- **`frontend/src/app/router/index.ts`:** redirección de `/` hacia `/inventory`.
+
+---
+
+## Entrada 5 — Menú lateral compartido (`MainLayout.vue`) y módulo **Circulación y Préstamos**
+
+**Fecha:** 2026-11-24 | **Commit:** `c1ecb67`
+
+### Qué se movió y reorganizó
+- **`frontend/src/app/layouts/MainLayout.vue`:** se centralizó la barra lateral fija izquierda (`w-72 bg-primary`) y el menú desplegable móvil (*drawer*) para que todas las vistas compartan una sola navegación persistente sin duplicar el sidebar.
+- **`frontend/src/modules/inventory/views/InventoryView.vue`:** se retiró el menú lateral duplicado para renderizarse dentro de `MainLayout.vue`.
+- **Nuevo módulo `frontend/src/modules/circulation/`:**
+  - `views/CirculationView.vue`, `routes.ts`, `index.ts`: vista operativa de préstamos y devoluciones con 4 tarjetas de métricas, pestañas operativas (*Todos*, *Activos*, *Por vencer*, *Vencidos*, *Devueltos*), filtros por texto/carrera, tabla interactiva con acciones de **Devolver**, **Renovar** y **Ver Ficha**, y panel lateral de **Devoluciones de Hoy**.
+- **`frontend/src/app/router/index.ts`:** se registró `/circulation` (alias `/circulacion-y-prestamos`) como hijo de `MainLayout.vue`.
+
+---
+
+## Entrada 6 — Operaciones de Mostrador y solución de colisión CSS en **Circulación y Préstamos**
+
+**Fecha:** 2026-11-24 | **Commit:** `fae24cb`
+
+### Problema detectado y cómo se resolvió
+- **Problema de diseño detectado:** el archivo global `frontend/src/shared/styles/global.css` define una regla sin capa `.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }` que sobrescribía las utilidades de Tailwind (`grid-cols-1`, `grid-cols-4`, etc.), causando que las tarjetas de *Devoluciones de Hoy* se acomodaran en 2 columnas y se desbordaran horizontalmente.
+- **Solución técnica adoptada para todo el proyecto:** no usar la clase `.grid` de Tailwind en las vistas; en su lugar definir clases CSS `scoped` dedicadas (ej. `.circulation-metrics-grid`) y `flex flex-col` para listas apiladas.
+- **Mejora funcional en `CirculationView.vue`:**
+  - Se retiró el campo de escáner de código de barras por solicitud funcional y se reemplazó por la barra de **Operaciones de Mostrador** con dos modales completos: **Procesar Préstamo** (validación de lector/libro y fecha límite) y **Registrar Devolución** (selección de préstamo activo y actualización instantánea de métricas y tabla).
+
+---
+
+## Entrada 7 — Módulo Frontend **Registro de Asistencia** (3ra pestaña)
+
+**Fecha:** 2026-11-24 | **Commit:** `89095b0`
+
+### Qué se agregó
+- **Nuevo módulo `frontend/src/modules/attendance/`:**
+  - `views/AttendanceView.vue`, `routes.ts`, `index.ts`.
+  - **3 gráficas de dona SVG reactivas** calculadas dinámicamente (distribución por **Género**, **Turno** y **Carrera**).
+  - **Matriz mensual estilo Excel** agrupada por semanas con subtotales automáticos y totales acumulados.
+  - Filtros interactivos por día y carrera, **modal de Registro de Asistencia** (alta en vivo que recalcula gráficas y matriz) y botón de **Exportar a CSV/Excel**.
+  - Cuadrículas aisladas con CSS `scoped` (`.attendance-metrics-grid`, etc.) para evitar colisiones con `global.css`.
+- **`frontend/src/app/layouts/MainLayout.vue` y `router/index.ts`:** se activó la 3ra pestaña **Registro de Asistencia** apuntando a `/attendance` (alias `/registro-de-asistencia`).
+
+---
+
+## Entrada 8 — Rediseño visual de **Inventario** y cuadrículas aisladas
+
+**Fecha:** 2026-11-24 | **Commit:** `8e6a273`
+
+### Qué se modificó en `frontend/src/modules/inventory/views/InventoryView.vue`
+- Se simplificó la barra de búsqueda del hero retirando la fila de filtros redundantes de estado.
+- Se rediseñaron las **5 tarjetas de métricas** (`Total`, `Prestados`, `Reparación`, `En Baja`, `Catálogo`) con proporción `1.25fr / 1fr / 1fr / 1fr / 1fr` y comportamiento de **filtro rápido al hacer clic**.
+- Se amplió el catálogo de respaldo local de 8 a **12 ejemplares** (`#4001` a `#4012`) con portadas 3D diferenciadas.
+- Se simplificó el contador de resultados, se centró la barra de paginación y se aislaron todas las cuadrículas con clases `scoped` (`.inventory-metrics-grid`, `.inventory-books-grid`, `.inv-grid-2/3/4`).
+
+---
+
+## Hito de Integración en Equipo — Pull Request #1 (Rositapro)
+
+**Fecha:** 2026-11-24 | **Commit:** `45b2fb4` (incluye `5e3311f`..`d1a3115`)
+
+Se integraron a la rama principal los cambios de compañera (documentados a detalle en `docs/BITACORA_CAMBIOS.md`), manteniendo compatibilidad con las vistas y el backend:
+- Estandarización de puertos: **Frontend/Nginx en `6050`** y **Backend .NET 10 en `6060`**.
+- Evolución de `Borrower` para soportar Alumnos, Docentes y Administrativos (`borrower_type`, `studentid`, `employeeid` y columna generada `institutional_id`).
+- Requerimientos de Tópicos de BD (`IFF-1026`): tabla particionada `AuditLog`, triggers automáticos `trg_audit_*`, vistas SQL de reporte (`vw_attendance_summary_by_type`, `vw_active_loans_detail`, `vw_inventory_metrics`), scripts de respaldo/restauración y esquema maestro-esclavo.
+
+---
+
+## Entrada 9 — Módulo Frontend **Dashboard** (4ta pestaña del menú)
+
+**Fecha:** 2026-11-25 | **Commit:** `3879257`
+
+### Qué se agregó
+- **Nuevo módulo `frontend/src/modules/dashboard/`:**
+  - `views/DashboardView.vue`, `routes.ts`, `index.ts`.
+  - **Selector interactivo de periodo** (`Hoy`, `Semanal`, `Mensual`, `Ciclo`) que actualiza reactivamente todos los indicadores y gráficas.
+  - **4 KPIs ejecutivos** (Asistencia, Préstamos activos, Tasa de devolución a tiempo y Acervo disponible).
+  - **Gráfica de barras SVG semanal por turno** (Matutino vs. Vespertino), barras de demanda por las **7 ingenierías**, listado **Top 5 libros más solicitados**, **dona SVG de género** con enlace directo a `/attendance` y botón de **Exportar Informe CSV**.
+  - Cuadrículas aisladas con clases `scoped` (`.dashboard-kpi-grid`, `.dashboard-two-col`).
+- **`frontend/src/app/layouts/MainLayout.vue` y `router/index.ts`:** se agregó **Dashboard** como 4ta pestaña después de *Registro de Asistencia* y se registró `/dashboard`.
+
+---
+
+## Entrada 10 — Franja de 3 botones de altas y modales minimalistas en **Inventario**
+
+**Fecha:** 2026-11-25 | **Commit:** `d6a31b7`
+
+### Qué se cambió en `frontend/src/modules/inventory/views/InventoryView.vue`
+- Se movió el botón de alta fuera de la barra de herramientas superior y se creó una **franja dedicada de 3 botones** (`.inventory-actions-grid`):
+  1. `+ Registrar Nuevo Ejemplar`
+  2. `+ Registrar Estante`
+  3. `+ Registrar Temas`
+- **Modal 4 — Registrar Nuevo Estante (`showEstanteModal`):** diseñado de forma estrictamente minimalista (alineado con la tabla `Shelf` de `database.sql`), mostrando únicamente el campo **Código del Estante** (`estanteCodigo`, placeholder `Ej. 1.3.2`) y los botones **Cancelar** / **Guardar Estante**, sin subtítulos, banners ni descripciones adicionales.
+- **Modal 5 — Registrar Nuevo Tema (`showTemasModal`):** diseñado igualmente minimalista (alineado con la tabla `Topic`), mostrando únicamente el campo **Nombre del Tema** (`temaNombre`, placeholder `Ej. Inteligencia Artificial, Siderurgia`) y los botones **Cancelar** / **Guardar Tema**, sin campos extra.
+- Se agregaron las funciones `openEstanteModal`, `closeEstanteModal`, `saveNewEstante`, `openTemasModal`, `closeTemasModal`, `saveNewTema`, cierre con tecla `Escape` y banner de confirmación (`feedbackMessage`).
+
+---
+
+## Entrada 11 — Buscador de libros en tiempo real del módulo Inventario (Backend + Frontend)
+
+**Fecha:** 2026-11-25 | **Commit:** `5935d32`  
 **Alcance:** Backend (`backend/`) y Frontend (`frontend/src/modules/inventory/`), manteniendo ambos proyectos estrictamente separados.
 
 ### 1. ¿Cómo funciona de punta a punta?
@@ -22,8 +213,6 @@ Cuando el usuario escribe en la barra de búsqueda de la vista **Inventario**, o
 7. **Servicio de negocio (`BooksService.cs`):** construye una consulta **LINQ asíncrona de EF Core** (sin SQL crudo), separa el texto en palabras (*tokens*), normaliza acentos y mayúsculas, y consulta PostgreSQL buscando coincidencias en todas las columnas y relaciones del libro.
 8. **Respuesta JSON (`BookDto[]`):** el backend devuelve únicamente DTOs desacoplados (nunca entidades crudas de EF Core) con código `200 OK`.
 9. **Actualización de la vista (`InventoryView.vue`):** los resultados del backend se mapean a tarjetas 3D y actualizan la cuadrícula/lista en tiempo real. Si el backend devuelve `[]`, la vista muestra el estado vacío *"No se encontraron ejemplares con los filtros actuales"* sin alterar las tarjetas de métricas totales superiores.
-
----
 
 ### 2. Cómo funciona la API de Inventario
 
@@ -76,8 +265,6 @@ Accept: application/json
 | `GET /api/books/shelves` | Lista el catálogo activo de estantes ordenados por nombre. |
 | `GET /api/books/statuses` | Lista el catálogo activo de estados de libros. |
 
----
-
 ### 3. Cambios detallados en el Backend (`backend/`)
 
 Se aplicó el patrón **Thin Controller + Fat Service** indicado en `backend/AGENTS.md`: toda la lógica de consultas, validaciones y mapeo se movió fuera de `BooksController.cs` hacia un servicio dedicado inyectado por DI.
@@ -85,93 +272,49 @@ Se aplicó el patrón **Thin Controller + Fat Service** indicado en `backend/AGE
 #### Archivo nuevo: `backend/Features/Books/BooksService.cs`
 Define la interfaz `IBooksService` y su implementación `BooksService(TecNMDbContext db)`.
 
-- **`SearchBooksAsync(BookSearchQuery searchQuery, CancellationToken cancellationToken)`**
-  - Construye una consulta `AsNoTracking()` con `Include` sobre `Status`, `Shelf`, `BookAuthors -> Author` (solo activos) y `BookTopics -> Topic` (solo activos), usando `AsSplitQuery()` para evitar producto cartesiano entre múltiples colecciones.
-  - Encadena `ApplyStatusFilter`, `ApplyRealtimeSearchFilter` y `ApplySorting`, ejecuta `ToListAsync(cancellationToken)` y transforma cada entidad a `BookDto` con `MapToDto`.
-- **`ApplyRealtimeSearchFilter(IQueryable<Book> query, string? search, string? field)`**
-  - Divide `search` por espacios en palabras únicas (hasta `MaxSearchTokens = 10` para evitar consultas abusivas).
-  - Normaliza cada palabra con `NormalizeSearchText` (minúsculas + reemplazo de `á, é, í, ó, ú, ü` por `a, e, i, o, u, u`).
-  - Por cada palabra agrega un `.Where(...)` generado por `BuildTokenPredicate`, de modo que un libro aparece si **todas** las palabras coinciden en algún campo.
-- **`BuildTokenPredicate(string normalizedToken, string field)`**
-  - Construye el árbol de expresiones LINQ (`Expression<Func<Book, bool>>`) que EF Core traduce a SQL en PostgreSQL sin usar SQL crudo.
-  - Cuando `field` es `"all"`, busca coincidencias simultáneamente en:
-    1. `Book.Title` (título)
-    2. `Book.Author` (autor principal en columna)
-    3. `Book.BookAuthors` (`Author.Name` y `Author.LastName` — coautores en tabla N:M)
-    4. `Book.BookTopics` (`Topic.Name` — especialidad/temas en tabla N:M)
-    5. `Book.Note` (edición, volumen, editorial)
-    6. `Book.Dewey` (clasificación Dewey)
-    7. `Book.Cutter` (clave Cutter)
-    8. `Book.Folio` (folio / ID de inventario)
-    9. `Book.Shelf.Name` (estante físico)
-    10. `Book.Status.Name` (nombre del estado)
-- **`BuildNormalizedContains(...)` + `record SearchParameter(string Value)`**
-  - Aplica `LOWER` y `REPLACE` de vocales acentuadas sobre la columna en SQL y compara con `.Contains(...)`.
-  - **Detalle técnico importante:** el término buscado se envuelve en `SearchParameter` (en lugar de `Expression.Constant(string)` directo) para que EF Core genere un **parámetro SQL real (`@__p_0`)** y reutilice el plan de consulta en caché en cada tecleo sin inflar memoria.
-- **`BuildBookAuthorsMatch(...)` y `BuildBookTopicsMatch(...)`**
-  - Construyen subconsultas `EXISTS` mediante `Enumerable.Any` validando `IdStatus == true` (compatible con el conversor `BitArray` de `BIT(1)` en PostgreSQL).
-- **`ApplyStatusFilter(...)` y `ApplySorting(...)`**
-  - Traducen claves legibles (`disponible`, `prestado`, `reparacion`, `baja`, `catalogo` o su ID numérico) y el criterio de ordenamiento (`dewey`, `status`, `barcode`/`folio`, `relevance`).
-- **`GetMetricsAsync(CancellationToken cancellationToken)`**
-  - Se optimizó para usar `GroupBy(b => b.StatusId)` directo en SQL en lugar de cargar todos los libros en memoria con `ToListAsync()`.
-- **`CreateBookAsync(...)`, `UpdateStatusAsync(...)`, `SoftDeleteAsync(...)`, `GetBookByIdAsync(...)`, `GetShelvesAsync(...)`, `GetStatusesAsync(...)`**
-  - Se movieron desde el controlador al servicio, agregando validación de existencia de `BookStatus` y `Shelf`, evitando insertar entidades navegacionales `AsNoTracking()` por accidente al guardar `Book`, y devolviendo mensajes de error claros en español de México.
-- **`MapToDto(Book book)`**
-  - Convierte la entidad a `BookDto`, completando el autor desde `BookAuthors` si la columna `Author` viniera vacía e incluyendo la lista de `Topics`.
+- **`SearchBooksAsync(BookSearchQuery searchQuery, CancellationToken cancellationToken)`:** construye una consulta `AsNoTracking()` con `Include` sobre `Status`, `Shelf`, `BookAuthors -> Author` (solo activos) y `BookTopics -> Topic` (solo activos), usando `AsSplitQuery()`. Encadena `ApplyStatusFilter`, `ApplyRealtimeSearchFilter` y `ApplySorting`, ejecuta `ToListAsync(cancellationToken)` y mapea cada entidad a `BookDto`.
+- **`ApplyRealtimeSearchFilter(IQueryable<Book> query, string? search, string? field)`:** divide `search` por espacios en palabras únicas (máximo `MaxSearchTokens = 10`), normaliza acentos/mayúsculas con `NormalizeSearchText` y encadena un `.Where(...)` por cada palabra (búsqueda multipalabra).
+- **`BuildTokenPredicate(string normalizedToken, string field)`:** construye el árbol de expresiones LINQ (`Expression<Func<Book, bool>>`) que EF Core traduce a SQL en PostgreSQL sin SQL crudo. En modo `"all"` busca coincidencias en: `Book.Title`, `Book.Author`, `Book.BookAuthors` (`Author.Name` / `LastName`), `Book.BookTopics` (`Topic.Name`), `Book.Note`, `Book.Dewey`, `Book.Cutter`, `Book.Folio`, `Book.Shelf.Name` y `Book.Status.Name`.
+- **`BuildNormalizedContains(...)` + `record SearchParameter(string Value)`:** aplica `LOWER` y `REPLACE` de vocales acentuadas en SQL y envuelve el término buscado en `SearchParameter` para que EF Core genere un **parámetro SQL real (`@__p_0`)** y reutilice el plan de consulta en caché sin inflar memoria en cada tecleo.
+- **`BuildBookAuthorsMatch(...)` y `BuildBookTopicsMatch(...)`:** generan subconsultas `EXISTS` con `Enumerable.Any` filtrando `IdStatus == true` (compatible con `BitArray` / `BIT(1)`).
+- **`ApplyStatusFilter(...)` y `ApplySorting(...)`:** filtran por estado y ordenan por `dewey`, `status`, `barcode`/`folio` o `relevance`.
+- **`GetMetricsAsync(CancellationToken cancellationToken)`:** usa `GroupBy(b => b.StatusId)` en SQL en lugar de cargar todos los libros en memoria.
+- **`CreateBookAsync`, `UpdateStatusAsync`, `SoftDeleteAsync`, `GetBookByIdAsync`, `GetShelvesAsync`, `GetStatusesAsync`:** movidos del controlador al servicio, validando existencia de `BookStatus` y `Shelf` y evitando adjuntar entidades `AsNoTracking()` al insertar un nuevo `Book`.
+- **`MapToDto(Book book)`:** construye el `BookDto` completando autor desde `BookAuthors` si falta e incluyendo la lista `Topics`.
 
 #### Archivo modificado: `backend/Features/Books/BooksController.cs`
-- **Qué se movió:** se retiró toda la lógica directa de `TecNMDbContext` y consultas LINQ hacia `BooksService.cs`.
-- **Qué quedó:** ahora recibe `IBooksService` por constructor, expone las mismas rutas `/api/books`, propaga `CancellationToken` en todos los endpoints y se limita a devolver códigos HTTP (`Ok`, `CreatedAtAction`, `NotFound`, `StatusCode`).
+- Se retiró toda la lógica directa de `TecNMDbContext` y consultas LINQ hacia `BooksService.cs`.
+- Ahora recibe `IBooksService` por constructor, propaga `CancellationToken` en todos los endpoints y se enfoca exclusivamente en transporte HTTP y códigos de respuesta.
 
 #### Archivo modificado: `backend/Features/Books/BookDtos.cs`
-- Se agregó `IReadOnlyList<string>? Topics = null` al final de `BookDto` (manteniendo compatibilidad hacia atrás con todos los campos previos).
-- Se agregó el record `BookSearchQuery(string? Search, string? Field, string? Status, string? SortBy)` para encapsular los parámetros de búsqueda.
+- Se agregó `IReadOnlyList<string>? Topics = null` al final de `BookDto`.
+- Se agregó `BookSearchQuery(string? Search, string? Field, string? Status, string? SortBy)`.
 
 #### Archivo modificado: `backend/Program.cs`
-- Se importó `TecNM.Api.Features.Books` y se registró el servicio en inyección de dependencias:
-  ```csharp
-  builder.Services.AddScoped<IBooksService, BooksService>();
-  ```
-
----
+- Se registró el servicio en inyección de dependencias: `builder.Services.AddScoped<IBooksService, BooksService>();`.
 
 ### 4. Cambios detallados en el Frontend (`frontend/src/modules/inventory/`)
 
-Siguiendo la arquitectura de vertical slice de `frontend/AGENTS.md`, se separaron los tipos y el cliente HTTP del módulo de inventario para no mezclar lógica de red directamente dentro de la vista.
-
 #### Archivo nuevo: `frontend/src/modules/inventory/types/inventory.ts`
-Centraliza todos los tipos TypeScript del módulo:
-- `BookStatusKey`, `InventorySortKey`, `StatusMeta`
-- Contratos de API: `BookApiDto`, `BookMetricsApiDto`, `BookSearchParams`, `CreateBookPayload`, `UpdateBookStatusPayload`
-- Modelos de vista: `BookItem` (ahora incluye `topics: string[]`) y `MetricsSummary`.
+Centraliza los tipos TypeScript del módulo (`BookStatusKey`, `InventorySortKey`, `StatusMeta`, `BookApiDto`, `BookMetricsApiDto`, `BookSearchParams`, `CreateBookPayload`, `UpdateBookStatusPayload`, `BookItem` con `topics: string[]` y `MetricsSummary`).
 
 #### Archivo nuevo: `frontend/src/modules/inventory/api/inventoryApi.ts`
-Cliente HTTP exclusivo del dominio de Inventario (usa la instancia compartida `http` de `frontend/src/shared/api/http.ts`):
-- **`searchBooks(params: BookSearchParams, signal?: AbortSignal)`**: llama a `GET /books` enviando solo los query params activos (`search`, `field`, `status`, `sortBy`) y adjuntando `signal` para cancelar peticiones obsoletas.
-- **`getInventoryMetrics(signal?: AbortSignal)`**: llama a `GET /books/metrics`.
-- **`createBook(payload: CreateBookPayload)`**: llama a `POST /books`.
-- **`updateBookStatus(bookId: number, payload: UpdateBookStatusPayload)`**: llama a `PUT /books/{bookId}/status`.
+Cliente HTTP exclusivo de Inventario basado en `shared/api/http.ts`:
+- `searchBooks(params, signal?)` → `GET /books` con soporte de `AbortSignal`.
+- `getInventoryMetrics(signal?)` → `GET /books/metrics`.
+- `createBook(payload)` → `POST /books`.
+- `updateBookStatus(bookId, payload)` → `PUT /books/{bookId}/status`.
 
 #### Archivo modificado: `frontend/src/modules/inventory/views/InventoryView.vue`
-- **Reemplazo de llamadas directas a `http`:** ahora importa las funciones desde `../api/inventoryApi` y los tipos desde `../types/inventory`.
-- **Nuevos estados reactivos:** `isSearching` (indica búsqueda en curso) y `searchError` (muestra errores de conexión con botón *Reintentar*).
-- **`executeBackendSearch()`:**
-  - Incrementa `latestSearchRequestId` y aborta cualquier `activeSearchController` pendiente antes de lanzar `searchBooks(...)`.
-  - Actualiza `books.value` con lo que regresa el backend **incluso si devuelve 0 resultados (`[]`)** — esto corrigió un error previo donde una búsqueda sin coincidencias mantenía los libros anteriores en pantalla.
-  - Ignora silenciosamente errores de cancelación (`axios.isCancel` / `AbortError`).
-- **`scheduleRealtimeSearch()` y `runImmediateSearch()`:**
-  - `watch(searchKeyword)` usa debounce de `220 ms` mientras escribes y dispara búsqueda inmediata si vacías la barra.
-  - `watch([selectedStatus, sortBy])` y el submit del formulario (`@submit.prevent="runImmediateSearch"`) ejecutan búsqueda inmediata contra el backend.
-- **Corrección de métricas globales (`displayMetrics` y `fetchMetrics`):**
-  - Las 5 tarjetas superiores (`Total`, `Prestados`, `Reparación`, `En Baja`, `Catálogo`) ahora siempre muestran `baseMetrics` (obtenidas de `GET /api/books/metrics`) en lugar de recalcularse sobre el subconjunto filtrado de la búsqueda. También se refrescan tras crear un libro o cambiar estatus.
-- **Limpieza de recursos (`onBeforeUnmount`):** limpia `searchDebounceTimer` y aborta `activeSearchController` si el usuario cambia de vista mientras hay una búsqueda en vuelo.
-- **Fallback sin conexión (`normalizeOfflineText` + `filteredBooks`):** si el backend aún no está levantado (`usingApiData === false`), conserva el filtrado local insensible a acentos sobre el catálogo demo; cuando el backend está activo (`usingApiData === true`), muestra exactamente la lista devuelta por PostgreSQL.
-- **Feedback visual en interfaz:** ícono giratorio `progress_activity` en el buscador y texto *"Buscando coincidencias..."* mientras consulta al servidor, más banner de error con botón **Reintentar**.
-
----
+- Consume `inventoryApi.ts` y `types/inventory.ts` en lugar de usar `http` directamente.
+- Nuevos estados reactivos: `isSearching` y `searchError`.
+- **`executeBackendSearch()`:** cancela peticiones anteriores con `AbortController`, protege contra respuestas fuera de orden (`latestSearchRequestId`) y actualiza `books.value` incluso si PostgreSQL devuelve `[]` (corrigiendo el bug anterior que ignoraba resultados vacíos).
+- **`scheduleRealtimeSearch()` y `runImmediateSearch()`:** `watch(searchKeyword)` aplica debounce de `220 ms` al escribir y búsqueda inmediata al vaciar; `watch([selectedStatus, sortBy])` y el submit ejecutan búsqueda inmediata.
+- **Métricas globales (`displayMetrics` / `fetchMetrics`):** mantienen siempre los totales globales del inventario desde `GET /api/books/metrics` aunque haya una búsqueda activa.
+- **Limpieza (`onBeforeUnmount`):** limpia el timer y aborta peticiones en vuelo al salir de la vista.
+- **Feedback visual:** ícono giratorio `progress_activity`, aviso *"Buscando coincidencias..."* y banner de error con botón **Reintentar**.
 
 ### 5. Validación ejecutada
-
 - **Backend:** `dotnet build backend/TecNM.Api.csproj --no-restore` → **0 errores**.
 - **Frontend:** `npm run build` (`vue-tsc --noEmit && vite build`) → **0 errores**.
 - **Layout:** `node scripts/check-layout.mjs` → **aprobado**.
@@ -180,4 +323,4 @@ Cliente HTTP exclusivo del dominio de Inventario (usa la instancia compartida `h
   cd C:\Users\odeth\TecNM_Library\TecNM_Library
   docker compose up -d --build
   ```
-  Luego abrir `http://localhost:6050/inventory` y escribir términos como `calculo`, `stewart`, `redes`, `ross`, `005.1` o `FOL-TECNM-004` para ver el filtrado en tiempo real desde PostgreSQL.
+  Abrir `http://localhost:6050/inventory` y escribir términos como `calculo`, `stewart`, `redes`, `ross`, `005.1` o `FOL-TECNM-004` para comprobar el filtrado en tiempo real desde PostgreSQL.
