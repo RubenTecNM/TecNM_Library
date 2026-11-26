@@ -501,6 +501,12 @@ const showFichaModal = ref(false)
 const showEditarFichaModal = ref(false)
 const showCambiarEstadoModal = ref(false)
 const showNewBookModal = ref(false)
+const showEstanteModal = ref(false)
+const showTemasModal = ref(false)
+const feedbackMessage = ref('')
+
+const estanteCodigo = ref('')
+const temaNombre = ref('')
 
 const directStatusSelection = ref<BookStatusKey>('disponible')
 
@@ -882,6 +888,52 @@ async function saveNewBook(keepOpen = false) {
   }
 }
 
+function openEstanteModal() {
+  estanteCodigo.value = ''
+  showEstanteModal.value = true
+}
+
+function closeEstanteModal() {
+  showEstanteModal.value = false
+}
+
+function saveNewEstante() {
+  if (isSubmitting.value) return
+  const codigo = estanteCodigo.value.trim()
+  if (!codigo) return
+
+  isSubmitting.value = true
+  try {
+    showEstanteModal.value = false
+    feedbackMessage.value = `Estante "${codigo}" registrado correctamente.`
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+function openTemasModal() {
+  temaNombre.value = ''
+  showTemasModal.value = true
+}
+
+function closeTemasModal() {
+  showTemasModal.value = false
+}
+
+function saveNewTema() {
+  if (isSubmitting.value) return
+  const nombre = temaNombre.value.trim()
+  if (!nombre) return
+
+  isSubmitting.value = true
+  try {
+    showTemasModal.value = false
+    feedbackMessage.value = `Tema "${nombre}" registrado correctamente.`
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
 function handleEscapeKey(event: KeyboardEvent) {
   if (event.key !== 'Escape') return
   if (showCambiarEstadoModal.value) {
@@ -890,6 +942,10 @@ function handleEscapeKey(event: KeyboardEvent) {
     closeEditarFichaModal()
   } else if (showNewBookModal.value) {
     closeNewBookModal()
+  } else if (showEstanteModal.value) {
+    closeEstanteModal()
+  } else if (showTemasModal.value) {
+    closeTemasModal()
   } else if (showFichaModal.value) {
     closeFichaModal()
   }
@@ -1098,15 +1154,6 @@ onBeforeUnmount(() => {
               </div>
 
               <div class="flex items-center flex-wrap gap-2.5 w-full md:w-auto justify-end">
-                <button
-                  type="button"
-                  class="px-3.5 py-2 bg-primary text-white rounded-lg font-label-sm text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:bg-[#184580] transition-colors"
-                  @click="openNewBookModal"
-                >
-                  <span class="material-symbols-outlined text-sm">add</span>
-                  <span>Registrar Nuevo Ejemplar</span>
-                </button>
-
                 <div class="flex items-center gap-2">
                   <label class="font-label-sm text-xs text-slate-500 font-semibold whitespace-nowrap" for="sortSelector">
                     Ordenar:
@@ -1150,6 +1197,54 @@ onBeforeUnmount(() => {
                   </button>
                 </div>
               </div>
+            </div>
+
+            <!-- 3-Button Catalog Management Strip -->
+            <div class="inventory-actions-grid w-full">
+              <button
+                type="button"
+                class="h-12 px-5 bg-primary-container hover:bg-[#184580] text-white rounded-xl font-label-md text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] border border-white/10"
+                @click="openNewBookModal"
+              >
+                <span class="material-symbols-outlined text-[20px] text-tecnm-gold-light">add_circle</span>
+                <span>+ Registrar Nuevo Ejemplar</span>
+              </button>
+              <button
+                type="button"
+                class="h-12 px-5 bg-primary-container hover:bg-[#184580] text-white rounded-xl font-label-md text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] border border-white/10"
+                @click="openEstanteModal"
+              >
+                <span class="material-symbols-outlined text-[20px] text-tecnm-gold-light">shelves</span>
+                <span>+ Registrar Estante</span>
+              </button>
+              <button
+                type="button"
+                class="h-12 px-5 bg-primary-container hover:bg-[#184580] text-white rounded-xl font-label-md text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] border border-white/10"
+                @click="openTemasModal"
+              >
+                <span class="material-symbols-outlined text-[20px] text-tecnm-gold-light">label</span>
+                <span>+ Registrar Temas</span>
+              </button>
+            </div>
+
+            <!-- Feedback Banner -->
+            <div
+              v-if="feedbackMessage"
+              class="px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between gap-3"
+              role="status"
+            >
+              <span class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                <span>{{ feedbackMessage }}</span>
+              </span>
+              <button
+                type="button"
+                class="p-1 rounded hover:bg-emerald-100"
+                aria-label="Cerrar aviso"
+                @click="feedbackMessage = ''"
+              >
+                <span class="material-symbols-outlined text-[16px]">close</span>
+              </button>
             </div>
 
             <!-- Empty state when search/filter matches 0 books -->
@@ -1982,6 +2077,140 @@ onBeforeUnmount(() => {
             </form>
           </div>
         </div>
+
+        <!-- Modal 4: Registrar Nuevo Estante -->
+        <div
+          v-if="showEstanteModal"
+          class="fixed inset-0 z-50 bg-[#001838]/60 backdrop-blur-sm flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="estanteModalTitle"
+          @click.self="closeEstanteModal"
+        >
+          <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden max-h-[92vh]">
+            <div class="bg-[#002351] text-white px-6 py-4 flex items-center justify-between border-b border-[#C5A059]/40">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-tecnm-gold">
+                  <span class="material-symbols-outlined text-lg">shelves</span>
+                </span>
+                <h3 id="estanteModalTitle" class="font-headline-sm !text-sm font-bold tracking-wide text-white">
+                  Registrar Nuevo Estante
+                </h3>
+              </div>
+              <button
+                type="button"
+                class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                title="Cerrar"
+                aria-label="Cerrar"
+                @click="closeEstanteModal"
+              >
+                <span class="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            <form class="p-6 flex flex-col gap-4 text-xs" @submit.prevent="saveNewEstante">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1" for="estanteCodigo">
+                  Código del Estante: <span class="text-rose-600">*</span>
+                </label>
+                <input
+                  id="estanteCodigo"
+                  v-model="estanteCodigo"
+                  class="inventory-input w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 font-citation-code font-bold focus:ring-2 focus:ring-primary focus:border-primary !text-xs"
+                  placeholder="Ej. 1.3.2"
+                  required
+                  type="text"
+                />
+              </div>
+
+              <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5 mt-2">
+                <button
+                  type="button"
+                  class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold transition-colors"
+                  :disabled="isSubmitting"
+                  @click="closeEstanteModal"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  class="px-6 py-2.5 rounded-xl bg-primary hover:bg-[#184580] text-white font-bold transition-all shadow-md flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+                  :disabled="isSubmitting"
+                >
+                  <span class="material-symbols-outlined text-sm text-tecnm-gold-light">check</span>
+                  <span>Guardar Estante</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal 5: Registrar Nuevo Tema -->
+        <div
+          v-if="showTemasModal"
+          class="fixed inset-0 z-50 bg-[#001838]/60 backdrop-blur-sm flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="temasModalTitle"
+          @click.self="closeTemasModal"
+        >
+          <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden max-h-[92vh]">
+            <div class="bg-[#002351] text-white px-6 py-4 flex items-center justify-between border-b border-[#C5A059]/40">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-tecnm-gold">
+                  <span class="material-symbols-outlined text-lg">label</span>
+                </span>
+                <h3 id="temasModalTitle" class="font-headline-sm !text-sm font-bold tracking-wide text-white">
+                  Registrar Nuevo Tema
+                </h3>
+              </div>
+              <button
+                type="button"
+                class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                title="Cerrar"
+                aria-label="Cerrar"
+                @click="closeTemasModal"
+              >
+                <span class="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            <form class="p-6 flex flex-col gap-4 text-xs" @submit.prevent="saveNewTema">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1" for="temaNombre">
+                  Nombre del Tema: <span class="text-rose-600">*</span>
+                </label>
+                <input
+                  id="temaNombre"
+                  v-model="temaNombre"
+                  class="inventory-input w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 font-medium focus:ring-2 focus:ring-primary focus:border-primary !text-xs"
+                  placeholder="Ej. Inteligencia Artificial, Siderurgia"
+                  required
+                  type="text"
+                />
+              </div>
+
+              <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5 mt-2">
+                <button
+                  type="button"
+                  class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold transition-colors"
+                  :disabled="isSubmitting"
+                  @click="closeTemasModal"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  class="px-6 py-2.5 rounded-xl bg-primary hover:bg-[#184580] text-white font-bold transition-all shadow-md flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+                  :disabled="isSubmitting"
+                >
+                  <span class="material-symbols-outlined text-sm text-tecnm-gold-light">check</span>
+                  <span>Guardar Tema</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </main>
 </template>
 
@@ -2010,6 +2239,18 @@ onBeforeUnmount(() => {
 @media (min-width: 1024px) {
   .inventory-metrics-grid {
     grid-template-columns: 1.25fr 1fr 1fr 1fr 1fr;
+  }
+}
+
+.inventory-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .inventory-actions-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
