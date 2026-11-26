@@ -22,6 +22,7 @@
 | **10** | 2026-11-25 | `d6a31b7` | Frontend | Franja de 3 botones en Inventario y modales simples de Estante y Tema |
 | **11** | 2026-11-25 | `5935d32` | Backend + Frontend | **Buscador de libros en tiempo real** (`BooksService`, API parametrizada y cliente reactivo) |
 | **12** | 2026-11-25 | *pendiente* | Infra / Seguridad | Gestión estricta de credenciales vía `.env` (cero hardcoded en Compose) y volumen persistente en `db_replica` |
+| **13** | 2026-11-26 | *pendiente* | Frontend | Limpieza del modal *Ficha Técnica* en Inventario (retiro de barra *Disponibilidad en Acervo* y subtítulo) |
 
 ---
 
@@ -360,4 +361,18 @@ Cliente HTTP exclusivo de Inventario basado en `shared/api/http.ts`:
   ```powershell
   docker compose --env-file .env -f docker/docker-compose.replication.yml up -d
   ```
+
+---
+
+## Entrada 13 — Actualización del modal *Ficha Técnica* en Inventario
+
+**Fecha:** 2026-11-26  
+**Alcance:** Frontend (`frontend/src/modules/inventory/views/InventoryView.vue`).
+
+### Qué se modificó
+- **Modal *Ficha Técnica y Control de Ejemplar* (`showFichaModal`):**
+  - Se eliminó el bloque de **Disponibilidad en Acervo** (texto de copias libres y barra de progreso verde), ya que cada registro de la tabla `Book` representa un ejemplar físico individual con su propio folio y estatus.
+  - Se retiró el subtítulo *"TecNM Campus Monclova • Acervo Físico"* del encabezado del modal para dejar un header más limpio.
+- **Lógica preservada sin cambios:** se mantuvo íntegro todo el funcionamiento del **buscador en tiempo real** conectado a `GET /api/books` (`executeBackendSearch`, debounce de `220 ms`, `AbortController`, filtros por estado, ordenamiento, indicadores de carga/error) y los modales minimalistas de *Registrar Nuevo Estante* y *Registrar Nuevo Tema*.
+
 

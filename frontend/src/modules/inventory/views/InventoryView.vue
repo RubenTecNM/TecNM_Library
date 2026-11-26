@@ -1561,14 +1561,9 @@ onBeforeUnmount(() => {
                 <span class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-tecnm-gold">
                   <span class="material-symbols-outlined text-lg">menu_book</span>
                 </span>
-                <div>
-                  <h3 id="fichaModalTitle" class="font-headline-sm !text-sm font-bold tracking-wide text-white">
-                    Ficha Técnica y Control de Ejemplar
-                  </h3>
-                  <p class="font-label-sm text-[11px] !text-[#acc7ff]">
-                    TecNM Campus Monclova • Acervo Físico
-                  </p>
-                </div>
+                <h3 id="fichaModalTitle" class="font-headline-sm !text-sm font-bold tracking-wide text-white">
+                  Ficha Técnica y Control de Ejemplar
+                </h3>
               </div>
               <button
                 type="button"
@@ -1640,22 +1635,6 @@ onBeforeUnmount(() => {
                     <span class="material-symbols-outlined text-xs text-tecnm-gold">shelves</span>
                     {{ activeBook.shelf }}
                   </span>
-                </div>
-              </div>
-
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-2">
-                <div class="flex justify-between items-center text-xs font-label-sm">
-                  <span class="text-slate-500 font-medium flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm text-emerald-600">inventory</span>
-                    Disponibilidad en Acervo:
-                  </span>
-                  <span class="font-bold text-slate-800">{{ activeBook.available }}</span>
-                </div>
-                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    class="h-full bg-emerald-600 rounded-full transition-all duration-300"
-                    :style="{ width: `${activeBook.barWidth}%` }"
-                  ></div>
                 </div>
               </div>
 
