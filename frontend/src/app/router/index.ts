@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { attendanceRoutes } from '../../modules/attendance'
 import { circulationRoutes } from '../../modules/circulation'
+import { dashboardRoutes } from '../../modules/dashboard'
 import { inventoryRoutes } from '../../modules/inventory'
 
 const router = createRouter({
@@ -18,6 +19,7 @@ const router = createRouter({
         ...inventoryRoutes,
         ...circulationRoutes,
         ...attendanceRoutes,
+        ...dashboardRoutes,
       ],
     },
     {

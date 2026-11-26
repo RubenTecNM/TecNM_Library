@@ -31,6 +31,12 @@ const navItems: NavItem[] = [
     to: '/attendance',
     routeName: 'attendance',
   },
+  {
+    label: 'Dashboard',
+    icon: 'dashboard',
+    to: '/dashboard',
+    routeName: 'dashboard',
+  },
 ]
 
 function isActive(item: NavItem): boolean {
