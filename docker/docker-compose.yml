@@ -1,20 +1,20 @@
-name: tecnm-library
+name: ${COMPOSE_PROJECT_NAME:-tecnm-library}
 
 services:
   db:
     image: postgres:17.4
     container_name: tecnm-library-postgres
     environment:
-      POSTGRES_DB: tecnm_library
-      POSTGRES_USER: tecnm_admin
-      POSTGRES_PASSWORD: TecNM_Postgres_Password_2026!
+      POSTGRES_DB: ${POSTGRES_DB:?Falta POSTGRES_DB en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../database.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     networks:
       - internal_network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U tecnm_admin -d tecnm_library" ]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -27,12 +27,12 @@ services:
     image: tecnm-library-backend:local
     container_name: tecnm-library-backend
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:6060
-      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=tecnm_library;Username=tecnm_admin;Password=TecNM_Postgres_Password_2026!
-      Cors__AllowedOrigins: http://localhost:6050,http://127.0.0.1:6050
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=${POSTGRES_DB:?Falta POSTGRES_DB en .env};Username=${POSTGRES_USER:?Falta POSTGRES_USER en .env};Password=${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
+      Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS:-http://localhost:6050,http://127.0.0.1:6050}
     ports:
-      - "6060:6060"
+      - "${TECNM_BACKEND_PORT:-6060}:6060"
     expose:
       - "6060"
     networks:
@@ -50,7 +50,7 @@ services:
     image: tecnm-library-nginx:local
     container_name: tecnm-library-nginx
     ports:
-      - "6050:6050"
+      - "${TECNM_FRONTEND_PORT:-6050}:6050"
     networks:
       - public_network
     depends_on:

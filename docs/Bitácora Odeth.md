@@ -21,6 +21,7 @@
 | **9** | 2026-11-25 | `3879257` | Frontend | Módulo **Dashboard** como 4ta pestaña (`/dashboard`) con KPIs y gráficas interactivas |
 | **10** | 2026-11-25 | `d6a31b7` | Frontend | Franja de 3 botones en Inventario y modales simples de Estante y Tema |
 | **11** | 2026-11-25 | `5935d32` | Backend + Frontend | **Buscador de libros en tiempo real** (`BooksService`, API parametrizada y cliente reactivo) |
+| **12** | 2026-11-25 | *pendiente* | Infra / Seguridad | Gestión estricta de credenciales vía `.env` (cero hardcoded en Compose) y volumen persistente en `db_replica` |
 
 ---
 
@@ -324,3 +325,39 @@ Cliente HTTP exclusivo de Inventario basado en `shared/api/http.ts`:
   docker compose up -d --build
   ```
   Abrir `http://localhost:6050/inventory` y escribir términos como `calculo`, `stewart`, `redes`, `ross`, `005.1` o `FOL-TECNM-004` para comprobar el filtrado en tiempo real desde PostgreSQL.
+
+---
+
+## Entrada 12 — Gestión estricta de credenciales en `.env` y volumen persistente en réplica
+
+**Fecha:** 2026-11-25  
+**Alcance:** Infraestructura Docker (`compose.yaml`, `docker/docker-compose.yml`, `docker/docker-compose.replication.yml`) y plantillas de entorno (`.env.example`, `backend/.env.example`).
+
+### 1. Qué problema se detectó en la auditoría
+- Aunque el código fuente de C# y Vue ya estaba limpio de contraseñas y `.gitignore` ignoraba `.env`, los 3 archivos de Docker Compose subidos a Git contenían la contraseña de PostgreSQL y la cadena `ConnectionStrings__DefaultConnection` escritas en texto plano (*hardcoded*).
+- Además, `.env.example` aún usaba variables viejas de la plantilla (`tecnm-template`, `TECNM_DB_PASSWORD`) sin correspondencia con `compose.yaml`.
+- En `docker/docker-compose.replication.yml`, el contenedor `db_replica` no tenía volumen persistente declarado.
+
+### 2. Qué se modificó archivo por archivo
+- **`.env.example`:** actualizado como plantilla oficial (sin contraseñas reales) con las variables `COMPOSE_PROJECT_NAME`, `TECNM_FRONTEND_PORT`, `TECNM_BACKEND_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` (vacía para llenarse localmente), `ASPNETCORE_ENVIRONMENT` y `CORS_ALLOWED_ORIGINS`.
+- **`backend/.env.example`:** alineado a `Database=tecnm_library;Username=tecnm_admin;Password=REPLACE_LOCAL_PASSWORD`.
+- **`compose.yaml` y `docker/docker-compose.yml`:**
+  - Se eliminaron todas las contraseñas y cadenas de conexión en texto plano.
+  - Ahora exigen variables obligatorias desde `.env` mediante `${POSTGRES_DB:?...}`, `${POSTGRES_USER:?...}` y `${POSTGRES_PASSWORD:?...}` tanto en el servicio `db` como al armar `ConnectionStrings__DefaultConnection` en `backend`.
+  - El `healthcheck` de PostgreSQL usa `pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB` (variables evaluadas dentro del contenedor) sin hardcodear usuario ni base de datos.
+  - Los puertos (`TECNM_BACKEND_PORT`, `TECNM_FRONTEND_PORT`) y `CORS_ALLOWED_ORIGINS` también se leen desde `.env`.
+- **`docker/docker-compose.replication.yml`:**
+  - Se parametrizaron `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` y `PGPASSWORD` desde `.env` en `db_master` y `db_replica`, junto con el `healthcheck`.
+  - Se agregó el volumen persistente `postgres_replica_data:/var/lib/postgresql/data` (`tecnm-library-postgres-replica-data`) en `db_replica` para garantizar persistencia también en la réplica.
+- **`.env` local (fuera de Git):** creado localmente en la raíz del proyecto e ignorado automáticamente por `.gitignore` para que `docker compose up -d` siga funcionando con el volumen existente de PostgreSQL.
+
+### 3. Cómo levantar los servicios con `.env`
+- **Entorno principal (desde la raíz del repo):**
+  ```powershell
+  docker compose up -d --build
+  ```
+- **Compose alterno o replicación (dentro de `docker/`):**
+  ```powershell
+  docker compose --env-file .env -f docker/docker-compose.replication.yml up -d
+  ```
+
