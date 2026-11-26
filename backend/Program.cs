@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TecNM.Api.Data;
+using TecNM.Api.Features.Books;
 
 const string FrontendCors = "Frontend";
 
@@ -47,6 +48,7 @@ foreach (var origin in allowedOrigins)
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<TecNMDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddScoped<IBooksService, BooksService>();
 builder.Services.AddCors(options => options.AddPolicy(FrontendCors, policy =>
     policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
 

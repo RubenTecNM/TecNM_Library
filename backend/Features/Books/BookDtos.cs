@@ -13,7 +13,8 @@ public record BookDto(
     int ShelfId,
     string ShelfName,
     string AvailableText,
-    int AvailabilityPercent
+    int AvailabilityPercent,
+    IReadOnlyList<string>? Topics = null
 );
 
 public record BookMetricsDto(
@@ -23,6 +24,13 @@ public record BookMetricsDto(
     int RepairCount,
     int DiscardCount,
     int CatalogCount
+);
+
+public record BookSearchQuery(
+    string? Search = null,
+    string? Field = "all",
+    string? Status = "all",
+    string? SortBy = "dewey"
 );
 
 public record CreateBookRequest(
@@ -43,4 +51,3 @@ public record UpdateBookStatusRequest(
 
 public record ShelfDto(int Id, string Name);
 public record BookStatusDto(int Id, string Name);
-

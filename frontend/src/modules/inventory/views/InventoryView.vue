@@ -1,55 +1,20 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { http } from '../../../shared/api/http'
-
-type BookStatusKey = 'disponible' | 'prestado' | 'reparacion' | 'baja' | 'catalogo'
-
-interface StatusMeta {
-  id: number
-  key: BookStatusKey
-  label: string
-  cardLabel: string
-  statusClass: string
-  dotClass: string
-  pillBgClass: string
-  badgeBgClass: string
-}
-
-interface BookItem {
-  id: number
-  title: string
-  author: string
-  note: string
-  folio: string
-  dewey: string
-  cutter: string
-  shelf: string
-  shelfId: number
-  status: BookStatusKey
-  available: string
-  barWidth: number
-  code: string
-  shortTitle: string
-  coverSubtitle: string
-  coverAuthor: string
-  coverEdition: string
-  coverIcon: string
-  coverGradient: string
-  coverBorderColor: string
-  coverTagColor: string
-  coverSubtitleColor: string
-  coverBarColor: string
-  deweyBadgeClass: string
-  recommendation: string
-}
-
-interface MetricsSummary {
-  totalBooks: number
-  borrowedCount: number
-  repairCount: number
-  discardCount: number
-  catalogCount: number
-}
+import axios from 'axios'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import {
+  createBook,
+  getInventoryMetrics,
+  searchBooks,
+  updateBookStatus,
+} from '../api/inventoryApi'
+import type {
+  BookApiDto,
+  BookItem,
+  BookStatusKey,
+  InventorySortKey,
+  MetricsSummary,
+  StatusMeta,
+} from '../types/inventory'
 
 const STATUS_META: Record<BookStatusKey, StatusMeta> = {
   disponible: {
@@ -208,6 +173,7 @@ const initialBooks: BookItem[] = [
     status: 'disponible',
     recommendation:
       'Obra inventariada para el tronco común en Ciencias Básicas del TecNM Campus Monclova. Ejemplar auditado en el ciclo semestral vigente sin extravíos.',
+    topics: ['Cálculo Diferencial e Integral'],
     ...DEFAULT_COVER_STYLES[0],
   },
   {
@@ -230,6 +196,7 @@ const initialBooks: BookItem[] = [
     status: 'prestado',
     recommendation:
       'Préstamo activo a estudiante de Ingeniería Mecatrónica. Vencimiento estipulado en mostrador del Edificio A.',
+    topics: ['Mecatrónica'],
     ...DEFAULT_COVER_STYLES[1],
   },
   {
@@ -252,6 +219,7 @@ const initialBooks: BookItem[] = [
     status: 'disponible',
     recommendation:
       'Colección regional insignia del acervo de Monclova. Material de consulta para residencias e industria siderúrgica.',
+    topics: ['Siderurgia'],
     ...DEFAULT_COVER_STYLES[2],
   },
   {
@@ -274,6 +242,7 @@ const initialBooks: BookItem[] = [
     status: 'catalogo',
     recommendation:
       'Nuevo título ingresado en catálogo para Ingeniería en Sistemas Computacionales e Informática ITSM.',
+    topics: ['Algoritmos y Estructuras de Datos'],
     ...DEFAULT_COVER_STYLES[3],
   },
   {
@@ -296,6 +265,7 @@ const initialBooks: BookItem[] = [
     status: 'reparacion',
     recommendation:
       'Ejemplar transferido al taller de encuadernación por desprendimiento de lomo. Entrega estimada en 3 días hábiles.',
+    topics: ['Ingeniería Eléctrica'],
     ...DEFAULT_COVER_STYLES[4],
   },
   {
@@ -318,6 +288,7 @@ const initialBooks: BookItem[] = [
     status: 'baja',
     recommendation:
       'Propuesta de baja técnica por deterioro físico total. Pendiente acta de Comité de Adquisiciones y Descarte.',
+    topics: ['Termodinámica'],
     ...DEFAULT_COVER_STYLES[5],
   },
   {
@@ -340,6 +311,7 @@ const initialBooks: BookItem[] = [
     status: 'disponible',
     recommendation:
       'Volumen con alta rotación en sala general de estudio. Sellos y firmas verificados.',
+    topics: ['Física'],
     ...DEFAULT_COVER_STYLES[6],
   },
   {
@@ -362,6 +334,7 @@ const initialBooks: BookItem[] = [
     status: 'disponible',
     recommendation:
       'Libro de texto base para residencias profesionales y materias de formulación de proyectos en Gestión Empresarial e Industrial.',
+    topics: ['Administración y Gestión de Proyectos'],
     ...DEFAULT_COVER_STYLES[7],
   },
   {
@@ -384,6 +357,7 @@ const initialBooks: BookItem[] = [
     status: 'disponible',
     recommendation:
       'Texto de referencia para Inteligencia Artificial, Aprendizaje Automático y Sistemas Inteligentes en Ingeniería Informática y Sistemas.',
+    topics: ['Inteligencia Artificial y Aprendizaje Automático'],
     coverIcon: 'smart_toy',
     coverGradient: 'from-[#003b35] via-[#042421] to-[#011413]',
     coverBorderColor: 'border-l-[#d2a858]',
@@ -412,6 +386,7 @@ const initialBooks: BookItem[] = [
     status: 'prestado',
     recommendation:
       'Bibliografía fundamental para Química de tronco común en ingenierías del TecNM Campus Monclova.',
+    topics: ['Química'],
     coverIcon: 'science',
     coverGradient: 'from-[#0c264d] via-[#001f47] to-[#04142d]',
     coverBorderColor: 'border-l-[#C5A059]',
@@ -440,6 +415,7 @@ const initialBooks: BookItem[] = [
     status: 'disponible',
     recommendation:
       'Obra base para programación lineal, modelos de redes y optimización en Ingeniería Industrial y Gestión Empresarial.',
+    topics: ['Investigación de Operaciones'],
     coverIcon: 'analytics',
     coverGradient: 'from-[#3b2a05] via-[#241a02] to-[#120d00]',
     coverBorderColor: 'border-l-[#d2a858]',
@@ -468,6 +444,7 @@ const initialBooks: BookItem[] = [
     status: 'catalogo',
     recommendation:
       'Ejemplar reciente en revisión catalográfica para Electrónica, Mecatrónica y Sistemas Computacionales.',
+    topics: ['Sistemas Digitales'],
     coverIcon: 'memory',
     coverGradient: 'from-[#121e3d] via-[#091326] to-[#040812]',
     coverBorderColor: 'border-l-[#C5A059]',
@@ -478,14 +455,22 @@ const initialBooks: BookItem[] = [
   },
 ]
 
-const books = ref<BookItem[]>(initialBooks.map((item) => ({ ...item })))
+const SEARCH_DEBOUNCE_MS = 220
+
+const books = ref<BookItem[]>(initialBooks.map((item) => ({ ...item, topics: [...item.topics] })))
 const searchKeyword = ref('')
 const selectedStatus = ref<'all' | BookStatusKey>('all')
-const sortBy = ref<'dewey' | 'status' | 'relevance' | 'barcode'>('dewey')
+const sortBy = ref<InventorySortKey>('dewey')
 const layoutMode = ref<'grid' | 'list'>('grid')
 const currentPage = ref(1)
 const isSubmitting = ref(false)
+const isSearching = ref(false)
+const searchError = ref('')
 const usingApiData = ref(false)
+
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let activeSearchController: AbortController | null = null
+let latestSearchRequestId = 0
 
 const baseMetrics = ref<MetricsSummary>({
   totalBooks: 5240,
@@ -539,53 +524,43 @@ const activeBook = computed<BookItem | undefined>(() =>
   books.value.find((book) => book.id === activeBookId.value),
 )
 
-const statusCounts = computed(() => {
-  const counts: Record<'all' | BookStatusKey, number> = {
-    all: books.value.length,
-    disponible: 0,
-    prestado: 0,
-    reparacion: 0,
-    baja: 0,
-    catalogo: 0,
-  }
-  for (const book of books.value) {
-    counts[book.status] += 1
-  }
-  return counts
-})
+const displayMetrics = computed<MetricsSummary>(() => baseMetrics.value)
 
-const displayMetrics = computed<MetricsSummary>(() => {
-  if (usingApiData.value) {
-    return {
-      totalBooks: books.value.length,
-      borrowedCount: statusCounts.value.prestado,
-      repairCount: statusCounts.value.reparacion,
-      discardCount: statusCounts.value.baja,
-      catalogCount: statusCounts.value.catalogo,
-    }
-  }
-  return baseMetrics.value
-})
+function normalizeOfflineText(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
 
 const filteredBooks = computed(() => {
-  const term = searchKeyword.value.trim().toLowerCase()
+  if (usingApiData.value) {
+    return books.value
+  }
+
+  const tokens = normalizeOfflineText(searchKeyword.value)
+    .split(/\s+/)
+    .filter(Boolean)
+
   const list = books.value.filter((book) => {
     const matchesStatus = selectedStatus.value === 'all' || book.status === selectedStatus.value
     if (!matchesStatus) return false
-    if (!term) return true
-    const haystack = [
-      book.title,
-      book.author,
-      book.note,
-      book.dewey,
-      book.cutter,
-      book.folio,
-      book.shelf,
-      STATUS_META[book.status].label,
-    ]
-      .join(' ')
-      .toLowerCase()
-    return haystack.includes(term)
+    if (tokens.length === 0) return true
+    const haystack = normalizeOfflineText(
+      [
+        book.title,
+        book.author,
+        book.note,
+        book.dewey,
+        book.cutter,
+        book.folio,
+        book.shelf,
+        STATUS_META[book.status].label,
+        ...book.topics,
+      ].join(' '),
+    )
+    return tokens.every((token) => haystack.includes(token))
   })
 
   const sorted = [...list]
@@ -593,6 +568,8 @@ const filteredBooks = computed(() => {
     sorted.sort((a, b) => STATUS_META[a.status].id - STATUS_META[b.status].id || a.title.localeCompare(b.title))
   } else if (sortBy.value === 'barcode') {
     sorted.sort((a, b) => a.folio.localeCompare(b.folio))
+  } else if (sortBy.value === 'relevance') {
+    sorted.sort((a, b) => a.title.localeCompare(b.title))
   } else if (sortBy.value === 'dewey') {
     sorted.sort((a, b) => a.dewey.localeCompare(b.dewey))
   }
@@ -624,29 +601,30 @@ function buildShortTitle(title: string): string {
   return significant.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9]/g, '').slice(0, 13).toUpperCase() || 'OBRA'
 }
 
-function mapApiBook(item: Record<string, unknown>, idx: number): BookItem {
+function mapApiBook(item: BookApiDto, idx: number): BookItem {
   const style = DEFAULT_COVER_STYLES[idx % DEFAULT_COVER_STYLES.length]
   const statusId = Number(item.statusId ?? 1)
   const status = STATUS_BY_ID[statusId] ?? 'disponible'
-  const title = String(item.title ?? 'Sin título')
-  const author = String(item.author ?? 'Autor institucional')
-  const shelfRaw = String(item.shelfName ?? 'General')
+  const title = item.title || 'Sin título'
+  const author = item.author || 'Autor institucional'
+  const shelfRaw = item.shelfName || 'General'
   const shelfClean = shelfRaw.replace(/^Estante\s+/i, '')
-  const dewey = String(item.dewey ?? '000')
+  const dewey = item.dewey || '000'
   const fallbackAvailability = availabilityByStatus(status)
+  const topics = Array.isArray(item.topics) ? item.topics : []
 
   return {
     id: Number(item.id ?? idx + 1),
     title,
     author,
-    note: String(item.note ?? 'Acervo institucional TecNM Monclova'),
-    folio: String(item.folio ?? `#${4000 + idx + 1}`),
+    note: item.note || 'Acervo institucional TecNM Monclova',
+    folio: item.folio || `#${4000 + idx + 1}`,
     dewey,
-    cutter: String(item.cutter ?? ''),
+    cutter: item.cutter || '',
     shelf: shelfClean,
     shelfId: Number(item.shelfId ?? 1),
     status,
-    available: String(item.availableText ?? fallbackAvailability.text),
+    available: item.availableText || fallbackAvailability.text,
     barWidth: Number(item.availabilityPercent ?? fallbackAvailability.width),
     code: dewey,
     shortTitle: buildShortTitle(title),
@@ -654,40 +632,96 @@ function mapApiBook(item: Record<string, unknown>, idx: number): BookItem {
     coverAuthor: author.split(/[•,]/)[0]?.trim().slice(0, 14) || 'TecNM',
     coverEdition: 'Acervo',
     recommendation:
-      'Ejemplar registrado en la base de datos del Sistema de Biblioteca TecNM Campus Monclova.',
+      topics.length > 0
+        ? `Temas asociados: ${topics.join(', ')}. Ejemplar registrado en la base de datos del Sistema de Biblioteca TecNM Campus Monclova.`
+        : 'Ejemplar registrado en la base de datos del Sistema de Biblioteca TecNM Campus Monclova.',
+    topics,
     ...style,
   }
 }
 
-async function fetchInventory() {
+async function fetchMetrics() {
   try {
-    const [booksRes, metricsRes] = await Promise.all([
-      http.get('/books'),
-      http.get('/books/metrics').catch(() => null),
-    ])
-
-    if (Array.isArray(booksRes.data) && booksRes.data.length > 0) {
-      books.value = booksRes.data.map((item: Record<string, unknown>, idx: number) =>
-        mapApiBook(item, idx),
-      )
-      usingApiData.value = true
-      if (books.value.length > 0) {
-        activeBookId.value = books.value[0].id
-      }
-    }
-
-    if (metricsRes?.data) {
-      baseMetrics.value = {
-        totalBooks: Number(metricsRes.data.totalBooks ?? books.value.length),
-        borrowedCount: Number(metricsRes.data.borrowedCount ?? statusCounts.value.prestado),
-        repairCount: Number(metricsRes.data.repairCount ?? statusCounts.value.reparacion),
-        discardCount: Number(metricsRes.data.discardCount ?? statusCounts.value.baja),
-        catalogCount: Number(metricsRes.data.catalogCount ?? statusCounts.value.catalogo),
-      }
+    const metrics = await getInventoryMetrics()
+    baseMetrics.value = {
+      totalBooks: Number(metrics.totalBooks ?? 0),
+      borrowedCount: Number(metrics.borrowedCount ?? 0),
+      repairCount: Number(metrics.repairCount ?? 0),
+      discardCount: Number(metrics.discardCount ?? 0),
+      catalogCount: Number(metrics.catalogCount ?? 0),
     }
   } catch {
-    // Mantiene el catálogo de demostración cuando el backend no está accesible
+    // Mantiene métricas base cuando el backend no está accesible
   }
+}
+
+async function executeBackendSearch() {
+  const requestId = ++latestSearchRequestId
+
+  activeSearchController?.abort()
+  const controller = new AbortController()
+  activeSearchController = controller
+
+  isSearching.value = true
+  searchError.value = ''
+
+  try {
+    const results = await searchBooks(
+      {
+        search: searchKeyword.value,
+        field: 'all',
+        status: selectedStatus.value,
+        sortBy: sortBy.value,
+      },
+      controller.signal,
+    )
+
+    if (requestId !== latestSearchRequestId) {
+      return
+    }
+
+    books.value = results.map((item, idx) => mapApiBook(item, idx))
+    usingApiData.value = true
+    currentPage.value = 1
+
+    if (books.value.length > 0 && !books.value.some((book) => book.id === activeBookId.value)) {
+      activeBookId.value = books.value[0].id
+    }
+  } catch (error) {
+    if (axios.isCancel(error) || (error as { name?: string })?.name === 'AbortError') {
+      return
+    }
+
+    if (requestId !== latestSearchRequestId) {
+      return
+    }
+
+    if (usingApiData.value) {
+      searchError.value = 'No se pudo consultar el inventario en el servidor. Intenta de nuevo.'
+    }
+  } finally {
+    if (requestId === latestSearchRequestId) {
+      isSearching.value = false
+    }
+  }
+}
+
+function scheduleRealtimeSearch() {
+  if (searchDebounceTimer !== null) {
+    clearTimeout(searchDebounceTimer)
+  }
+  searchDebounceTimer = setTimeout(() => {
+    searchDebounceTimer = null
+    void executeBackendSearch()
+  }, SEARCH_DEBOUNCE_MS)
+}
+
+function runImmediateSearch() {
+  if (searchDebounceTimer !== null) {
+    clearTimeout(searchDebounceTimer)
+    searchDebounceTimer = null
+  }
+  void executeBackendSearch()
 }
 
 function setStatusFilter(status: 'all' | BookStatusKey) {
@@ -695,7 +729,19 @@ function setStatusFilter(status: 'all' | BookStatusKey) {
 }
 
 function clearSearch() {
+  if (!searchKeyword.value) {
+    return
+  }
   searchKeyword.value = ''
+}
+
+function resetFilters() {
+  const hadChanges = searchKeyword.value !== '' || selectedStatus.value !== 'all'
+  searchKeyword.value = ''
+  selectedStatus.value = 'all'
+  if (!hadChanges) {
+    runImmediateSearch()
+  }
 }
 
 function openFichaModal(id: number) {
@@ -725,10 +771,11 @@ async function applyDirectStatusChange() {
     const statusId = STATUS_META[newStatus].id
 
     try {
-      await http.put(`/books/${activeBook.value.id}/status`, {
+      await updateBookStatus(activeBook.value.id, {
         statusId,
         note: activeBook.value.note,
       })
+      void fetchMetrics()
     } catch {
       // Continúa actualizando estado local si la API no está conectada
     }
@@ -772,10 +819,11 @@ async function saveFichaEdits() {
 
     if (previousStatus !== nextStatus) {
       try {
-        await http.put(`/books/${activeBook.value.id}/status`, {
+        await updateBookStatus(activeBook.value.id, {
           statusId: STATUS_META[nextStatus].id,
           note: editForm.value.note.trim(),
         })
+        void fetchMetrics()
       } catch {
         // Continúa actualizando estado local si la API no está conectada
       }
@@ -834,7 +882,7 @@ async function saveNewBook(keepOpen = false) {
     let createdId = Math.max(0, ...books.value.map((b) => b.id)) + 1
 
     try {
-      const response = await http.post('/books', {
+      const created = await createBook({
         title,
         author,
         note,
@@ -844,9 +892,10 @@ async function saveNewBook(keepOpen = false) {
         statusId,
         shelfId: 1,
       })
-      if (response.data?.id) {
-        createdId = Number(response.data.id)
+      if (created?.id) {
+        createdId = Number(created.id)
       }
+      void fetchMetrics()
     } catch {
       // Mantiene el alta local si el backend no responde
     }
@@ -870,6 +919,7 @@ async function saveNewBook(keepOpen = false) {
       coverAuthor: author.split(/[•,]/)[0]?.trim().slice(0, 14) || 'TecNM',
       coverEdition: '2025',
       recommendation: 'Ejemplar incorporado recientemente al acervo físico del TecNM Campus Monclova.',
+      topics: [],
       ...style,
     }
 
@@ -951,12 +1001,28 @@ function handleEscapeKey(event: KeyboardEvent) {
   }
 }
 
+watch(searchKeyword, (value) => {
+  if (!value.trim()) {
+    runImmediateSearch()
+    return
+  }
+  scheduleRealtimeSearch()
+})
+
+watch([selectedStatus, sortBy], () => {
+  runImmediateSearch()
+})
+
 onMounted(() => {
-  fetchInventory()
+  void Promise.all([executeBackendSearch(), fetchMetrics()])
   window.addEventListener('keydown', handleEscapeKey)
 })
 
 onBeforeUnmount(() => {
+  if (searchDebounceTimer !== null) {
+    clearTimeout(searchDebounceTimer)
+  }
+  activeSearchController?.abort()
   window.removeEventListener('keydown', handleEscapeKey)
 })
 </script>
@@ -993,15 +1059,23 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-lg border border-white/40 text-on-surface">
-              <form class="flex flex-col lg:flex-row items-stretch gap-2.5" @submit.prevent>
+              <form class="flex flex-col lg:flex-row items-stretch gap-2.5" @submit.prevent="runImmediateSearch">
                 <div class="relative flex-1 flex items-center">
-                  <span class="material-symbols-outlined absolute left-4 text-primary text-xl pointer-events-none">search</span>
+                  <span
+                    :class="[
+                      'material-symbols-outlined absolute left-4 text-primary text-xl pointer-events-none',
+                      isSearching ? 'animate-spin' : '',
+                    ]"
+                  >
+                    {{ isSearching ? 'progress_activity' : 'search' }}
+                  </span>
                   <input
                     id="searchKeyword"
                     v-model="searchKeyword"
                     class="inventory-input w-full !h-11 !min-h-0 !pl-11 !pr-10 !py-0 bg-slate-50 text-on-surface font-body-md !text-xs placeholder:text-slate-400 !rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-tecnm-gold focus:bg-white transition-all shadow-inner"
                     placeholder="Buscar por título, autor, especialidad, código Dewey o ID de inventario..."
                     type="text"
+                    autocomplete="off"
                     aria-label="Buscar en el inventario"
                   />
                   <button
@@ -1147,9 +1221,17 @@ onBeforeUnmount(() => {
             <!-- Toolbar & Controls -->
             <div class="bg-white p-4 rounded-xl shadow-[0_2px_12px_rgba(0,35,81,0.04)] border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-space-md">
               <div class="flex items-center gap-space-sm w-full md:w-auto">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100 shrink-0"></span>
-                <p class="font-body-md text-sm !text-slate-700 !max-w-none">
-                  Mostrando <span class="font-bold text-primary">{{ filteredBooks.length }}</span> obras registradas
+                <span
+                  :class="[
+                    'w-2.5 h-2.5 rounded-full shrink-0',
+                    isSearching ? 'bg-amber-500 ring-4 ring-amber-100' : 'bg-emerald-500 ring-4 ring-emerald-100',
+                  ]"
+                ></span>
+                <p class="font-body-md text-sm !text-slate-700 !max-w-none" aria-live="polite">
+                  <template v-if="isSearching">Buscando coincidencias...</template>
+                  <template v-else>
+                    Mostrando <span class="font-bold text-primary">{{ filteredBooks.length }}</span> obras registradas
+                  </template>
                 </p>
               </div>
 
@@ -1227,6 +1309,25 @@ onBeforeUnmount(() => {
               </button>
             </div>
 
+            <!-- Search Error Banner -->
+            <div
+              v-if="searchError"
+              class="px-4 py-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center justify-between gap-3"
+              role="alert"
+            >
+              <span class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">error</span>
+                <span>{{ searchError }}</span>
+              </span>
+              <button
+                type="button"
+                class="px-2.5 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 font-semibold transition-colors"
+                @click="runImmediateSearch"
+              >
+                Reintentar
+              </button>
+            </div>
+
             <!-- Feedback Banner -->
             <div
               v-if="feedbackMessage"
@@ -1262,7 +1363,7 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="mt-1 px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-[#184580] transition-colors"
-                @click="searchKeyword = ''; selectedStatus = 'all'"
+                @click="resetFilters"
               >
                 Mostrar todo el inventario
               </button>
