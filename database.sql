@@ -260,6 +260,7 @@ CREATE TABLE Service (
 CREATE TABLE Visit (
     id SERIAL PRIMARY KEY,
     borrower_id INT NOT NULL,
+    librarian_id INT NOT NULL,
     service_id INT NOT NULL,
     entryDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     notes TEXT NULL,
@@ -273,6 +274,7 @@ CREATE TABLE Visit (
     idStatus BIT(1) NOT NULL DEFAULT B'1',
     -- Llaves Foráneas
     CONSTRAINT fk_visit_borrower FOREIGN KEY (borrower_id) REFERENCES Borrower(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_visit_librarian FOREIGN KEY (librarian_id) REFERENCES Borrower(id) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_visit_service FOREIGN KEY (service_id) REFERENCES Service(id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
@@ -534,11 +536,11 @@ INSERT INTO Service (id, name, description, idUserCreate, dateCreate, idStatus) 
 SELECT setval('Service_id_seq', (SELECT MAX(id) FROM Service));
 
 -- 12. Visitas de prueba (Visit)
-INSERT INTO Visit (id, borrower_id, service_id, entryDate, notes, idUserCreate, dateCreate, idStatus) VALUES
-(1, 1, 1, CURRENT_TIMESTAMP - INTERVAL '2 days', 'Consulta de bibliografía para proyecto de Sistemas Operativos', 1, CURRENT_TIMESTAMP, B'1'),
-(2, 2, 2, CURRENT_TIMESTAMP - INTERVAL '1 day', 'Acceso a base de datos digital IEEE', 1, CURRENT_TIMESTAMP, B'1'),
-(3, 3, 3, CURRENT_TIMESTAMP - INTERVAL '4 hours', 'Reunión de equipo para proyecto integrador', 1, CURRENT_TIMESTAMP, B'1'),
-(4, 5, 4, CURRENT_TIMESTAMP - INTERVAL '1 hour', 'Clase de Bases de Datos en sala audiovisual', 1, CURRENT_TIMESTAMP, B'1');
+INSERT INTO Visit (id, borrower_id, librarian_id, service_id, entryDate, notes, idUserCreate, dateCreate, idStatus) VALUES
+(1, 1, 6, 1, CURRENT_TIMESTAMP - INTERVAL '2 days', 'Consulta de bibliografía para proyecto de Sistemas Operativos', 1, CURRENT_TIMESTAMP, B'1'),
+(2, 2, 6, 2, CURRENT_TIMESTAMP - INTERVAL '1 day', 'Acceso a base de datos digital IEEE', 1, CURRENT_TIMESTAMP, B'1'),
+(3, 3, 7, 3, CURRENT_TIMESTAMP - INTERVAL '4 hours', 'Reunión de equipo para proyecto integrador', 1, CURRENT_TIMESTAMP, B'1'),
+(4, 5, 7, 4, CURRENT_TIMESTAMP - INTERVAL '1 hour', 'Clase de Bases de Datos en sala audiovisual', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Visit_id_seq', (SELECT MAX(id) FROM Visit));
 
 -- ============================================================================

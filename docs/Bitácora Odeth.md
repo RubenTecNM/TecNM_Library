@@ -27,6 +27,7 @@
 | **15** | 2026-11-26 | *pendiente* | BD + Backend | Eliminación de columna `exitDate` en `Visit` (`database.sql`, `Visit.cs` y `TecNMDbContext.cs`) |
 | **16** | 2026-11-26 | *pendiente* | Frontend | Rediseño completo de **Registro de Asistencia** (formulario *Nueva Visita*, historial filtrable por rango/presets y CSV) |
 | **17** | 2026-11-26 | *pendiente* | Frontend | Selector **Tipo de Visitante** y tabla de 6 columnas (sin Matrícula, con rol bajo Nombre) en **Registro de Asistencia** |
+| **18** | 2026-11-27 | *pendiente* | BD + Backend | Columna `librarian_id` (FK a `Borrower`) en `Visit` para registrar al encargado en turno |
 
 ---
 
@@ -462,6 +463,24 @@ Se reemplazó la vista anterior (basada en donas y matriz mensual) por el nuevo 
   - En la columna **Nombre**, debajo del nombre del visitante se muestra ahora la etiqueta con ícono y color de su **Tipo de Visitante** (`Alumno`, `Docente`, `Administrativo`, `Otro`).
   - Se limpiaron las etiquetas de **Carrera** (ej. `Ing. Informática`, `Informática / Docente Titular`, `Soporte Técnico / TI`) para evitar duplicar el rol.
 - **Exportación CSV (`exportToCSV`):** se reemplazó la columna `Matrícula` por `Tipo de Visitante` para mantener coherencia con la tabla.
+
+---
+
+## Entrada 18 — Campo `librarian_id` en `Visit` (encargado que registra la visita)
+
+**Fecha:** 2026-11-27  
+**Alcance:** Base de datos (`database.sql`) y Backend (`backend/Features/Books/Visit.cs`, `backend/Data/TecNMDbContext.cs`).
+
+### Qué se modificó
+- **`database.sql`:**
+  - Se agregó `librarian_id INT NOT NULL` en `Visit` con llave foránea `fk_visit_librarian` hacia `Borrower(id)` (`ON UPDATE CASCADE ON DELETE RESTRICT`).
+  - Se actualizaron los `INSERT INTO Visit` semilla asignando a los encargados existentes en `Borrower` (`6` Admin / `7` Bibliotecario).
+- **`backend/Features/Books/Visit.cs`:** se agregaron `LibrarianId` (`int`) y navegación `Librarian` (`Borrower?`).
+- **`backend/Data/TecNMDbContext.cs`:** se mapeó `librarian_id` y se configuró explícitamente la segunda relación `HasOne(e => e.Librarian).WithMany().HasForeignKey(e => e.LibrarianId)` con `DeleteBehavior.Restrict` para evitar ambigüedad con `Borrower.Visits`.
+
+### Por qué es mejor
+Cumple **3FN** sin crear una tabla redundante de responsables ni guardar nombres repetidos en texto; reutiliza `Borrower` + `Role` y garantiza integridad referencial en PostgreSQL.
+
 
 
 
