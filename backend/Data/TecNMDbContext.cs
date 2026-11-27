@@ -137,9 +137,9 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.BookId).HasColumnName("book_id");
             entity.Property(e => e.BorrowerId).HasColumnName("borrower_id");
-            entity.Property(e => e.StartDate).HasColumnName("startdate");
-            entity.Property(e => e.DueDate).HasColumnName("duedate");
-            entity.Property(e => e.ReturnDate).HasColumnName("returndate");
+            entity.Property(e => e.StartDate).HasColumnName("startdate").HasColumnType("date");
+            entity.Property(e => e.DueDate).HasColumnName("duedate").HasColumnType("date");
+            entity.Property(e => e.ReturnDate).HasColumnName("returndate").HasColumnType("date");
             entity.Property(e => e.Responsible).HasColumnName("responsible").HasMaxLength(150).IsRequired();
 
             entity.HasOne(e => e.Book)

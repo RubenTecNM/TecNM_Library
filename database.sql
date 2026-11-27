@@ -178,9 +178,9 @@ CREATE TABLE Loan (
     id SERIAL PRIMARY KEY,
     book_id INT NOT NULL,
     borrower_id INT NOT NULL,
-    startDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    dueDate TIMESTAMP NOT NULL,
-    returnDate TIMESTAMP NULL,
+    startDate DATE NOT NULL DEFAULT CURRENT_DATE,
+    dueDate DATE NOT NULL,
+    returnDate DATE NULL,
     responsible VARCHAR(150) NOT NULL,
     -- Campos de Auditoría Obligatorios
     idUserCreate INT NOT NULL DEFAULT 1,
@@ -477,6 +477,31 @@ INSERT INTO Book (title, note, author, folio, dewey, cutter, status_id, shelf_id
 ('Diccionario de Sinónimos y Antónimos', NULL, 'Larousse', 'SIN-FOLIO-004', 'C004.6732', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
 ('Diccionario Enciclopédico', NULL, NULL, 'SIN-FOLIO-005', 'C004.6733', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1');
 
+INSERT INTO Book (title, note, author, folio, dewey, cutter, status_id, shelf_id, idUserCreate, dateCreate, idStatus) VALUES
+('Lecciones de Electricidad', NULL, 'J. Ney / G. Louis', '1932', '333.7932', 'N568L', 2, 6, 1, CURRENT_TIMESTAMP, B'1'),
+('Programación TRANSACT', NULL, 'Manuel Torres', '4346', '005.133', 'T636s', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Aprenda Programación Microsoft SQL', NULL, 'Rebeca M. Riordan', 'SIN-FOLIO-PRESTAMO-001', '005.74', 'R56', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Tecnología de las Máquinas Herramientas', NULL, 'Steve F. Krar / Arthur. Gill / Peter Smid', '4343', '621.902', 'K898t 2009', 2, 6, 1, CURRENT_TIMESTAMP, B'1'),
+('C++ Como Programar', NULL, 'Daitel', '4075', '005.133', 'D324e Ej.1', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Ruta Interior', NULL, 'Hermann Hesse', '1611', '830.39', 'H586r', 2, 5, 1, CURRENT_TIMESTAMP, B'1'),
+('La Inteligencia Emocional', NULL, 'Vergara', '3547', '153.9', 'G625I', 1, 5, 1, CURRENT_TIMESTAMP, B'1'),
+('Programacion en algoritmos', NULL, 'Luis Joyanes Agilar', '1799', '005.13', 'E96XJ', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructuras de datos Básicas', NULL, 'Silvia Guardiati', '4812', '005.73', 'G914e', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructuras de datos', NULL, 'Luis Joyanes Aguilar', '1765', '005.73', 'J88E', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructuras de datos a objetos algoritmos', NULL, 'Silvia Guardiati', '4686', '005.73', 'G914e', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructuras de datos con CYC++', NULL, 'Luis Joyanes Aguilar', '263', '005.73', 'L585e', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructura de datos', NULL, 'Luis Joyanes Aguilar', '1764', '005.73', 'J88E', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('El Lenguaje de programación', NULL, 'Kernichan / Ritchie', '3542', '005.13', 'K399L', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructura de datos con CyC++', NULL, 'Yedidyah L.', '1536', '005.73', 'L265E', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructura de Datos Algoritmicos', NULL, 'Luis Joyanes Aguilar', '1766', '005.73', 'J88E Ej.3', 1, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructura de datos con CyC++', NULL, 'Yedidyah L.', '1535', '005.73', 'L285E', 1, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Programacion con C metodologia', NULL, 'Luis Joyanes Aguilar', '4536', '005.3', 'J88p', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructura de datos algorítmicos', NULL, 'Luis Joyanes Aguilar', '1767', '005.73', 'J88E Ej.4', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructura de datos con CyC++', NULL, 'Yedidyah L.', '1534', '005.73', 'L285E', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Estructura de Datos con Pascal', NULL, 'Aron M. Tenen baum', '1269', '005.133', 'T292e', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Libros Condensados', NULL, NULL, '3002', '810.6', 'L6979', 2, 5, 1, CURRENT_TIMESTAMP, B'1')
+ON CONFLICT (folio) DO NOTHING;
+
 -- 6. Relaciones N:M Book_Author
 INSERT INTO Book_Author (book_id, author_id, idUserCreate, dateCreate, idStatus) VALUES
 (1, 1, 1, CURRENT_TIMESTAMP, B'1'), -- Tanenbaum -> Sistemas Operativos Modernos
@@ -519,12 +544,29 @@ INSERT INTO Borrower (id, name, borrower_type, studentid, employeeid, major, sem
 (6, 'Lic. Martha Elena Vázquez Torres', 'Administrativo', NULL, 'ADM-BIB-003', 'Administrador de Biblioteca', NULL, 'Turno Completo', 'Femenino', '8666789012', 'martha.vazquez@monclova.tecnm.mx', 1, 1, CURRENT_TIMESTAMP, B'1'),
 (7, 'Lic. Jorge Eduardo Morales Cruz', 'Administrativo', NULL, 'BIB-MON-005', 'Bibliotecario - Área de Circulación', NULL, 'Turno Vespertino', 'Masculino', '8667890123', 'jorge.morales@monclova.tecnm.mx', 2, 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Borrower_id_seq', (SELECT MAX(id) FROM Borrower));
+INSERT INTO Borrower (name, borrower_type, studentid, employeeid, major, semester, time, gender, phoneNumber, email, role_id, idUserCreate, dateCreate, idStatus) VALUES
+('Diego Verastegui Carrillo', 'Alumno', 'N24050251', NULL, 'Ingeniería Industrial', NULL, 'Matutino', 'Masculino', '8661470480', 'n24050251@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Christian Alonso Segovia Ambriz', 'Alumno', 'I21050385', NULL, 'Ingeniería Informática', NULL, 'Vespertino', 'Masculino', '8661616633', 'i21050385@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Kenia Aide Martinez Vallesteros', 'Alumno', 'I25050370', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Femenino', '8663886402', 'i25050370@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Oscar Uriel Soria', 'Alumno', 'INE-OSCAR', NULL, 'Sin especificar (INE)', NULL, 'Matutino', 'Masculino', '8662139499', 'oscar.soria@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Nery Eli Amador Facundo', 'Alumno', 'N25050276', NULL, 'Ingeniería Industrial', NULL, 'Matutino', 'Masculino', '8661503998', 'n25050276@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Raul de Jesus Berlanga. M', 'Alumno', 'I24050400', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Masculino', '8661625795', 'i24050400@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Xóchitl Mesta Alanis', 'Alumno', 'I24050387', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Femenino', '8661386510', 'i24050387@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Leslie Sofia Perez Romo', 'Alumno', 'I2505555', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Femenino', '8662000591', 'i2505555@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Mario Alejandro Mtz.', 'Alumno', 'I25050368', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Masculino', '8661345456', 'i25050368@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Stephanny Elizabeth Torres R.', 'Alumno', 'I25050386', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Femenino', '8662532849', 'i25050386@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Sebastian Ponce Carmona', 'Alumno', 'I25050377', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Masculino', '8662565888', 'i25050377@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Daniela Vianey Garcia', 'Alumno', 'I25050363', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Femenino', '8662124481', 'i25050363@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Elizabeth Anabely Garcia', 'Alumno', 'I25050364', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Femenino', '8666503851', 'i25050364@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Jesus Armando Sendejo', 'Alumno', 'I24050394', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Masculino', '8661854586', 'i24050394@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1'),
+('Cesar Emmanuel Vallejo', 'Alumno', 'I23050364', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Masculino', '8661651892', 'i23050364@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1')
+ON CONFLICT (studentid) DO NOTHING;
 
 -- 10. Préstamos de prueba (Loan)
 INSERT INTO Loan (id, book_id, borrower_id, startDate, dueDate, returnDate, responsible, idUserCreate, dateCreate, idStatus) VALUES
-(1, 3, 1, CURRENT_TIMESTAMP - INTERVAL '5 days', CURRENT_TIMESTAMP + INTERVAL '2 days', NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '5 days', B'1'),
-(2, 5, 2, CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP + INTERVAL '4 days', NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '3 days', B'1'),
-(3, 1, 3, CURRENT_TIMESTAMP - INTERVAL '14 days', CURRENT_TIMESTAMP - INTERVAL '7 days', CURRENT_TIMESTAMP - INTERVAL '6 days', 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '14 days', B'1');
+(1, 3, 1, CURRENT_DATE - 5, CURRENT_DATE + 2, NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '5 days', B'1'),
+(2, 5, 2, CURRENT_DATE - 3, CURRENT_DATE + 4, NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '3 days', B'1'),
+(3, 1, 3, CURRENT_DATE - 14, CURRENT_DATE - 7, CURRENT_DATE - 6, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '14 days', B'1');
 SELECT setval('Loan_id_seq', (SELECT MAX(id) FROM Loan));
 
 -- 11. Catálogo de Servicios de Biblioteca (Service)
@@ -706,8 +748,8 @@ SELECT
     l.responsible,
     CASE
         WHEN l.returnDate IS NOT NULL THEN 'Devuelto'
-        WHEN l.dueDate < CURRENT_TIMESTAMP THEN 'Vencido'
-        WHEN DATE(l.dueDate) = CURRENT_DATE THEN 'Vence Hoy'
+        WHEN l.dueDate < CURRENT_DATE THEN 'Vencido'
+        WHEN l.dueDate = CURRENT_DATE THEN 'Vence Hoy'
         ELSE 'En Tiempo'
     END AS loan_status
 FROM Loan l
