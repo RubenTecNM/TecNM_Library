@@ -3,14 +3,19 @@ import axios from 'axios'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   createBook,
+  createShelf,
+  createTopic,
   getInventoryMetrics,
+  getNextAvailableFolio,
   searchBooks,
+  updateBook,
   updateBookStatus,
 } from '../api/inventoryApi'
 import type {
   BookApiDto,
   BookItem,
   BookStatusKey,
+  InventorySearchField,
   InventorySortKey,
   MetricsSummary,
   StatusMeta,
@@ -162,7 +167,7 @@ const initialBooks: BookItem[] = [
     dewey: 'QA303.2',
     cutter: '.S74 2023',
     note: '8va Edición • Volumen 1 • Cengage Learning',
-    folio: '#4001',
+    folio: '5000',
     available: '6 de 8 copias libres',
     barWidth: 75,
     code: 'QA303.2',
@@ -185,7 +190,7 @@ const initialBooks: BookItem[] = [
     dewey: 'TJ223',
     cutter: '.B65',
     note: '6ta Edición • Control Industrial',
-    folio: '#4002',
+    folio: '5001',
     available: 'En préstamo (1 ejemplar)',
     barWidth: 25,
     code: 'TJ223',
@@ -208,7 +213,7 @@ const initialBooks: BookItem[] = [
     dewey: 'TN665',
     cutter: '.A86',
     note: 'Edición Especial • Siderurgia',
-    folio: '#4003',
+    folio: '5002',
     available: '3 de 4 copias libres',
     barWidth: 75,
     code: 'TN665',
@@ -231,7 +236,7 @@ const initialBooks: BookItem[] = [
     dewey: 'QA76.73',
     cutter: '.W45',
     note: '4ta Edición 2024 • Software',
-    folio: '#4004',
+    folio: '5003',
     available: 'En revisión de catalogación',
     barWidth: 100,
     code: 'QA76.73',
@@ -254,7 +259,7 @@ const initialBooks: BookItem[] = [
     dewey: 'TK454',
     cutter: '.H39',
     note: '9na Edición • Redes y Señales',
-    folio: '#4005',
+    folio: '5004',
     available: 'En taller de encuadernación',
     barWidth: 40,
     code: 'TK454',
@@ -277,7 +282,7 @@ const initialBooks: BookItem[] = [
     dewey: 'TJ265',
     cutter: '.C46',
     note: '9na Edición • Enfoque Industrial',
-    folio: '#4006',
+    folio: '5005',
     available: '0 disponibles (Baja definitiva)',
     barWidth: 10,
     code: 'TJ265',
@@ -300,7 +305,7 @@ const initialBooks: BookItem[] = [
     dewey: 'QC21.3',
     cutter: '.Y68',
     note: '14va Edición • Volúmenes 1 y 2',
-    folio: '#4007',
+    folio: '5006',
     available: '8 de 10 copias libres',
     barWidth: 80,
     code: 'QC21.3',
@@ -323,7 +328,7 @@ const initialBooks: BookItem[] = [
     dewey: 'HD69.P75',
     cutter: '.B33',
     note: '7ma Edición • Formulación y Evaluación',
-    folio: '#4008',
+    folio: '5007',
     available: '3 de 4 copias libres',
     barWidth: 75,
     code: 'HD69.P75',
@@ -346,7 +351,7 @@ const initialBooks: BookItem[] = [
     dewey: 'QA76.87',
     cutter: '.R87',
     note: '3ra Edición • Pearson Educación',
-    folio: '#4009',
+    folio: '5008',
     available: '4 de 5 copias libres',
     barWidth: 80,
     code: 'QA76.87',
@@ -375,7 +380,7 @@ const initialBooks: BookItem[] = [
     dewey: 'QD31.3',
     cutter: '.C43',
     note: '11va Edición • McGraw-Hill',
-    folio: '#4010',
+    folio: '5009',
     available: 'En préstamo (1 ejemplar)',
     barWidth: 25,
     code: 'QD31.3',
@@ -404,7 +409,7 @@ const initialBooks: BookItem[] = [
     dewey: 'T57.6',
     cutter: '.T34',
     note: '9na Edición • Optimización e Industria',
-    folio: '#4011',
+    folio: '5010',
     available: '5 de 6 copias libres',
     barWidth: 83,
     code: 'T57.6',
@@ -433,7 +438,7 @@ const initialBooks: BookItem[] = [
     dewey: 'TK7868',
     cutter: '.T63',
     note: '10ma Edición • Lógica Digital y Circuitos',
-    folio: '#4012',
+    folio: '5011',
     available: 'En revisión de catalogación',
     barWidth: 100,
     code: 'TK7868',
@@ -459,6 +464,7 @@ const SEARCH_DEBOUNCE_MS = 220
 
 const books = ref<BookItem[]>(initialBooks.map((item) => ({ ...item, topics: [...item.topics] })))
 const searchKeyword = ref('')
+const searchField = ref<InventorySearchField>('all')
 const selectedStatus = ref<'all' | BookStatusKey>('all')
 const sortBy = ref<InventorySortKey>('dewey')
 const layoutMode = ref<'grid' | 'list'>('grid')
@@ -507,8 +513,36 @@ const editForm = ref({
   recommendation: '',
 })
 
-const createEmptyNewBookForm = () => ({
-  folio: `#${5241 + Math.max(0, books.value.length - initialBooks.length)}`,
+function normalizeFolioValue(value: string): string {
+  return value.trim().replace(/^#+/, '').trim()
+}
+
+function computeNextLocalConsecutiveFolio(): string {
+  const usedNumbers = new Set<number>()
+  for (const book of books.value) {
+    const cleaned = normalizeFolioValue(book.folio)
+    const num = Number.parseInt(cleaned, 10)
+    if (!Number.isNaN(num) && num >= 5000) {
+      usedNumbers.add(num)
+    }
+  }
+  let candidate = 5000
+  while (usedNumbers.has(candidate)) {
+    candidate += 1
+  }
+  return String(candidate)
+}
+
+function folioAlreadyExists(folioCandidate: string, excludeBookId?: number): boolean {
+  const cleanCandidate = normalizeFolioValue(folioCandidate).toLowerCase()
+  if (!cleanCandidate) return false
+  return books.value.some(
+    (b) => b.id !== excludeBookId && normalizeFolioValue(b.folio).toLowerCase() === cleanCandidate,
+  )
+}
+
+const createEmptyNewBookForm = (suggestedFolio?: string) => ({
+  folio: suggestedFolio ?? computeNextLocalConsecutiveFolio(),
   title: '',
   author: '',
   shelf: '1.1.1',
@@ -535,39 +569,58 @@ function normalizeOfflineText(value: string): string {
 }
 
 const filteredBooks = computed(() => {
-  if (usingApiData.value) {
-    return books.value
-  }
-
-  const tokens = normalizeOfflineText(searchKeyword.value)
-    .split(/\s+/)
-    .filter(Boolean)
+  const rawQuery = searchKeyword.value.trim()
+  const normalizedQuery = normalizeOfflineText(rawQuery)
+  const normalizedFolioQuery = normalizeOfflineText(normalizeFolioValue(rawQuery))
+  const tokens = normalizedQuery.split(/\s+/).filter(Boolean)
 
   const list = books.value.filter((book) => {
     const matchesStatus = selectedStatus.value === 'all' || book.status === selectedStatus.value
     if (!matchesStatus) return false
     if (tokens.length === 0) return true
-    const haystack = normalizeOfflineText(
-      [
-        book.title,
-        book.author,
-        book.note,
-        book.dewey,
-        book.cutter,
-        book.folio,
-        book.shelf,
-        STATUS_META[book.status].label,
-        ...book.topics,
-      ].join(' '),
+
+    const normTitle = normalizeOfflineText(book.title)
+    const normDewey = normalizeOfflineText(book.dewey)
+    const normFolio = normalizeOfflineText(normalizeFolioValue(book.folio))
+    const normAuthor = normalizeOfflineText(book.author)
+    const normNote = normalizeOfflineText(book.note)
+    const normCutter = normalizeOfflineText(book.cutter)
+    const normShelf = normalizeOfflineText(book.shelf)
+    const normTopics = normalizeOfflineText(book.topics.join(' '))
+
+    if (searchField.value === 'title') {
+      return tokens.every((token) => normTitle.includes(token))
+    }
+    if (searchField.value === 'dewey') {
+      return normDewey.includes(normalizedQuery)
+    }
+    if (searchField.value === 'folio') {
+      return Boolean(normalizedFolioQuery) && normFolio.includes(normalizedFolioQuery)
+    }
+
+    return tokens.every(
+      (token) =>
+        normTitle.includes(token) ||
+        normDewey.includes(token) ||
+        normFolio.includes(token.replace(/^#+/, '')) ||
+        normAuthor.includes(token) ||
+        normNote.includes(token) ||
+        normCutter.includes(token) ||
+        normShelf.includes(token) ||
+        normTopics.includes(token),
     )
-    return tokens.every((token) => haystack.includes(token))
   })
 
   const sorted = [...list]
   if (sortBy.value === 'status') {
     sorted.sort((a, b) => STATUS_META[a.status].id - STATUS_META[b.status].id || a.title.localeCompare(b.title))
   } else if (sortBy.value === 'barcode') {
-    sorted.sort((a, b) => a.folio.localeCompare(b.folio))
+    sorted.sort((a, b) => {
+      const na = Number.parseInt(normalizeFolioValue(a.folio), 10)
+      const nb = Number.parseInt(normalizeFolioValue(b.folio), 10)
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb
+      return a.folio.localeCompare(b.folio)
+    })
   } else if (sortBy.value === 'relevance') {
     sorted.sort((a, b) => a.title.localeCompare(b.title))
   } else if (sortBy.value === 'dewey') {
@@ -618,7 +671,7 @@ function mapApiBook(item: BookApiDto, idx: number): BookItem {
     title,
     author,
     note: item.note || 'Acervo institucional TecNM Monclova',
-    folio: item.folio || `#${4000 + idx + 1}`,
+    folio: normalizeFolioValue(item.folio || `${5000 + idx}`),
     dewey,
     cutter: item.cutter || '',
     shelf: shelfClean,
@@ -669,7 +722,7 @@ async function executeBackendSearch() {
     const results = await searchBooks(
       {
         search: searchKeyword.value,
-        field: 'all',
+        field: searchField.value,
         status: selectedStatus.value,
         sortBy: sortBy.value,
       },
@@ -816,17 +869,27 @@ async function saveFichaEdits() {
   try {
     const previousStatus = activeBook.value.status
     const nextStatus = editForm.value.status
+    const cleanedFolio = normalizeFolioValue(editForm.value.folio)
 
-    if (previousStatus !== nextStatus) {
-      try {
-        await updateBookStatus(activeBook.value.id, {
-          statusId: STATUS_META[nextStatus].id,
-          note: editForm.value.note.trim(),
-        })
-        void fetchMetrics()
-      } catch {
-        // Continúa actualizando estado local si la API no está conectada
-      }
+    if (cleanedFolio && folioAlreadyExists(cleanedFolio, activeBook.value.id)) {
+      searchError.value = `El folio ${cleanedFolio} ya existe en el inventario. No se permiten folios duplicados.`
+      return
+    }
+
+    try {
+      await updateBook(activeBook.value.id, {
+        title: editForm.value.title.trim(),
+        author: editForm.value.author.trim(),
+        note: editForm.value.note.trim(),
+        folio: cleanedFolio || normalizeFolioValue(activeBook.value.folio),
+        dewey: editForm.value.dewey.trim(),
+        cutter: editForm.value.cutter.trim(),
+        statusId: STATUS_META[nextStatus].id,
+        shelfName: editForm.value.shelf.trim(),
+      })
+      void fetchMetrics()
+    } catch {
+      // Continúa actualizando estado local si la API no está conectada
     }
 
     activeBook.value.title = editForm.value.title.trim()
@@ -846,15 +909,33 @@ async function saveFichaEdits() {
       activeBook.value.barWidth = updatedAvailability.width
     }
 
+    feedbackMessage.value = `Ficha del ejemplar (Folio ${activeBook.value.folio}) actualizada correctamente.`
     showEditarFichaModal.value = false
   } finally {
     isSubmitting.value = false
   }
 }
 
+async function assignUniqueNextFolio() {
+  let suggested = computeNextLocalConsecutiveFolio()
+  try {
+    const apiNext = await getNextAvailableFolio()
+    if (apiNext?.nextFolio) {
+      const candidate = normalizeFolioValue(apiNext.nextFolio)
+      if (!folioAlreadyExists(candidate)) {
+        suggested = candidate
+      }
+    }
+  } catch {
+    // Usa el siguiente consecutivo disponible local >= 5000
+  }
+  newBookForm.value = createEmptyNewBookForm(suggested)
+}
+
 function openNewBookModal() {
   newBookForm.value = createEmptyNewBookForm()
   showNewBookModal.value = true
+  void assignUniqueNextFolio()
 }
 
 function closeNewBookModal() {
@@ -868,10 +949,18 @@ async function saveNewBook(keepOpen = false) {
   if (!title || !author) return
 
   isSubmitting.value = true
+  searchError.value = ''
   try {
     const status = newBookForm.value.status
     const statusId = STATUS_META[status].id
-    const folio = newBookForm.value.folio.trim() || `#${5241 + books.value.length}`
+    let folio = normalizeFolioValue(newBookForm.value.folio) || computeNextLocalConsecutiveFolio()
+
+    // Validar que el folio sea >= 5000 y que NO exista ya en el sistema antes de asignarlo
+    const numericFolio = Number.parseInt(folio, 10)
+    if (Number.isNaN(numericFolio) || numericFolio < 5000 || folioAlreadyExists(folio)) {
+      folio = computeNextLocalConsecutiveFolio()
+    }
+
     const dewey = newBookForm.value.dewey.trim() || 'QA303.2'
     const cutter = newBookForm.value.cutter.trim() || '.S74 2025'
     const shelf = newBookForm.value.shelf.trim() || '1.1.1'
@@ -891,9 +980,13 @@ async function saveNewBook(keepOpen = false) {
         cutter,
         statusId,
         shelfId: 1,
+        shelfName: shelf,
       })
       if (created?.id) {
         createdId = Number(created.id)
+      }
+      if (created?.folio) {
+        folio = normalizeFolioValue(created.folio)
       }
       void fetchMetrics()
     } catch {
@@ -924,12 +1017,13 @@ async function saveNewBook(keepOpen = false) {
     }
 
     books.value.unshift(createdBook)
+    feedbackMessage.value = `Ejemplar "${title}" registrado con Folio consecutivo ${folio}.`
     if (!usingApiData.value) {
       baseMetrics.value.totalBooks += 1
     }
 
     if (keepOpen) {
-      newBookForm.value = createEmptyNewBookForm()
+      await assignUniqueNextFolio()
     } else {
       showNewBookModal.value = false
     }
@@ -947,15 +1041,20 @@ function closeEstanteModal() {
   showEstanteModal.value = false
 }
 
-function saveNewEstante() {
+async function saveNewEstante() {
   if (isSubmitting.value) return
   const codigo = estanteCodigo.value.trim()
   if (!codigo) return
 
   isSubmitting.value = true
   try {
+    try {
+      await createShelf(codigo)
+    } catch {
+      // Continúa en modo local si el backend no está disponible
+    }
     showEstanteModal.value = false
-    feedbackMessage.value = `Estante "${codigo}" registrado correctamente.`
+    feedbackMessage.value = `Estante "${codigo}" registrado correctamente en el catálogo.`
   } finally {
     isSubmitting.value = false
   }
@@ -970,15 +1069,20 @@ function closeTemasModal() {
   showTemasModal.value = false
 }
 
-function saveNewTema() {
+async function saveNewTema() {
   if (isSubmitting.value) return
   const nombre = temaNombre.value.trim()
   if (!nombre) return
 
   isSubmitting.value = true
   try {
+    try {
+      await createTopic(nombre)
+    } catch {
+      // Continúa en modo local si el backend no está disponible
+    }
     showTemasModal.value = false
-    feedbackMessage.value = `Tema "${nombre}" registrado correctamente.`
+    feedbackMessage.value = `Tema "${nombre}" registrado correctamente en el catálogo.`
   } finally {
     isSubmitting.value = false
   }
@@ -1009,7 +1113,7 @@ watch(searchKeyword, (value) => {
   scheduleRealtimeSearch()
 })
 
-watch([selectedStatus, sortBy], () => {
+watch([selectedStatus, sortBy, searchField], () => {
   runImmediateSearch()
 })
 
@@ -1060,6 +1164,19 @@ onBeforeUnmount(() => {
 
             <div class="bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-lg border border-white/40 text-on-surface">
               <form class="flex flex-col lg:flex-row items-stretch gap-2.5" @submit.prevent="runImmediateSearch">
+                <div class="relative min-w-[205px]">
+                  <select
+                    id="searchFieldSelector"
+                    v-model="searchField"
+                    class="inventory-select w-full !h-11 !min-h-0 !px-3.5 !py-0 bg-slate-100 text-primary font-label-md !text-xs font-bold !rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-tecnm-gold cursor-pointer"
+                    aria-label="Campo de búsqueda"
+                  >
+                    <option value="all">Todo (Título, Dewey, Folio)</option>
+                    <option value="title">Solo Título de la Obra</option>
+                    <option value="dewey">Código Dewey (CDD)</option>
+                    <option value="folio">Folio (5000+)</option>
+                  </select>
+                </div>
                 <div class="relative flex-1 flex items-center">
                   <span
                     :class="[
@@ -1073,7 +1190,7 @@ onBeforeUnmount(() => {
                     id="searchKeyword"
                     v-model="searchKeyword"
                     class="inventory-input w-full !h-11 !min-h-0 !pl-11 !pr-10 !py-0 bg-slate-50 text-on-surface font-body-md !text-xs placeholder:text-slate-400 !rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-tecnm-gold focus:bg-white transition-all shadow-inner"
-                    placeholder="Buscar por título, autor, especialidad, código Dewey o ID de inventario..."
+                    placeholder="Buscar por título (con o sin acentos), código Dewey o folio (5000+)..."
                     type="text"
                     autocomplete="off"
                     aria-label="Buscar en el inventario"

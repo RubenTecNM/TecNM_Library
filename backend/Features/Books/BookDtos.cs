@@ -14,7 +14,7 @@ public record BookDto(
     string ShelfName,
     string AvailableText,
     int AvailabilityPercent,
-    IReadOnlyList<string>? Topics = null
+    IReadOnlyList<string> Topics
 );
 
 public record BookMetricsDto(
@@ -24,6 +24,11 @@ public record BookMetricsDto(
     int RepairCount,
     int DiscardCount,
     int CatalogCount
+);
+
+public record NextFolioDto(
+    string NextFolio,
+    int NumericFolio
 );
 
 public record BookSearchQuery(
@@ -37,11 +42,23 @@ public record CreateBookRequest(
     string Title,
     string? Author,
     string? Note,
-    string Folio,
+    string? Folio,
     string Dewey,
     string Cutter,
     int StatusId,
-    int ShelfId
+    int ShelfId,
+    string? ShelfName = null
+);
+
+public record UpdateBookRequest(
+    string Title,
+    string? Author,
+    string? Note,
+    string? Folio,
+    string Dewey,
+    string Cutter,
+    int StatusId,
+    string? ShelfName = null
 );
 
 public record UpdateBookStatusRequest(
@@ -49,5 +66,9 @@ public record UpdateBookStatusRequest(
     string? Note
 );
 
+public record CreateShelfRequest(string Name);
+public record CreateTopicRequest(string Name);
+
 public record ShelfDto(int Id, string Name);
+public record TopicDto(int Id, string Name);
 public record BookStatusDto(int Id, string Name);

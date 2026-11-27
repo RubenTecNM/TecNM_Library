@@ -4,6 +4,8 @@ import type {
   BookMetricsApiDto,
   BookSearchParams,
   CreateBookPayload,
+  NextFolioApiDto,
+  UpdateBookPayload,
   UpdateBookStatusPayload,
 } from '../types/inventory'
 
@@ -43,8 +45,18 @@ export async function getInventoryMetrics(signal?: AbortSignal): Promise<BookMet
   return response.data
 }
 
+export async function getNextAvailableFolio(): Promise<NextFolioApiDto> {
+  const response = await http.get<NextFolioApiDto>('/books/next-folio')
+  return response.data
+}
+
 export async function createBook(payload: CreateBookPayload): Promise<BookApiDto> {
   const response = await http.post<BookApiDto>('/books', payload)
+  return response.data
+}
+
+export async function updateBook(bookId: number, payload: UpdateBookPayload): Promise<BookApiDto> {
+  const response = await http.put<BookApiDto>(`/books/${bookId}`, payload)
   return response.data
 }
 
@@ -53,4 +65,14 @@ export async function updateBookStatus(
   payload: UpdateBookStatusPayload,
 ): Promise<void> {
   await http.put(`/books/${bookId}/status`, payload)
+}
+
+export async function createShelf(name: string): Promise<{ id: number; name: string }> {
+  const response = await http.post<{ id: number; name: string }>('/books/shelves', { name })
+  return response.data
+}
+
+export async function createTopic(name: string): Promise<{ id: number; name: string }> {
+  const response = await http.post<{ id: number; name: string }>('/books/topics', { name })
+  return response.data
 }

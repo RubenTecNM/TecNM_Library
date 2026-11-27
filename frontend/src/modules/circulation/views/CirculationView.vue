@@ -1,36 +1,18 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-
-type LoanTab = 'activos' | 'proximos' | 'vencidos' | 'historial'
-type LoanState = 'en_tiempo' | 'vence_hoy' | 'vencido' | 'devuelto'
-
-interface LoanRecord {
-  id: number
-  folio: string
-  bookTitle: string
-  bookFullTitle: string
-  bookSubtitle: string
-  studentName: string
-  controlNumber: string
-  careerKey: string
-  careerLabel: string
-  loanDate: string
-  dueDate: string
-  state: LoanState
-  statusText: string
-  isOverdue: boolean
-  isDueToday: boolean
-  fineAmount?: number
-}
-
-interface TodayReturn {
-  id: number
-  bookTitle: string
-  time: string
-  studentInfo: string
-  detail: string
-  hasFine: boolean
-}
+import {
+  createCirculationLoan,
+  getCirculationSummary,
+  renewCirculationLoan,
+  returnCirculationLoan,
+} from '../api/circulationApi'
+import type {
+  BlockedStudentAlert,
+  LoanRecord,
+  LoanState,
+  LoanTab,
+  TodayReturn,
+} from '../types/circulation'
 
 const CAREER_OPTIONS = [
   { key: 'sistemas', label: 'Ing. en Sistemas' },
@@ -42,136 +24,170 @@ const CAREER_OPTIONS = [
   { key: 'electronica', label: 'Ing. Electrónica' },
 ]
 
+function formatShortDate(date: Date): string {
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = months[date.getMonth()]
+  const year = String(date.getFullYear()).slice(-2)
+  return `${day}/${month}/${year}`
+}
+
+function addDaysToShortDate(daysToAdd: number, baseDate?: Date): string {
+  const target = baseDate ? new Date(baseDate) : new Date()
+  target.setDate(target.getDate() + daysToAdd)
+  return formatShortDate(target)
+}
+
 const initialLoans: LoanRecord[] = [
   {
     id: 1,
-    folio: '#4002',
-    bookTitle: 'Ingeniería Económica',
-    bookFullTitle: 'Ingeniería Económica (Blank & Tarquin)',
-    bookSubtitle: 'L. Blank, A. Tarquin • 7a Ed.',
-    studentName: 'Carlos Eduardo Ramos',
-    controlNumber: '20051189',
-    careerKey: 'gestion',
-    careerLabel: 'Ing. Gestión Empresarial',
-    loanDate: '02/Ago/24',
-    dueDate: '09/Ago/24',
+    folio: '5002',
+    bookTitle: 'Código Limpio: Manual de estilo para el desarrollo ágil',
+    bookFullTitle: 'Código Limpio: Manual de estilo para el desarrollo ágil',
+    bookSubtitle: 'Robert C. Martin • 1ra Edición',
+    studentName: 'Carlos Alberto Mendoza Rivas',
+    controlNumber: '21280541',
+    careerKey: 'sistemas',
+    careerLabel: 'Ing. en Sistemas',
+    loanDate: addDaysToShortDate(-1),
+    dueDate: addDaysToShortDate(2),
     state: 'en_tiempo',
-    statusText: 'En tiempo (2 días)',
+    statusText: 'En tiempo (2 días • Plazo 3 días)',
     isOverdue: false,
     isDueToday: false,
+    hasEnrollmentBlock: false,
+    enrollmentBlockReason: null,
+    daysOverdue: 0,
   },
   {
     id: 2,
-    folio: '#4004',
-    bookTitle: 'Mecatrónica: Sistemas de Control',
-    bookFullTitle: 'Mecatrónica: Sistemas de Control',
-    bookSubtitle: 'W. Bolton • 5a Edición',
-    studentName: 'Mariana Soto Valdés',
-    controlNumber: '21050342',
-    careerKey: 'mecatronica',
-    careerLabel: 'Ing. Mecatrónica • Morosa',
-    loanDate: '28/Jul/24',
-    dueDate: '04/Ago/24',
+    folio: '5004',
+    bookTitle: 'Redes de Computadoras: Un Enfoque Descendente',
+    bookFullTitle: 'Redes de Computadoras: Un Enfoque Descendente',
+    bookSubtitle: 'James F. Kurose • 7ma Edición',
+    studentName: 'Ana Sofía Garza Villalobos',
+    controlNumber: '22280312',
+    careerKey: 'sistemas',
+    careerLabel: 'Ing. en Sistemas • BLOQUEO DE INSCRIPCIÓN',
+    loanDate: addDaysToShortDate(-5),
+    dueDate: addDaysToShortDate(-2),
     state: 'vencido',
-    statusText: 'Vencido (-4 días)',
+    statusText: 'Vencido (-2 días) • Bloqueo de Inscripción',
     isOverdue: true,
     isDueToday: false,
-    fineAmount: 60,
+    hasEnrollmentBlock: true,
+    enrollmentBlockReason: 'Bloqueo de inscripción activo por adeudo de ejemplar vencido (Folio 5004).',
+    daysOverdue: 2,
   },
   {
     id: 3,
-    folio: '#3890',
+    folio: '5005',
     bookTitle: 'Termodinámica Técnica',
     bookFullTitle: 'Termodinámica Técnica',
-    bookSubtitle: 'Y. Cengel, M. Boles',
+    bookSubtitle: 'Y. Çengel, M. Boles',
     studentName: 'Luis Fernando Garza',
     controlNumber: '19050882',
     careerKey: 'mecanica',
     careerLabel: 'Ing. Mecánica',
-    loanDate: '03/Ago/24',
-    dueDate: '10/Ago/24',
+    loanDate: addDaysToShortDate(0),
+    dueDate: addDaysToShortDate(3),
     state: 'en_tiempo',
     statusText: 'En tiempo (3 días)',
     isOverdue: false,
     isDueToday: false,
+    hasEnrollmentBlock: false,
+    enrollmentBlockReason: null,
+    daysOverdue: 0,
   },
   {
     id: 4,
-    folio: '#2215',
-    bookTitle: 'Química Ambiental y Energías',
-    bookFullTitle: 'Química Ambiental y Energías Renovables',
-    bookSubtitle: 'C. Baird, M. Cann',
+    folio: '5009',
+    bookTitle: 'Química General y Orgánica',
+    bookFullTitle: 'Química General y Orgánica',
+    bookSubtitle: 'Raymond Chang • 11va Edición',
     studentName: 'Valeria Méndez Gómez',
     controlNumber: '22050114',
     careerKey: 'energias',
-    careerLabel: 'Ing. Energías Renovables',
-    loanDate: '01/Ago/24',
-    dueDate: '08/Ago/24 (Hoy)',
+    careerLabel: 'Ing. en Energías Renovables',
+    loanDate: addDaysToShortDate(-3),
+    dueDate: `${addDaysToShortDate(0)} (Hoy)`,
     state: 'vence_hoy',
-    statusText: 'Vence Hoy (Hasta 20:00)',
+    statusText: 'Vence Hoy (Plazo 3 días)',
     isOverdue: false,
     isDueToday: true,
+    hasEnrollmentBlock: false,
+    enrollmentBlockReason: null,
+    daysOverdue: 0,
   },
   {
     id: 5,
-    folio: '#4102',
-    bookTitle: 'Manufactura, Ing. y Tecnología',
-    bookFullTitle: 'Manufactura, Ingeniería y Tecnología',
-    bookSubtitle: 'S. Kalpakjian, S. Schmid',
+    folio: '5010',
+    bookTitle: 'Investigación de Operaciones',
+    bookFullTitle: 'Investigación de Operaciones',
+    bookSubtitle: 'Hamdy A. Taha • 9na Edición',
     studentName: 'Jorge Alberto Castro',
     controlNumber: '21050720',
     careerKey: 'industrial',
-    careerLabel: 'Ing. Industrial',
-    loanDate: '04/Ago/24',
-    dueDate: '11/Ago/24',
-    state: 'en_tiempo',
-    statusText: 'En tiempo (4 días)',
-    isOverdue: false,
+    careerLabel: 'Ing. Industrial • BLOQUEO DE INSCRIPCIÓN',
+    loanDate: addDaysToShortDate(-4),
+    dueDate: addDaysToShortDate(-1),
+    state: 'vencido',
+    statusText: 'Vencido (-1 día) • Bloqueo de Inscripción',
+    isOverdue: true,
     isDueToday: false,
+    hasEnrollmentBlock: true,
+    enrollmentBlockReason: 'Bloqueo de inscripción activo por adeudo de ejemplar vencido (Folio 5010).',
+    daysOverdue: 1,
   },
   {
     id: 6,
-    folio: '#3510',
-    bookTitle: 'Cálculo Vectorial',
-    bookFullTitle: 'Cálculo Vectorial (Stewart)',
-    bookSubtitle: 'J. Stewart • 8a Ed.',
-    studentName: 'Andrea Paz',
-    controlNumber: '22050981',
-    careerKey: 'sistemas',
-    careerLabel: 'Ing. en Sistemas',
-    loanDate: '01/Ago/24',
-    dueDate: '08/Ago/24',
+    folio: '5000',
+    bookTitle: 'Sistemas Operativos Modernos',
+    bookFullTitle: 'Sistemas Operativos Modernos (Tanenbaum)',
+    bookSubtitle: 'Andrew S. Tanenbaum • 4ta Ed.',
+    studentName: 'Luis Fernando Treviño Peña',
+    controlNumber: '20280199',
+    careerKey: 'industrial',
+    careerLabel: 'Ing. Industrial',
+    loanDate: addDaysToShortDate(-6),
+    dueDate: addDaysToShortDate(-3),
     state: 'devuelto',
-    statusText: 'Devuelto • Sin multa',
+    statusText: 'Devuelto • Sin bloqueo de inscripción',
     isOverdue: false,
     isDueToday: false,
+    hasEnrollmentBlock: false,
+    enrollmentBlockReason: null,
+    daysOverdue: 0,
   },
 ]
 
 const initialReturns: TodayReturn[] = [
   {
     id: 1,
-    bookTitle: 'Cálculo Vectorial (Stewart)',
+    folio: '5000',
+    bookTitle: 'Sistemas Operativos Modernos',
     time: '11:42 hrs',
-    studentInfo: 'Andrea Paz (No. 22050981)',
-    detail: 'En buen estado • Sin multa',
-    hasFine: false,
+    studentInfo: 'Luis Fernando Treviño Peña (No. 20280199)',
+    detail: 'En buen estado • Sin bloqueo de inscripción',
+    wasBlocked: false,
   },
   {
     id: 2,
-    bookTitle: 'Física Universitaria Vol. 2',
+    folio: '5006',
+    bookTitle: 'Física Universitaria Moderna',
     time: '10:15 hrs',
     studentInfo: 'David Esquivel (No. 21050419)',
-    detail: 'Estante: Sala General A',
-    hasFine: false,
+    detail: 'Estante: Sala General A • Sin adeudo',
+    wasBlocked: false,
   },
   {
     id: 3,
-    bookTitle: 'Diseño Digital y VHDL',
+    folio: '5011',
+    bookTitle: 'Sistemas Digitales: Principios y Aplicaciones',
     time: '09:30 hrs',
     studentInfo: 'Héctor Moncada (No. 20050112)',
-    detail: 'Atraso 1 día • Multa: $15 MXN',
-    hasFine: true,
+    detail: 'Entregado tras vencimiento • Bloqueo de inscripción liberado',
+    wasBlocked: true,
   },
 ]
 
@@ -212,8 +228,34 @@ const activeLoanRecords = computed(() =>
   loans.value.filter((loan) => loan.state !== 'devuelto'),
 )
 
+const blockedStudentsAlerts = computed<BlockedStudentAlert[]>(() =>
+  loans.value
+    .filter((loan) => loan.isOverdue || loan.hasEnrollmentBlock)
+    .map((loan) => ({
+      loanId: loan.id,
+      studentName: loan.studentName,
+      controlNumber: loan.controlNumber,
+      careerLabel: loan.careerLabel.replace(/\s*•\s*BLOQUEO DE INSCRIPCIÓN/i, ''),
+      folio: loan.folio,
+      bookTitle: loan.bookTitle,
+      dueDate: loan.dueDate,
+      daysOverdue: loan.daysOverdue ?? 1,
+      blockReason:
+        loan.enrollmentBlockReason ??
+        `Bloqueo de inscripción escolar por ejemplar vencido (Folio ${loan.folio}).`,
+    })),
+)
+
+function normalizeSearchText(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
 const filteredLoans = computed(() => {
-  const query = (tableSearch.value.trim() || globalSearch.value.trim()).toLowerCase()
+  const query = normalizeSearchText(tableSearch.value.trim() || globalSearch.value.trim())
 
   return loans.value.filter((loan) => {
     if (activeTab.value === 'activos' && loan.state === 'devuelto') return false
@@ -226,18 +268,18 @@ const filteredLoans = computed(() => {
     }
 
     if (!query) return true
-    const haystack = [
-      loan.folio,
-      loan.bookTitle,
-      loan.bookFullTitle,
-      loan.bookSubtitle,
-      loan.studentName,
-      loan.controlNumber,
-      loan.careerLabel,
-      loan.statusText,
-    ]
-      .join(' ')
-      .toLowerCase()
+    const haystack = normalizeSearchText(
+      [
+        loan.folio,
+        loan.bookTitle,
+        loan.bookFullTitle,
+        loan.bookSubtitle,
+        loan.studentName,
+        loan.controlNumber,
+        loan.careerLabel,
+        loan.statusText,
+      ].join(' '),
+    )
 
     return haystack.includes(query)
   })
@@ -255,11 +297,40 @@ function getCurrentTimeLabel(): string {
   return `${hh}:${mm} hrs`
 }
 
-function receiveLoan(loan: LoanRecord) {
+async function fetchCirculationFromBackend() {
+  try {
+    const summary = await getCirculationSummary()
+    if (summary && Array.isArray(summary.loans) && summary.loans.length > 0) {
+      loans.value = summary.loans.map((item) => ({
+        ...item,
+        state: (item.state as LoanState) || 'en_tiempo',
+      }))
+      if (Array.isArray(summary.todayReturns) && summary.todayReturns.length > 0) {
+        todayReturns.value = summary.todayReturns
+      }
+      metricsBase.value.activeLoans = summary.activeLoans
+      metricsBase.value.scheduledToday = summary.scheduledToday
+      metricsBase.value.overdueLoans = summary.overdueLoans
+      metricsBase.value.receivedToday = summary.receivedToday
+      metricsBase.value.historyCount = summary.historyCount
+    }
+  } catch {
+    // Mantiene datos locales cuando la API no está disponible
+  }
+}
+
+async function receiveLoan(loan: LoanRecord) {
   if (isProcessing.value || loan.state === 'devuelto') return
   isProcessing.value = true
   try {
-    const hadFine = loan.isOverdue && (loan.fineAmount ?? 0) > 0
+    const hadEnrollmentBlock = loan.isOverdue || loan.hasEnrollmentBlock
+
+    try {
+      await returnCirculationLoan(loan.id)
+    } catch {
+      // Continúa actualizando en cliente si el backend no responde
+    }
+
     if (loan.isOverdue) {
       metricsBase.value.overdueLoans = Math.max(0, metricsBase.value.overdueLoans - 1)
     }
@@ -273,21 +344,29 @@ function receiveLoan(loan: LoanRecord) {
     loan.state = 'devuelto'
     loan.isOverdue = false
     loan.isDueToday = false
-    loan.statusText = hadFine ? `Devuelto • Multa cobrada ($${loan.fineAmount} MXN)` : 'Devuelto • En buen estado'
+    loan.hasEnrollmentBlock = false
+    loan.enrollmentBlockReason = null
+    loan.careerLabel = loan.careerLabel.replace(/\s*•\s*BLOQUEO DE INSCRIPCIÓN/i, '')
+    loan.statusText = hadEnrollmentBlock
+      ? 'Devuelto • Bloqueo de inscripción liberado'
+      : 'Devuelto • Sin bloqueo de inscripción'
 
     todayReturns.value.unshift({
       id: Date.now(),
+      folio: loan.folio,
       bookTitle: loan.bookTitle,
       time: getCurrentTimeLabel(),
       studentInfo: `${loan.studentName} (No. ${loan.controlNumber})`,
-      detail: hadFine ? `Sanción liquidada • Multa: $${loan.fineAmount} MXN` : 'En buen estado • Sin multa',
-      hasFine: hadFine,
+      detail: hadEnrollmentBlock
+        ? 'Entregado tras vencimiento • Bloqueo de inscripción liberado'
+        : 'En buen estado • Sin bloqueo de inscripción',
+      wasBlocked: hadEnrollmentBlock,
     })
 
     notify(
-      hadFine
-        ? `Devolución registrada para ${loan.folio} (${loan.bookTitle}) con sanción liquidada.`
-        : `Devolución registrada correctamente para ${loan.folio} (${loan.bookTitle}).`,
+      hadEnrollmentBlock
+        ? `Devolución registrada para Folio ${loan.folio} (${loan.bookTitle}). Se ha LIBERADO el bloqueo de inscripción del estudiante ${loan.studentName} (${loan.controlNumber}).`
+        : `Devolución registrada correctamente para Folio ${loan.folio} (${loan.bookTitle}).`,
       'success',
     )
   } finally {
@@ -295,19 +374,35 @@ function receiveLoan(loan: LoanRecord) {
   }
 }
 
-function renewLoan(loan: LoanRecord) {
+async function renewLoan(loan: LoanRecord) {
   if (isProcessing.value || loan.state === 'devuelto') return
   isProcessing.value = true
   try {
+    let updatedDueDate = addDaysToShortDate(3)
+    try {
+      const updated = await renewCirculationLoan(loan.id)
+      if (updated?.dueDate) {
+        updatedDueDate = updated.dueDate
+      }
+    } catch {
+      // Calcula +3 días localmente
+    }
+
     if (loan.isDueToday) {
       metricsBase.value.scheduledToday = Math.max(0, metricsBase.value.scheduledToday - 1)
     }
+    if (loan.isOverdue) {
+      metricsBase.value.overdueLoans = Math.max(0, metricsBase.value.overdueLoans - 1)
+    }
     loan.isDueToday = false
     loan.isOverdue = false
+    loan.hasEnrollmentBlock = false
+    loan.enrollmentBlockReason = null
+    loan.careerLabel = loan.careerLabel.replace(/\s*•\s*BLOQUEO DE INSCRIPCIÓN/i, '')
     loan.state = 'en_tiempo'
-    loan.dueDate = '14/Ago/24'
-    loan.statusText = 'Renovado (+3 días)'
-    notify(`Préstamo ${loan.folio} renovado por 3 días adicionales.`, 'info')
+    loan.dueDate = updatedDueDate
+    loan.statusText = 'Renovado (+3 días adicionales)'
+    notify(`Préstamo de Folio ${loan.folio} renovado por 3 días adicionales (nuevo vencimiento: ${updatedDueDate}).`, 'info')
   } finally {
     isProcessing.value = false
   }
@@ -315,14 +410,14 @@ function renewLoan(loan: LoanRecord) {
 
 function sendReminder(loan: LoanRecord) {
   notify(
-    `Recordatorio institucional enviado a ${loan.studentName} (Control ${loan.controlNumber}) por el ejemplar ${loan.folio}.`,
+    `Alerta de BLOQUEO DE INSCRIPCIÓN enviada a ${loan.studentName} (Control ${loan.controlNumber}) por adeudo del ejemplar Folio ${loan.folio}.`,
     'warning',
   )
 }
 
 function openNewLoanModal() {
   newLoanForm.value = {
-    folio: '',
+    folio: '5000',
     bookTitle: '',
     studentName: '',
     controlNumber: '',
@@ -331,41 +426,80 @@ function openNewLoanModal() {
   showNewLoanModal.value = true
 }
 
-function submitNewLoan() {
+async function submitNewLoan() {
   if (isProcessing.value) return
-  const folioRaw = newLoanForm.value.folio.trim()
+  const folioClean = newLoanForm.value.folio.trim().replace(/^#+/, '')
   const bookTitle = newLoanForm.value.bookTitle.trim()
   const studentName = newLoanForm.value.studentName.trim()
   const controlNumber = newLoanForm.value.controlNumber.trim()
-  if (!folioRaw || !bookTitle || !studentName || !controlNumber) return
+  if (!folioClean || !bookTitle || !studentName || !controlNumber) return
+
+  const numericFolio = Number.parseInt(folioClean, 10)
+  if (!Number.isNaN(numericFolio) && numericFolio < 5000) {
+    notify('El folio del libro debe ser a partir del número 5000 en adelante.', 'warning')
+    return
+  }
+
+  // Verificar si el estudiante tiene un bloqueo de inscripción activo antes de prestarle otro libro
+  const existingBlocked = blockedStudentsAlerts.value.find(
+    (b) => b.controlNumber.toLowerCase() === controlNumber.toLowerCase(),
+  )
+  if (existingBlocked) {
+    notify(
+      `ALERTA DE BLOQUEO DE INSCRIPCIÓN: El estudiante ${existingBlocked.studentName} (${controlNumber}) tiene bloqueo activo por el libro "${existingBlocked.bookTitle}" (Folio ${existingBlocked.folio}). Debe devolverlo primero.`,
+      'warning',
+    )
+    return
+  }
 
   isProcessing.value = true
   try {
     const career = CAREER_OPTIONS.find((item) => item.key === newLoanForm.value.careerKey)
-    const folioFormatted = folioRaw.startsWith('#') ? folioRaw : `#${folioRaw.toUpperCase()}`
-    const newId = Math.max(0, ...loans.value.map((item) => item.id)) + 1
+    let createdLoan: LoanRecord | null = null
+
+    try {
+      createdLoan = await createCirculationLoan({
+        folio: folioClean,
+        bookTitle,
+        studentName,
+        controlNumber,
+        careerKey: newLoanForm.value.careerKey,
+      })
+    } catch {
+      // Registro local con plazo oficial de 3 días
+    }
+
+    const newId = createdLoan?.id ?? Math.max(0, ...loans.value.map((item) => item.id)) + 1
+    const startDateLabel = createdLoan?.loanDate ?? formatShortDate(new Date())
+    const dueDateLabel = createdLoan?.dueDate ?? addDaysToShortDate(3)
 
     loans.value.unshift({
       id: newId,
-      folio: folioFormatted,
+      folio: folioClean,
       bookTitle,
       bookFullTitle: bookTitle,
-      bookSubtitle: 'Préstamo de mostrador • TecNM Monclova',
+      bookSubtitle: 'Préstamo de mostrador (Plazo 3 días) • TecNM Monclova',
       studentName,
       controlNumber,
       careerKey: newLoanForm.value.careerKey,
       careerLabel: career?.label ?? 'Ing. en Sistemas',
-      loanDate: '08/Ago/24',
-      dueDate: '15/Ago/24',
+      loanDate: startDateLabel,
+      dueDate: dueDateLabel,
       state: 'en_tiempo',
-      statusText: 'En tiempo (7 días)',
+      statusText: 'En tiempo (Plazo 3 días)',
       isOverdue: false,
       isDueToday: false,
+      hasEnrollmentBlock: false,
+      enrollmentBlockReason: null,
+      daysOverdue: 0,
     })
     metricsBase.value.activeLoans += 1
     activeTab.value = 'activos'
     showNewLoanModal.value = false
-    notify(`Préstamo ${folioFormatted} registrado correctamente para ${studentName}.`, 'success')
+    notify(
+      `Préstamo de Folio ${folioClean} registrado por 3 días (entrega límite: ${dueDateLabel}) para ${studentName}.`,
+      'success',
+    )
   } finally {
     isProcessing.value = false
   }
@@ -401,6 +535,7 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
+  void fetchCirculationFromBackend()
   window.addEventListener('keydown', handleKeydown)
 })
 
@@ -452,7 +587,7 @@ onBeforeUnmount(() => {
             class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors"
             title="Manual de Procedimientos e Información"
             aria-label="Manual de Procedimientos e Información"
-            @click="notify('Reglamento de circulación TecNM Monclova: préstamo regular de 7 días y renovación de 3 días.', 'info')"
+            @click="notify('Reglamento de circulación TecNM Monclova: plazo de entrega de 3 días, renovación por +3 días adicionales. Los adeudos vencidos generan bloqueo de inscripción (sin multas monetarias).', 'info')"
           >
             <span class="material-symbols-outlined text-[20px]">help_outline</span>
           </button>
@@ -480,7 +615,7 @@ onBeforeUnmount(() => {
               Módulo de Circulación y Préstamos
             </h1>
             <p class="font-body-md text-body-md !text-on-surface-variant !max-w-none">
-              Control integral de acervo bibliográfico, salidas físicas, devoluciones y sanciones
+              Control integral de préstamos (plazo 3 días), renovaciones (+3 días), devoluciones y alertas de bloqueo de inscripción
             </p>
           </div>
 
@@ -632,23 +767,23 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <!-- Préstamos Vencidos -->
+          <!-- Préstamos Vencidos / Bloqueos de Inscripción -->
           <div class="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-error-container/60 flex flex-col justify-between hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between gap-2">
               <span class="font-label-sm text-label-sm text-error uppercase tracking-wider font-bold">
-                Préstamos Vencidos
+                Bloqueos de Inscripción
               </span>
               <div class="w-10 h-10 rounded-xl bg-error-container/40 flex items-center justify-center text-error shrink-0">
-                <span class="material-symbols-outlined text-[22px]">warning</span>
+                <span class="material-symbols-outlined text-[22px]">block</span>
               </div>
             </div>
             <div class="mt-3">
               <div class="flex items-baseline gap-2 flex-wrap">
                 <span class="font-headline-lg text-[30px] font-bold text-error leading-none">
-                  {{ metricsBase.overdueLoans }}
+                  {{ blockedStudentsAlerts.length }}
                 </span>
                 <span class="font-body-sm text-[12px] text-error font-medium">
-                  alertas con demora
+                  estudiantes con bloqueo
                 </span>
               </div>
               <div class="mt-3 pt-2.5 border-t border-error-container/40 flex items-center justify-between text-error font-label-sm text-label-sm font-semibold">
@@ -657,7 +792,7 @@ onBeforeUnmount(() => {
                   class="text-error font-semibold text-[11px] hover:underline"
                   @click="activeTab = 'vencidos'"
                 >
-                  Atender morosos
+                  Ver estudiantes bloqueados
                 </button>
               </div>
             </div>
@@ -691,6 +826,73 @@ onBeforeUnmount(() => {
                   Revisar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel de Alertas de Estudiantes con Bloqueo de Inscripción -->
+        <div
+          v-if="blockedStudentsAlerts.length > 0"
+          class="bg-rose-50/90 border border-rose-200 rounded-xl p-4 shadow-sm flex flex-col gap-3"
+          role="region"
+          aria-label="Alertas de estudiantes con bloqueo de inscripción"
+        >
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-rose-200/80">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[18px]">gpp_maybe</span>
+              </span>
+              <div>
+                <h2 class="font-headline-sm !text-sm font-bold text-rose-900">
+                  Alertas Activas: Estudiantes con Bloqueo de Inscripción ({{ blockedStudentsAlerts.length }})
+                </h2>
+                <p class="text-[11.5px] !text-rose-700">
+                  En el TecNM Campus Monclova no aplican multas monetarias; el retraso en la entrega mayor a 3 días activa el bloqueo de reinscripción escolar hasta devolver el ejemplar.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-label-sm text-xs font-semibold shrink-0 transition-colors"
+              @click="activeTab = 'vencidos'"
+            >
+              Filtrar Bloqueados ({{ blockedStudentsAlerts.length }})
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            <div
+              v-for="alert in blockedStudentsAlerts"
+              :key="alert.loanId"
+              class="bg-white rounded-lg p-3 border border-rose-200 flex items-center justify-between gap-3 shadow-xs"
+            >
+              <div class="flex flex-col min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-citation-code text-[10.5px] font-bold">
+                    BLOQUEO ACTIVO • No. {{ alert.controlNumber }}
+                  </span>
+                  <span class="text-xs font-bold text-slate-900 truncate">{{ alert.studentName }}</span>
+                </div>
+                <span class="text-[11px] text-slate-600 truncate mt-0.5">
+                  {{ alert.careerLabel }} • Adeuda Folio <strong>{{ alert.folio }}</strong> ({{ alert.bookTitle }})
+                </span>
+                <span class="text-[10.5px] text-rose-700 font-semibold mt-0.5">
+                  Venció el {{ alert.dueDate }} ({{ alert.daysOverdue }} {{ alert.daysOverdue === 1 ? 'día' : 'días' }} de retraso)
+                </span>
+              </div>
+              <button
+                type="button"
+                class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shrink-0 transition-colors"
+                title="Recibir ejemplar y liberar bloqueo de inscripción"
+                @click="
+                  () => {
+                    const target = loans.find((l) => l.id === alert.loanId)
+                    if (target) receiveLoan(target)
+                  }
+                "
+              >
+                Recibir y Liberar
+              </button>
             </div>
           </div>
         </div>
@@ -986,7 +1188,7 @@ onBeforeUnmount(() => {
                                     ? 'bg-secondary hover:bg-secondary/90 text-on-secondary'
                                     : 'bg-surface-container hover:bg-primary hover:text-on-primary text-primary',
                               ]"
-                              :title="loan.isOverdue ? 'Cobrar sanción y recibir' : 'Recibir libro'"
+                              :title="loan.isOverdue ? 'Recibir libro y liberar bloqueo de inscripción' : 'Recibir libro'"
                               @click="receiveLoan(loan)"
                             >
                               <span class="material-symbols-outlined text-[17px]">
@@ -1099,7 +1301,7 @@ onBeforeUnmount(() => {
                 :key="item.id"
                 :class="[
                   'w-full p-3.5 rounded-xl border flex items-start gap-3 transition-colors',
-                  item.hasFine
+                  item.wasBlocked
                     ? 'bg-secondary-container/15 border-secondary/30'
                     : 'bg-surface-container-low border-surface-container-high/70',
                 ]"
@@ -1107,7 +1309,7 @@ onBeforeUnmount(() => {
                 <div
                   :class="[
                     'w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ring-4 ring-surface-container-lowest',
-                    item.hasFine ? 'bg-secondary' : 'bg-emerald-500',
+                    item.wasBlocked ? 'bg-secondary' : 'bg-emerald-500',
                   ]"
                 ></div>
                 <div class="flex flex-col flex-1 min-w-0 gap-0.5">
@@ -1125,7 +1327,7 @@ onBeforeUnmount(() => {
                   <span
                     :class="[
                       'font-semibold text-[11.5px] mt-0.5',
-                      item.hasFine ? 'text-secondary' : 'text-emerald-700',
+                      item.wasBlocked ? 'text-secondary' : 'text-emerald-700',
                     ]"
                   >
                     {{ item.detail }}
@@ -1168,13 +1370,13 @@ onBeforeUnmount(() => {
         <form class="p-6 flex flex-col gap-4 text-xs" @submit.prevent="submitNewLoan">
           <div class="circulation-form-grid">
             <div>
-              <label class="block font-bold text-slate-700 mb-1" for="loanFolio">Folio del Ejemplar *</label>
+              <label class="block font-bold text-slate-700 mb-1" for="loanFolio">Folio del Ejemplar (5000+) *</label>
               <input
                 id="loanFolio"
                 v-model="newLoanForm.folio"
                 type="text"
                 required
-                placeholder="Ej. #4015"
+                placeholder="Ej. 5000"
                 class="circulation-input w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 font-citation-code font-semibold !text-xs"
               />
             </div>
