@@ -25,6 +25,7 @@
 | **13** | 2026-11-26 | *pendiente* | Frontend | Limpieza del modal *Ficha Técnica* en Inventario (retiro de barra *Disponibilidad en Acervo* y subtítulo) |
 | **14** | 2026-11-26 | *pendiente* | BD + Backend | Cálculo automático de turno (`Matutino`/`Vespertino`, corte `15:00`) desde `Visit.entryDate` y `Borrower.time` opcional |
 | **15** | 2026-11-26 | *pendiente* | BD + Backend | Eliminación de columna `exitDate` en `Visit` (`database.sql`, `Visit.cs` y `TecNMDbContext.cs`) |
+| **16** | 2026-11-26 | *pendiente* | Frontend | Rediseño completo de **Registro de Asistencia** (formulario *Nueva Visita*, historial filtrable por rango/presets y CSV) |
 
 ---
 
@@ -418,6 +419,32 @@ Como PostgreSQL solo ejecuta `database.sql` al inicializar un volumen vacío, si
   - Se actualizaron los `INSERT INTO Visit` semilla removiendo la columna y sus valores.
 - **`backend/Features/Books/Visit.cs`:** se eliminó la propiedad `ExitDate` (`DateTime?`).
 - **`backend/Data/TecNMDbContext.cs`:** se retiró el mapeo `entity.Property(e => e.ExitDate).HasColumnName("exitdate")` para mantener paridad con `database.sql`.
+
+---
+
+## Entrada 16 — Rediseño completo de la vista **Registro de Asistencia**
+
+**Fecha:** 2026-11-26  
+**Alcance:** Frontend (`frontend/src/modules/attendance/views/AttendanceView.vue`).
+
+### Qué se cambió en `AttendanceView.vue`
+Se reemplazó la vista anterior (basada en donas y matriz mensual) por el nuevo diseño operativo de mostrador para registro diario e historial de visitas, integrado dentro del `MainLayout.vue` compartido (sin duplicar la barra lateral):
+
+- **Encabezado institucional y banner superior:**
+  - Barra superior con título *"Biblioteca Tec Monclova"* e indicador de estado *"Servicio Activo • Sala General"*.
+  - Banner *"Registro de Asistencias y Visitas Diarias"* con periodo vigente (*Ago - Dic 2026*).
+- **Tarjeta de captura *Nueva Visita*:**
+  - **Fecha** (`type="date"`, inicializada a la fecha actual) y **Turno** (`Matutino` / `Vespertino`, seleccionado automáticamente con el corte institucional de las `15:00`) distribuidos con cuadrícula scoped `.attendance-date-shift-grid` (aislada de `.grid` de `global.css`).
+  - **Nombre del Visitante** con búsqueda/autocompletado sobre el directorio local (`findMatchingVisitor`) por nombre o matrícula/clave de empleado.
+  - **Servicio / Motivo** en botones tipo *pill*: `Presencial` (activo por defecto), `Virtual`, `Reunión`, `Clase`, `Mantenimiento` y `Otra`.
+  - **Nota / Observaciones** opcional.
+  - **Registrar grupo + Cantidad** (`1` a `60`, habilitado al marcar el checkbox).
+  - Botón principal **Registrar Visita** (`handleRegisterVisit`) que inserta la visita al inicio del historial, actualiza contadores y muestra una notificación flotante (*toast* animado con `showToast`).
+- **Tarjeta *Historial de Visitas Registradas*:**
+  - **3 métricas reactivas del periodo:** `Total periodo`, `Matutino` y `Vespertino`.
+  - **Barra de periodo de consulta:** selector de fechas *desde / al*, botón **Filtrar** (`applyDateFilter`), accesos rápidos **Hoy**, **Semana** y **Mes** (`setFilterPreset`), y botón **Exportar CSV** (`exportToCSV`) que descarga el archivo `.csv` con BOM UTF-8.
+  - **Tabla interactiva (`#visitasTable`):** columnas `Fecha`, `Hora`, `Matrícula`, `Nombre` (con nota si existe), `Carrera`, `Servicio` (badge por color) y botón **Anular** (`handleDeleteVisit`), con paginación funcional de 6 registros por página.
+
 
 
 
