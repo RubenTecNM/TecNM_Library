@@ -590,10 +590,12 @@ INSERT INTO Loan (book_id, borrower_id, startDate, dueDate, returnDate, responsi
 
 -- 11. Catálogo de Servicios de Biblioteca (Service)
 INSERT INTO Service (id, name, description, idUserCreate, dateCreate, idStatus) VALUES
-(1, 'Física', 'Consulta o estudio presencial en sala de biblioteca', 1, CURRENT_TIMESTAMP, B'1'),
+(1, 'Presencial', 'Consulta o estudio presencial en sala de biblioteca', 1, CURRENT_TIMESTAMP, B'1'),
 (2, 'Virtual', 'Uso de biblioteca digital o equipo de cómputo', 1, CURRENT_TIMESTAMP, B'1'),
 (3, 'Reunión', 'Uso de espacio para reunión o trabajo en equipo', 1, CURRENT_TIMESTAMP, B'1'),
-(4, 'Clase', 'Sesión o clase impartida en instalaciones de biblioteca', 1, CURRENT_TIMESTAMP, B'1');
+(4, 'Clase', 'Sesión o clase impartida en instalaciones de biblioteca', 1, CURRENT_TIMESTAMP, B'1'),
+(5, 'Mantenimiento', 'Soporte técnico o mantenimiento en instalaciones de biblioteca', 1, CURRENT_TIMESTAMP, B'1'),
+(6, 'Otra', 'Otro servicio o motivo de visita a biblioteca', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Service_id_seq', (SELECT MAX(id) FROM Service));
 
 -- 12. Visitas de prueba (Visit)

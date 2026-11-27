@@ -29,6 +29,7 @@
 | **17** | 2026-11-26 | *pendiente* | Frontend | Selector **Tipo de Visitante** y tabla de 6 columnas (sin Matrícula, con rol bajo Nombre) en **Registro de Asistencia** |
 | **18** | 2026-11-27 | *pendiente* | BD + Backend | Columna `librarian_id` (FK a `Borrower`) en `Visit` para registrar al encargado en turno |
 | **19** | 2026-11-27 | *pendiente* | BD + Backend | Cambio de `startDate`, `dueDate` y `returnDate` en `Loan` de `TIMESTAMP` a `DATE` (solo fecha) |
+| **20** | 2026-11-27 | *pendiente* | BD | Alineación del catálogo `Service` en `database.sql` con los 6 servicios de `AttendanceView.vue` |
 
 ---
 
@@ -496,6 +497,19 @@ Cumple **3FN** sin crear una tabla redundante de responsables ni guardar nombres
   - En la vista `vw_active_loans_detail`: se ajustó la comparación a `l.dueDate < CURRENT_DATE` y `l.dueDate = CURRENT_DATE` (evitando marcar como vencidos los préstamos que vencen hoy).
 - **`backend/Features/Books/Loan.cs`:** `StartDate`, `DueDate` y `ReturnDate` cambiaron de `DateTime` / `DateTime?` a **`DateOnly` / `DateOnly?`**.
 - **`backend/Data/TecNMDbContext.cs`:** se agregó `.HasColumnType("date")` en las 3 columnas de `Loan`.
+
+---
+
+## Entrada 20 — Alineación del catálogo `Service` en `database.sql` con Asistencia
+
+**Fecha:** 2026-11-27  
+**Alcance:** Base de datos (`database.sql`).
+
+### Qué se modificó
+- **`database.sql` (`INSERT INTO Service`):**
+  - Se renombró el servicio `1` de `'Física'` a `'Presencial'`.
+  - Se agregaron los servicios `5: 'Mantenimiento'` y `6: 'Otra'` para igualar exactamente los 6 botones de `AttendanceView.vue` (`Presencial`, `Virtual`, `Reunión`, `Clase`, `Mantenimiento`, `Otra`).
+
 
 
 
