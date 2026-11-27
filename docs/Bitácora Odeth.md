@@ -24,6 +24,7 @@
 | **12** | 2026-11-25 | *pendiente* | Infra / Seguridad | Gestión estricta de credenciales vía `.env` (cero hardcoded en Compose) y volumen persistente en `db_replica` |
 | **13** | 2026-11-26 | *pendiente* | Frontend | Limpieza del modal *Ficha Técnica* en Inventario (retiro de barra *Disponibilidad en Acervo* y subtítulo) |
 | **14** | 2026-11-26 | *pendiente* | BD + Backend | Cálculo automático de turno (`Matutino`/`Vespertino`, corte `15:00`) desde `Visit.entryDate` y `Borrower.time` opcional |
+| **15** | 2026-11-26 | *pendiente* | BD + Backend | Eliminación de columna `exitDate` en `Visit` (`database.sql`, `Visit.cs` y `TecNMDbContext.cs`) |
 
 ---
 
@@ -403,6 +404,21 @@ En el TecNM Campus Monclova las clases del turno matutino son de 7:00 AM a 3:00 
 
 ### Nota para bases de datos ya inicializadas en Docker
 Como PostgreSQL solo ejecuta `database.sql` al inicializar un volumen vacío, si ya tienes un contenedor levantado y quieres aplicar el cambio sin borrar datos puedes ejecutar el `ALTER TABLE` y el `CREATE OR REPLACE VIEW`, o recrear el volumen con `docker compose down -v && docker compose up -d`.
+
+---
+
+## Entrada 15 — Eliminación de `exitDate` en `Visit`
+
+**Fecha:** 2026-11-26  
+**Alcance:** Base de datos (`database.sql`) y Backend (`backend/Features/Books/Visit.cs`, `backend/Data/TecNMDbContext.cs`).
+
+### Qué se modificó archivo por archivo
+- **`database.sql`:**
+  - Se eliminó la columna `exitDate TIMESTAMP NULL` de la definición de la tabla `Visit` (conservando `entryDate` como marca de tiempo de registro de la visita).
+  - Se actualizaron los `INSERT INTO Visit` semilla removiendo la columna y sus valores.
+- **`backend/Features/Books/Visit.cs`:** se eliminó la propiedad `ExitDate` (`DateTime?`).
+- **`backend/Data/TecNMDbContext.cs`:** se retiró el mapeo `entity.Property(e => e.ExitDate).HasColumnName("exitdate")` para mantener paridad con `database.sql`.
+
 
 
 

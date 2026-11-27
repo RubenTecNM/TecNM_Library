@@ -6,7 +6,6 @@ public class Visit
     public int BorrowerId { get; set; }
     public int ServiceId { get; set; }
     public DateTime EntryDate { get; set; } = DateTime.UtcNow;
-    public DateTime? ExitDate { get; set; }
     public string? Notes { get; set; }
 
     public int IdUserCreate { get; set; } = 1;

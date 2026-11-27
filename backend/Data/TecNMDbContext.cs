@@ -215,7 +215,6 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
             entity.Property(e => e.BorrowerId).HasColumnName("borrower_id");
             entity.Property(e => e.ServiceId).HasColumnName("service_id");
             entity.Property(e => e.EntryDate).HasColumnName("entrydate");
-            entity.Property(e => e.ExitDate).HasColumnName("exitdate");
             entity.Property(e => e.Notes).HasColumnName("notes");
 
             entity.HasOne(e => e.Borrower)
