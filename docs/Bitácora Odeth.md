@@ -26,6 +26,7 @@
 | **14** | 2026-11-26 | *pendiente* | BD + Backend | Cálculo automático de turno (`Matutino`/`Vespertino`, corte `15:00`) desde `Visit.entryDate` y `Borrower.time` opcional |
 | **15** | 2026-11-26 | *pendiente* | BD + Backend | Eliminación de columna `exitDate` en `Visit` (`database.sql`, `Visit.cs` y `TecNMDbContext.cs`) |
 | **16** | 2026-11-26 | *pendiente* | Frontend | Rediseño completo de **Registro de Asistencia** (formulario *Nueva Visita*, historial filtrable por rango/presets y CSV) |
+| **17** | 2026-11-26 | *pendiente* | Frontend | Selector **Tipo de Visitante** y tabla de 6 columnas (sin Matrícula, con rol bajo Nombre) en **Registro de Asistencia** |
 
 ---
 
@@ -444,6 +445,24 @@ Se reemplazó la vista anterior (basada en donas y matriz mensual) por el nuevo 
   - **3 métricas reactivas del periodo:** `Total periodo`, `Matutino` y `Vespertino`.
   - **Barra de periodo de consulta:** selector de fechas *desde / al*, botón **Filtrar** (`applyDateFilter`), accesos rápidos **Hoy**, **Semana** y **Mes** (`setFilterPreset`), y botón **Exportar CSV** (`exportToCSV`) que descarga el archivo `.csv` con BOM UTF-8.
   - **Tabla interactiva (`#visitasTable`):** columnas `Fecha`, `Hora`, `Matrícula`, `Nombre` (con nota si existe), `Carrera`, `Servicio` (badge por color) y botón **Anular** (`handleDeleteVisit`), con paginación funcional de 6 registros por página.
+
+---
+
+## Entrada 17 — Selector *Tipo de Visitante* y simplificación de tabla en **Registro de Asistencia**
+
+**Fecha:** 2026-11-26  
+**Alcance:** Frontend (`frontend/src/modules/attendance/views/AttendanceView.vue`).
+
+### Qué se comparó y actualizó en `AttendanceView.vue`
+- **Formulario *Nueva Visita*:**
+  - Se agregó el selector interactivo **Tipo de Visitante** (`VISITOR_ROLE_OPTIONS` y `selectVisitorRole`) debajo de *Nombre del Visitante* con 4 botones *pill*: **Alumno** (`school`, activo por defecto), **Docente** (`badge`), **Administrativo** (`corporate_fare`) y **Otro** (`person_outline`).
+  - Se ajustó el placeholder de *Nombre del Visitante* a `"Ej. Juan Carlos Pérez Morales"`.
+- **Tabla *Historial de Visitas Registradas* (`#visitasTable`):**
+  - Se eliminó la columna **Matrícula**, dejando **6 columnas**: `Fecha`, `Hora`, `Nombre`, `Carrera`, `Servicio` y `Acción`.
+  - En la columna **Nombre**, debajo del nombre del visitante se muestra ahora la etiqueta con ícono y color de su **Tipo de Visitante** (`Alumno`, `Docente`, `Administrativo`, `Otro`).
+  - Se limpiaron las etiquetas de **Carrera** (ej. `Ing. Informática`, `Informática / Docente Titular`, `Soporte Técnico / TI`) para evitar duplicar el rol.
+- **Exportación CSV (`exportToCSV`):** se reemplazó la columna `Matrícula` por `Tipo de Visitante` para mantener coherencia con la tabla.
+
 
 
 

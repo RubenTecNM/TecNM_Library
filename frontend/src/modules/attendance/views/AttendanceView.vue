@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, reactive, ref } from 'vue'
 
 type ServiceType = 'Presencial' | 'Virtual' | 'Reunión' | 'Clase' | 'Mantenimiento' | 'Otra'
+type VisitorRoleType = 'Alumno' | 'Docente' | 'Administrativo' | 'Otro'
 type ShiftType = 'Matutino' | 'Vespertino'
 type FilterPreset = 'hoy' | 'semana' | 'mes' | 'custom'
 
@@ -12,10 +13,16 @@ interface ServiceOption {
   dotClass: string
 }
 
+interface VisitorRoleOption {
+  name: VisitorRoleType
+  icon: string
+  tagClass: string
+}
+
 interface SampleVisitor {
-  matricula: string
   nombre: string
-  shortRol: string
+  tipo: VisitorRoleType
+  carrera: string
 }
 
 interface VisitRecord {
@@ -23,13 +30,24 @@ interface VisitRecord {
   dateIso: string
   timeLabel: string
   shift: ShiftType
-  matricula: string
   nombre: string
+  tipo: VisitorRoleType
   carrera: string
   servicio: ServiceType
   nota?: string
   isNew?: boolean
 }
+
+const VISITOR_ROLE_OPTIONS: VisitorRoleOption[] = [
+  { name: 'Alumno', icon: 'school', tagClass: 'text-primary' },
+  { name: 'Docente', icon: 'badge', tagClass: 'text-amber-900' },
+  { name: 'Administrativo', icon: 'corporate_fare', tagClass: 'text-slate-800' },
+  { name: 'Otro', icon: 'person_outline', tagClass: 'text-on-surface-variant' },
+]
+
+const VISITOR_ROLE_META: Record<VisitorRoleType, VisitorRoleOption> = Object.fromEntries(
+  VISITOR_ROLE_OPTIONS.map((opt) => [opt.name, opt]),
+) as Record<VisitorRoleType, VisitorRoleOption>
 
 const SERVICE_OPTIONS: ServiceOption[] = [
   {
@@ -76,34 +94,34 @@ const SERVICE_META: Record<ServiceType, ServiceOption> = Object.fromEntries(
 
 const SAMPLE_USERS: SampleVisitor[] = [
   {
-    matricula: '20570142',
     nombre: 'Carlos Alberto Mendoza Rivas',
-    shortRol: 'Ing. Informática',
+    tipo: 'Alumno',
+    carrera: 'Ing. Informática',
   },
   {
-    matricula: 'DOC-0841',
     nombre: 'Ing. Roberto Hernández D.',
-    shortRol: 'Informática / Docente',
+    tipo: 'Docente',
+    carrera: 'Informática / Docente Titular',
   },
   {
-    matricula: '21570389',
     nombre: 'Ana Sofía Garza V.',
-    shortRol: 'Ing. Informática / Alumna',
+    tipo: 'Alumno',
+    carrera: 'Ing. Informática',
   },
   {
-    matricula: '22570014',
     nombre: 'Luis Fernando Ramos P.',
-    shortRol: 'Ing. Gestión Empresarial / Alumno',
+    tipo: 'Alumno',
+    carrera: 'Ing. Gestión Empresarial',
   },
   {
-    matricula: '20570912',
     nombre: 'María José Torres G.',
-    shortRol: 'Ing. Industrial / Alumna',
+    tipo: 'Alumno',
+    carrera: 'Ing. Industrial',
   },
   {
-    matricula: 'EXT-0019',
     nombre: 'Téc. Jaime Villarreal C.',
-    shortRol: 'Ing. Electrónica / Soporte',
+    tipo: 'Administrativo',
+    carrera: 'Soporte Técnico / TI',
   },
 ]
 
@@ -145,8 +163,8 @@ const initialVisits: VisitRecord[] = [
     dateIso: todayIso,
     timeLabel: '09:01 AM',
     shift: 'Matutino',
-    matricula: '20570142',
     nombre: 'Carlos Alberto Mendoza Rivas',
+    tipo: 'Alumno',
     carrera: 'Ing. Informática',
     servicio: 'Presencial',
   },
@@ -155,9 +173,9 @@ const initialVisits: VisitRecord[] = [
     dateIso: todayIso,
     timeLabel: '09:15 AM',
     shift: 'Matutino',
-    matricula: 'DOC-0841',
     nombre: 'Ing. Roberto Hernández D.',
-    carrera: 'Informática / Docente',
+    tipo: 'Docente',
+    carrera: 'Informática / Docente Titular',
     servicio: 'Clase',
   },
   {
@@ -165,9 +183,9 @@ const initialVisits: VisitRecord[] = [
     dateIso: todayIso,
     timeLabel: '09:30 AM',
     shift: 'Matutino',
-    matricula: '21570389',
     nombre: 'Ana Sofía Garza V.',
-    carrera: 'Ing. Informática / Alumna',
+    tipo: 'Alumno',
+    carrera: 'Ing. Informática',
     servicio: 'Virtual',
   },
   {
@@ -175,9 +193,9 @@ const initialVisits: VisitRecord[] = [
     dateIso: todayIso,
     timeLabel: '10:05 AM',
     shift: 'Matutino',
-    matricula: '22570014',
     nombre: 'Luis Fernando Ramos P.',
-    carrera: 'Ing. Gestión Empresarial / Alumno',
+    tipo: 'Alumno',
+    carrera: 'Ing. Gestión Empresarial',
     servicio: 'Reunión',
   },
   {
@@ -185,9 +203,9 @@ const initialVisits: VisitRecord[] = [
     dateIso: todayIso,
     timeLabel: '10:45 AM',
     shift: 'Matutino',
-    matricula: '20570912',
     nombre: 'María José Torres G.',
-    carrera: 'Ing. Industrial / Alumna',
+    tipo: 'Alumno',
+    carrera: 'Ing. Industrial',
     servicio: 'Presencial',
   },
   {
@@ -195,9 +213,9 @@ const initialVisits: VisitRecord[] = [
     dateIso: todayIso,
     timeLabel: '11:20 AM',
     shift: 'Matutino',
-    matricula: 'EXT-0019',
     nombre: 'Téc. Jaime Villarreal C.',
-    carrera: 'Ing. Electrónica / Soporte',
+    tipo: 'Administrativo',
+    carrera: 'Soporte Técnico / TI',
     servicio: 'Mantenimiento',
   },
   {
@@ -205,9 +223,9 @@ const initialVisits: VisitRecord[] = [
     dateIso: todayIso,
     timeLabel: '04:15 PM',
     shift: 'Vespertino',
-    matricula: '21280615',
     nombre: 'Diego Alejandro Salinas R.',
-    carrera: 'Ing. Mecatrónica / Alumno',
+    tipo: 'Alumno',
+    carrera: 'Ing. Mecatrónica',
     servicio: 'Presencial',
   },
   {
@@ -215,9 +233,9 @@ const initialVisits: VisitRecord[] = [
     dateIso: todayIso,
     timeLabel: '05:10 PM',
     shift: 'Vespertino',
-    matricula: '22280402',
     nombre: 'Valeria Guadalupe Castillo M.',
-    carrera: 'Ing. Gestión Empresarial / Alumna',
+    tipo: 'Alumno',
+    carrera: 'Ing. Gestión Empresarial',
     servicio: 'Virtual',
   },
   {
@@ -225,9 +243,9 @@ const initialVisits: VisitRecord[] = [
     dateIso: addDaysIso(todayIso, -1),
     timeLabel: '09:40 AM',
     shift: 'Matutino',
-    matricula: '20280199',
     nombre: 'Luis Fernando Treviño P.',
-    carrera: 'Ing. Industrial / Alumno',
+    tipo: 'Alumno',
+    carrera: 'Ing. Industrial',
     servicio: 'Reunión',
   },
   {
@@ -235,9 +253,9 @@ const initialVisits: VisitRecord[] = [
     dateIso: addDaysIso(todayIso, -2),
     timeLabel: '05:30 PM',
     shift: 'Vespertino',
-    matricula: '23280711',
     nombre: 'Sofía Alejandra Morales L.',
-    carrera: 'Ing. Informática / Alumna',
+    tipo: 'Alumno',
+    carrera: 'Ing. Informática',
     servicio: 'Presencial',
   },
 ]
@@ -249,6 +267,7 @@ const form = reactive({
   dateIso: todayIso,
   shift: defaultShift as ShiftType,
   visitorInput: '',
+  visitorRole: 'Alumno' as VisitorRoleType,
   service: 'Presencial' as ServiceType,
   note: '',
   isGroup: false,
@@ -285,6 +304,10 @@ function showToast(title: string, details: string) {
   }, 3500)
 }
 
+function selectVisitorRole(roleName: VisitorRoleType) {
+  form.visitorRole = roleName
+}
+
 function selectService(serviceName: ServiceType) {
   form.service = serviceName
 }
@@ -304,7 +327,6 @@ function findMatchingVisitor(query: string): SampleVisitor | undefined {
   if (!normalized) return undefined
   return SAMPLE_USERS.find(
     (user) =>
-      user.matricula.toLowerCase() === normalized ||
       user.nombre.toLowerCase() === normalized ||
       user.nombre.toLowerCase().includes(normalized),
   )
@@ -317,16 +339,17 @@ function handleRegisterVisit() {
   const matched = findMatchingVisitor(rawInput)
   const visitDateIso = form.dateIso || todayIso
 
-  let matricula = matched?.matricula ?? ''
   let nombre = matched?.nombre ?? rawInput
-  const carrera = matched?.shortRol ?? 'Comunidad TecNM'
-
-  if (!matricula) {
-    matricula =
-      rawInput.length <= 10 && /^[A-Za-z0-9-]+$/.test(rawInput)
-        ? rawInput.toUpperCase()
-        : `VIS-${Math.floor(1000 + Math.random() * 9000)}`
-  }
+  const tipo = form.visitorRole
+  const carrera =
+    matched?.carrera ??
+    (tipo === 'Docente'
+      ? 'Departamento Académico'
+      : tipo === 'Administrativo'
+        ? 'Personal Administrativo'
+        : tipo === 'Otro'
+          ? 'Visitante Externo'
+          : 'Comunidad TecNM')
 
   const safeGroupCount = Math.min(60, Math.max(1, Number(form.groupCount) || 1))
   if (form.isGroup && safeGroupCount > 1) {
@@ -339,8 +362,8 @@ function handleRegisterVisit() {
     dateIso: visitDateIso,
     timeLabel: formatCurrentTime12h(now),
     shift: form.shift,
-    matricula,
     nombre,
+    tipo,
     carrera,
     servicio: form.service,
     nota: form.note.trim() || undefined,
@@ -464,13 +487,13 @@ const rangeEnd = computed(() =>
 const pageNumbers = computed(() => Array.from({ length: totalPages.value }, (_, idx) => idx + 1))
 
 function exportToCSV() {
-  const headers = ['Fecha', 'Hora', 'Turno', 'Matrícula', 'Nombre', 'Carrera', 'Servicio', 'Nota']
+  const headers = ['Fecha', 'Hora', 'Turno', 'Nombre', 'Tipo de Visitante', 'Carrera', 'Servicio', 'Nota']
   const rows = filteredVisits.value.map((visit) => [
     formatDisplayDate(visit.dateIso),
     visit.timeLabel,
     visit.shift,
-    visit.matricula,
     visit.nombre,
+    visit.tipo,
     visit.carrera,
     visit.servicio,
     visit.nota ?? '',
@@ -652,10 +675,35 @@ onBeforeUnmount(() => {
                   v-model="form.visitorInput"
                   autocomplete="off"
                   class="w-full !h-11 !min-h-0 !pl-11 !pr-space-md !py-0 !rounded-lg bg-surface-container-low text-on-surface font-body-md !text-[14px] focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary shadow-inner border border-transparent"
-                  placeholder="Ej. Juan Carlos Pérez Morales o matrícula (20570142, DOC-0841)"
+                  placeholder="Ej. Juan Carlos Pérez Morales"
                   required
                   type="text"
                 />
+              </div>
+            </div>
+
+            <!-- Row 2.5: Tipo de Visitante -->
+            <div class="flex flex-col gap-space-xs">
+              <span class="font-label-lg text-label-lg text-on-surface font-semibold flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-primary text-[18px]">assignment_ind</span>
+                Tipo de Visitante:
+              </span>
+              <div class="flex flex-wrap gap-2.5 pt-1">
+                <button
+                  v-for="roleOption in VISITOR_ROLE_OPTIONS"
+                  :key="roleOption.name"
+                  type="button"
+                  :class="[
+                    'px-4 py-2 rounded-lg font-label-lg text-label-lg font-medium transition-all flex items-center gap-2',
+                    form.visitorRole === roleOption.name
+                      ? 'shadow-md bg-primary text-on-primary'
+                      : 'shadow-sm bg-surface-container text-on-surface hover:bg-surface-container-high',
+                  ]"
+                  @click="selectVisitorRole(roleOption.name)"
+                >
+                  <span class="material-symbols-outlined text-[18px]">{{ roleOption.icon }}</span>
+                  <span>{{ roleOption.name }}</span>
+                </button>
               </div>
             </div>
 
@@ -885,7 +933,6 @@ onBeforeUnmount(() => {
                 <tr class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
                   <th class="!py-space-md !px-space-md">Fecha</th>
                   <th class="!py-space-md !px-space-md">Hora</th>
-                  <th class="!py-space-md !px-space-md">Matrícula</th>
                   <th class="!py-space-md !px-space-md">Nombre</th>
                   <th class="!py-space-md !px-space-md">Carrera</th>
                   <th class="!py-space-md !px-space-md">Servicio</th>
@@ -894,7 +941,7 @@ onBeforeUnmount(() => {
               </thead>
               <tbody class="divide-y divide-surface-container-low font-body-md text-body-md text-on-surface">
                 <tr v-if="paginatedVisits.length === 0">
-                  <td colspan="7" class="!py-10 !px-space-md text-center text-on-surface-variant text-sm">
+                  <td colspan="6" class="!py-10 !px-space-md text-center text-on-surface-variant text-sm">
                     No hay visitas registradas en el periodo seleccionado.
                   </td>
                 </tr>
@@ -912,13 +959,23 @@ onBeforeUnmount(() => {
                   <td class="!py-3 !px-space-md font-label-md text-label-md text-primary font-semibold whitespace-nowrap">
                     {{ visit.timeLabel }}
                   </td>
-                  <td class="!py-3 !px-space-md font-citation-code text-citation-code font-medium text-on-surface whitespace-nowrap">
-                    {{ visit.matricula }}
-                  </td>
                   <td class="!py-3 !px-space-md">
-                    <div class="font-label-lg text-label-lg text-on-surface font-semibold">{{ visit.nombre }}</div>
-                    <div v-if="visit.nota" class="font-body-sm text-[11px] text-on-surface-variant mt-0.5">
-                      {{ visit.nota }}
+                    <div class="flex flex-col">
+                      <span class="font-label-lg text-label-lg text-on-surface font-semibold">{{ visit.nombre }}</span>
+                      <span
+                        :class="[
+                          'inline-flex items-center gap-1 font-label-sm text-[11px] font-medium mt-0.5',
+                          VISITOR_ROLE_META[visit.tipo].tagClass,
+                        ]"
+                      >
+                        <span class="material-symbols-outlined text-[14px]">
+                          {{ VISITOR_ROLE_META[visit.tipo].icon }}
+                        </span>
+                        <span>{{ visit.tipo }}</span>
+                      </span>
+                      <span v-if="visit.nota" class="font-body-sm text-[11px] text-on-surface-variant mt-0.5">
+                        {{ visit.nota }}
+                      </span>
                     </div>
                   </td>
                   <td class="!py-3 !px-space-md text-on-surface-variant">
