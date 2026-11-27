@@ -562,12 +562,31 @@ INSERT INTO Borrower (name, borrower_type, studentid, employeeid, major, semeste
 ('Cesar Emmanuel Vallejo', 'Alumno', 'I23050364', NULL, 'Ingeniería Informática', NULL, 'Matutino', 'Masculino', '8661651892', 'i23050364@monclova.tecnm.mx', 3, 1, CURRENT_TIMESTAMP, B'1')
 ON CONFLICT (studentid) DO NOTHING;
 
--- 10. Préstamos de prueba (Loan)
-INSERT INTO Loan (id, book_id, borrower_id, startDate, dueDate, returnDate, responsible, idUserCreate, dateCreate, idStatus) VALUES
-(1, 3, 1, CURRENT_DATE - 5, CURRENT_DATE + 2, NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '5 days', B'1'),
-(2, 5, 2, CURRENT_DATE - 3, CURRENT_DATE + 4, NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '3 days', B'1'),
-(3, 1, 3, CURRENT_DATE - 14, CURRENT_DATE - 7, CURRENT_DATE - 6, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '14 days', B'1');
-SELECT setval('Loan_id_seq', (SELECT MAX(id) FROM Loan));
+-- 10. Préstamos (Loan)
+INSERT INTO Loan (book_id, borrower_id, startDate, dueDate, returnDate, responsible, idUserCreate, dateCreate, idStatus) VALUES
+((SELECT id FROM Book WHERE folio = '1932'), (SELECT id FROM Borrower WHERE studentid = 'N24050251'), '2026-09-01', '2026-09-04', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '4346'), (SELECT id FROM Borrower WHERE studentid = 'I21050385'), '2026-09-02', '2026-09-05', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = 'SIN-FOLIO-PRESTAMO-001'), (SELECT id FROM Borrower WHERE studentid = 'I21050385'), '2026-09-02', '2026-09-05', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '4343'), (SELECT id FROM Borrower WHERE studentid = 'I25050370'), '2026-09-04', '2026-09-08', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '4075'), (SELECT id FROM Borrower WHERE studentid = 'INE-OSCAR'), '2026-09-04', '2026-09-08', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1611'), (SELECT id FROM Borrower WHERE studentid = 'N25050276'), '2026-09-02', '2026-09-05', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '3547'), (SELECT id FROM Borrower WHERE studentid = 'N25050276'), '2026-08-24', '2026-08-27', '2026-08-27', 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1799'), (SELECT id FROM Borrower WHERE studentid = 'I24050400'), '2026-08-31', '2026-09-04', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '4812'), (SELECT id FROM Borrower WHERE studentid = 'I24050400'), '2026-08-31', '2026-09-04', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1765'), (SELECT id FROM Borrower WHERE studentid = 'I24050400'), '2026-08-31', '2026-09-04', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '4686'), (SELECT id FROM Borrower WHERE studentid = 'I24050387'), '2026-08-31', '2026-09-04', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '263'), (SELECT id FROM Borrower WHERE studentid = 'I24050387'), '2026-08-31', '2026-09-04', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1764'), (SELECT id FROM Borrower WHERE studentid = 'I2505555'), '2026-08-26', '2026-08-31', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '3542'), (SELECT id FROM Borrower WHERE studentid = 'I25050368'), '2026-08-27', '2026-08-31', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1536'), (SELECT id FROM Borrower WHERE studentid = 'I25050386'), '2026-08-27', '2026-08-31', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1766'), (SELECT id FROM Borrower WHERE studentid = 'I25050377'), '2026-08-27', '2026-08-31', '2026-08-31', 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1535'), (SELECT id FROM Borrower WHERE studentid = 'I25050363'), '2026-08-27', '2026-08-31', '2026-08-31', 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '4536'), (SELECT id FROM Borrower WHERE studentid = 'I25050364'), '2026-08-27', '2026-08-31', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1767'), (SELECT id FROM Borrower WHERE studentid = 'I25050364'), '2026-08-27', '2026-08-31', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1534'), (SELECT id FROM Borrower WHERE studentid = 'I24050394'), '2026-08-28', '2026-09-01', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '1269'), (SELECT id FROM Borrower WHERE studentid = 'I24050394'), '2026-08-28', '2026-09-01', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '3002'), (SELECT id FROM Borrower WHERE studentid = 'I23050364'), '2026-08-31', '2026-09-04', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1');
+
 
 -- 11. Catálogo de Servicios de Biblioteca (Service)
 INSERT INTO Service (id, name, description, idUserCreate, dateCreate, idStatus) VALUES
