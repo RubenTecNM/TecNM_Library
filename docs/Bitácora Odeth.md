@@ -30,6 +30,7 @@
 | **18** | 2026-11-27 | *pendiente* | BD + Backend | Columna `librarian_id` (FK a `Borrower`) en `Visit` para registrar al encargado en turno |
 | **19** | 2026-11-27 | *pendiente* | BD + Backend | Cambio de `startDate`, `dueDate` y `returnDate` en `Loan` de `TIMESTAMP` a `DATE` (solo fecha) |
 | **20** | 2026-11-27 | *pendiente* | BD | Alineación del catálogo `Service` en `database.sql` con los 6 servicios de `AttendanceView.vue` |
+| **21** | 2026-11-27 | *pendiente* | BD | Soporte para `borrower_type = 'Otro'` en restricciones `CHECK` de `Borrower` (`database.sql`) |
 
 ---
 
@@ -509,6 +510,19 @@ Cumple **3FN** sin crear una tabla redundante de responsables ni guardar nombres
 - **`database.sql` (`INSERT INTO Service`):**
   - Se renombró el servicio `1` de `'Física'` a `'Presencial'`.
   - Se agregaron los servicios `5: 'Mantenimiento'` y `6: 'Otra'` para igualar exactamente los 6 botones de `AttendanceView.vue` (`Presencial`, `Virtual`, `Reunión`, `Clase`, `Mantenimiento`, `Otra`).
+
+---
+
+## Entrada 21 — Soporte para tipo de visitante `'Otro'` en `Borrower`
+
+**Fecha:** 2026-11-27  
+**Alcance:** Base de datos (`database.sql`).
+
+### Qué se modificó
+- **`database.sql` (`CREATE TABLE Borrower`):**
+  - `chk_borrower_type`: se agregó `'Otro'` → `IN ('Alumno', 'Docente', 'Administrativo', 'Otro')`.
+  - `chk_borrower_identifier_by_type`: se agregó la rama `(borrower_type = 'Otro' AND studentid IS NULL AND semester IS NULL)` para permitir visitantes externos con o sin clave `employeeid` (sin exigir matrícula de alumno ni semestre).
+
 
 
 

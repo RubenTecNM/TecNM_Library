@@ -163,12 +163,14 @@ CREATE TABLE Borrower (
     CONSTRAINT chk_borrower_gender
         CHECK (gender IN ('Masculino', 'Femenino')),
     CONSTRAINT chk_borrower_type
-        CHECK (borrower_type IN ('Alumno', 'Docente', 'Administrativo')),
+        CHECK (borrower_type IN ('Alumno', 'Docente', 'Administrativo', 'Otro')),
     CONSTRAINT chk_borrower_identifier_by_type
         CHECK (
             (borrower_type = 'Alumno' AND studentid IS NOT NULL AND employeeid IS NULL)
             OR
             (borrower_type IN ('Docente', 'Administrativo') AND employeeid IS NOT NULL AND studentid IS NULL AND semester IS NULL)
+            OR
+            (borrower_type = 'Otro' AND studentid IS NULL AND semester IS NULL)
         )
 );
 -- ----------------------------------------------------------------------------
