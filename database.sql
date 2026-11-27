@@ -299,7 +299,12 @@ INSERT INTO Shelf (id, name, idUserCreate, dateCreate, idStatus) VALUES
 (3, 'Estante B-1: Redes, Telecomunicaciones y Ciberseguridad', 1, CURRENT_TIMESTAMP, B'1'),
 (4, 'Estante B-2: Sistemas Operativos y Arquitectura de Computadoras', 1, CURRENT_TIMESTAMP, B'1'),
 (5, 'Estante C-1: Ciencias Básicas y Matemáticas Aplicadas', 1, CURRENT_TIMESTAMP, B'1'),
-(6, 'Estante D-1: Gestión Empresarial e Ingeniería Industrial', 1, CURRENT_TIMESTAMP, B'1');
+(6, 'Estante D-1: Gestión Empresarial e Ingeniería Industrial', 1, CURRENT_TIMESTAMP, B'1'),
+(7, 'Estante 1.1.1', 1, CURRENT_TIMESTAMP, B'1'),
+(8, 'Estante 1.1.2', 1, CURRENT_TIMESTAMP, B'1'),
+(9, 'Estante 1.1.3', 1, CURRENT_TIMESTAMP, B'1'),
+(10, 'Estante 1.1.4', 1, CURRENT_TIMESTAMP, B'1'),
+(11, 'Estante 1.1.5', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Shelf_id_seq', (SELECT MAX(id) FROM Shelf));
 
 -- 3. Temas (Topic)
