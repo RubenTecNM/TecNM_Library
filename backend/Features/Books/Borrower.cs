@@ -10,7 +10,7 @@ public class Borrower
     public string InstitutionalId { get; private set; } = string.Empty;
     public string Major { get; set; } = string.Empty;
     public string? Semester { get; set; }
-    public string Time { get; set; } = string.Empty;
+    public string? Time { get; set; }
     public string Gender { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
     public string Email { get; set; } = string.Empty;

@@ -145,7 +145,7 @@ CREATE TABLE Borrower (
     institutional_id VARCHAR(30) GENERATED ALWAYS AS (COALESCE(studentid, employeeid)) STORED UNIQUE,
     major VARCHAR(100) NOT NULL,
     semester VARCHAR(20) NULL,
-    time VARCHAR(50) NOT NULL,
+    time VARCHAR(50) NULL,
     gender VARCHAR(20) NOT NULL,
     phoneNumber VARCHAR(25) NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
@@ -521,12 +521,17 @@ CREATE TRIGGER trg_audit_bookstatus
 -- ----------------------------------------------------------------------------
 
 -- Vista 1: Resumen de Asistencia y Visitas por Tipo de Usuario (Alumno, Docente, Administrativo)
+--          El turno (shift) se calcula a partir de la hora exacta de entrada en Visit.entryDate:
+--          < 15:00 (antes de las 3:00 PM) -> 'Matutino' | >= 15:00 -> 'Vespertino'
 CREATE OR REPLACE VIEW vw_attendance_summary_by_type AS
 SELECT
     DATE(v.entryDate) AS visit_date,
     b.borrower_type,
     b.gender,
-    b.time AS shift,
+    CASE
+        WHEN EXTRACT(HOUR FROM v.entryDate) < 15 THEN 'Matutino'
+        ELSE 'Vespertino'
+    END AS shift,
     b.major,
     s.name AS service_name,
     COUNT(v.id) AS total_visits
@@ -534,7 +539,16 @@ FROM Visit v
 INNER JOIN Borrower b ON b.id = v.borrower_id
 INNER JOIN Service s ON s.id = v.service_id
 WHERE v.idStatus = B'1' AND b.idStatus = B'1'
-GROUP BY DATE(v.entryDate), b.borrower_type, b.gender, b.time, b.major, s.name;
+GROUP BY
+    DATE(v.entryDate),
+    b.borrower_type,
+    b.gender,
+    CASE
+        WHEN EXTRACT(HOUR FROM v.entryDate) < 15 THEN 'Matutino'
+        ELSE 'Vespertino'
+    END,
+    b.major,
+    s.name;
 
 -- Vista 2: Detalle de Préstamos Activos y Vencidos con Identificador Institucional Único
 CREATE OR REPLACE VIEW vw_active_loans_detail AS

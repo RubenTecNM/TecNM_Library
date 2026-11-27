@@ -89,7 +89,7 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
             entity.Property(e => e.InstitutionalId).HasColumnName("institutional_id").HasMaxLength(30).ValueGeneratedOnAddOrUpdate();
             entity.Property(e => e.Major).HasColumnName("major").HasMaxLength(100).IsRequired();
             entity.Property(e => e.Semester).HasColumnName("semester").HasMaxLength(20);
-            entity.Property(e => e.Time).HasColumnName("time").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Time).HasColumnName("time").HasMaxLength(50);
             entity.Property(e => e.Gender).HasColumnName("gender").HasMaxLength(20).IsRequired();
             entity.Property(e => e.PhoneNumber).HasColumnName("phonenumber").HasMaxLength(25);
             entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(150).IsRequired();

@@ -23,6 +23,7 @@
 | **11** | 2026-11-25 | `5935d32` | Backend + Frontend | **Buscador de libros en tiempo real** (`BooksService`, API parametrizada y cliente reactivo) |
 | **12** | 2026-11-25 | *pendiente* | Infra / Seguridad | Gestión estricta de credenciales vía `.env` (cero hardcoded en Compose) y volumen persistente en `db_replica` |
 | **13** | 2026-11-26 | *pendiente* | Frontend | Limpieza del modal *Ficha Técnica* en Inventario (retiro de barra *Disponibilidad en Acervo* y subtítulo) |
+| **14** | 2026-11-26 | *pendiente* | BD + Backend | Cálculo automático de turno (`Matutino`/`Vespertino`, corte `15:00`) desde `Visit.entryDate` y `Borrower.time` opcional |
 
 ---
 
@@ -374,5 +375,34 @@ Cliente HTTP exclusivo de Inventario basado en `shared/api/http.ts`:
   - Se eliminó el bloque de **Disponibilidad en Acervo** (texto de copias libres y barra de progreso verde), ya que cada registro de la tabla `Book` representa un ejemplar físico individual con su propio folio y estatus.
   - Se retiró el subtítulo *"TecNM Campus Monclova • Acervo Físico"* del encabezado del modal para dejar un header más limpio.
 - **Lógica preservada sin cambios:** se mantuvo íntegro todo el funcionamiento del **buscador en tiempo real** conectado a `GET /api/books` (`executeBackendSearch`, debounce de `220 ms`, `AbortController`, filtros por estado, ordenamiento, indicadores de carga/error) y los modales minimalistas de *Registrar Nuevo Estante* y *Registrar Nuevo Tema*.
+
+---
+
+## Entrada 14 — Cálculo real de turno (`shift`) a partir de `Visit.entryDate` y `Borrower.time` opcional
+
+**Fecha:** 2026-11-26  
+**Alcance:** Base de datos (`database.sql`) y Backend (`backend/Features/Books/Borrower.cs`, `backend/Data/TecNMDbContext.cs`).
+
+### Por qué se hizo este cambio
+En el TecNM Campus Monclova las clases del turno matutino son de 7:00 AM a 3:00 PM y el vespertino inicia por la tarde. Anteriormente la vista `vw_attendance_summary_by_type` leía el turno desde `Borrower.time` (que además contenía valores como `'Tiempo Completo'` o `'Turno Completo'` para docentes y administrativos). Calcular el turno a partir de la hora exacta de entrada registrada en `Visit.entryDate` refleja la afluencia real de la biblioteca y garantiza siempre valores consistentes (`'Matutino'` o `'Vespertino'`) para todos los tipos de usuario.
+
+### Qué se modificó archivo por archivo
+- **`database.sql`:**
+  - En la tabla **`Borrower`**: `time VARCHAR(50) NULL` pasó a ser opcional para no obligar a capturarlo en nuevos registros sin romper scripts existentes (como `database/scripts/verify-topicos-bd.ps1`).
+  - En la vista **`vw_attendance_summary_by_type`**: se reemplazó `b.time AS shift` por una expresión calculada sobre `v.entryDate`:
+    ```sql
+    CASE
+        WHEN EXTRACT(HOUR FROM v.entryDate) < 15 THEN 'Matutino'
+        ELSE 'Vespertino'
+    END AS shift
+    ```
+    - Antes de las **15:00 (3:00 PM)** → **`Matutino`**.
+    - A partir de las **15:00 (3:00 PM)** en adelante → **`Vespertino`**.
+- **`backend/Features/Books/Borrower.cs`:** se cambió la propiedad `Time` de `string` a `string?` (nullable).
+- **`backend/Data/TecNMDbContext.cs`:** se retiró `.IsRequired()` del mapeo de `Borrower.Time` para mantener paridad exacta con `database.sql`.
+
+### Nota para bases de datos ya inicializadas en Docker
+Como PostgreSQL solo ejecuta `database.sql` al inicializar un volumen vacío, si ya tienes un contenedor levantado y quieres aplicar el cambio sin borrar datos puedes ejecutar el `ALTER TABLE` y el `CREATE OR REPLACE VIEW`, o recrear el volumen con `docker compose down -v && docker compose up -d`.
+
 
 
