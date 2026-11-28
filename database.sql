@@ -328,7 +328,7 @@ INSERT INTO Author (id, name, lastName, idUserCreate, dateCreate, idStatus) VALU
 (9, 'Roger S.', 'Pressman', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Author_id_seq', (SELECT MAX(id) FROM Author));
 
--- 5. Libros de acervo universitario (Book) - Folios consecutivos a partir de 5000
+-- 5. Libros de acervo universitario (Book) - Folios consecutivos a partir de 5000 (12 ejemplares para paginación)
 INSERT INTO Book (id, title, note, author, folio, dewey, cutter, status_id, shelf_id, idUserCreate, dateCreate, idStatus) VALUES
 (1, 'Sistemas Operativos Modernos', '4ta Edición, Pearson Educación', 'Andrew S. Tanenbaum', '5000', '005.43', 'T164s', 1, 4, 1, CURRENT_TIMESTAMP, B'1'),
 (2, 'Ingeniería de Software: Un Enfoque Práctico', '7ma Edición, McGraw-Hill', 'Roger S. Pressman', '5001', '005.1', 'P935i', 1, 1, 1, CURRENT_TIMESTAMP, B'1'),
@@ -337,7 +337,11 @@ INSERT INTO Book (id, title, note, author, folio, dewey, cutter, status_id, shel
 (5, 'Redes de Computadoras: Un Enfoque Descendente', '7ma Edición, Pearson', 'James F. Kurose', '5004', '004.6', 'K96r', 2, 3, 1, CURRENT_TIMESTAMP, B'1'),
 (6, 'Cálculo de una Variable: Trascendentes Tempranas', '8va Edición, Cengage Learning', 'James Stewart', '5005', '515.3', 'S849c', 1, 5, 1, CURRENT_TIMESTAMP, B'1'),
 (7, 'Introduction to Algorithms (CLRS)', '3rd Edition, MIT Press', 'Thomas H. Cormen', '5006', '005.1', 'C811i', 3, 1, 1, CURRENT_TIMESTAMP, B'1'),
-(8, 'Ingeniería del Software', '9na Edición, Pearson Addison Wesley', 'Ian Sommerville', '5007', '005.1', 'S696i', 5, 1, 1, CURRENT_TIMESTAMP, B'1');
+(8, 'Ingeniería del Software', '9na Edición, Pearson Addison Wesley', 'Ian Sommerville', '5007', '005.1', 'S696i', 5, 1, 1, CURRENT_TIMESTAMP, B'1'),
+(9, 'Inteligencia Artificial: Un Enfoque Moderno', '3ra Edición, Pearson Educación', 'Stuart Russell & Peter Norvig', '5008', '006.3', 'R87i', 1, 3, 1, CURRENT_TIMESTAMP, B'1'),
+(10, 'Química General y Orgánica', '11va Edición, McGraw-Hill', 'Raymond Chang', '5009', '540.1', 'C43q', 2, 5, 1, CURRENT_TIMESTAMP, B'1'),
+(11, 'Investigación de Operaciones', '9na Edición, Optimización e Industria', 'Hamdy A. Taha', '5010', '658.4', 'T34i', 2, 6, 1, CURRENT_TIMESTAMP, B'1'),
+(12, 'Sistemas Digitales: Principios y Aplicaciones', '10ma Edición, Lógica Digital y Circuitos', 'Ronald J. Tocci', '5011', '621.39', 'T63s', 5, 4, 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Book_id_seq', (SELECT MAX(id) FROM Book));
 
 -- 6. Relaciones N:M Book_Author
@@ -388,7 +392,10 @@ SELECT setval('Borrower_id_seq', (SELECT MAX(id) FROM Borrower));
 INSERT INTO Loan (id, book_id, borrower_id, startDate, dueDate, returnDate, responsible, idUserCreate, dateCreate, idStatus) VALUES
 (1, 3, 1, CURRENT_TIMESTAMP - INTERVAL '1 day', CURRENT_TIMESTAMP + INTERVAL '2 days', NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '1 day', B'1'),
 (2, 5, 2, CURRENT_TIMESTAMP - INTERVAL '5 days', CURRENT_TIMESTAMP - INTERVAL '2 days', NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '5 days', B'1'),
-(3, 1, 3, CURRENT_TIMESTAMP - INTERVAL '6 days', CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '3 days', 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '6 days', B'1');
+(3, 1, 3, CURRENT_TIMESTAMP - INTERVAL '6 days', CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '3 days', 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '6 days', B'1'),
+(4, 10, 4, CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP, NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '3 days', B'1'),
+(5, 11, 3, CURRENT_TIMESTAMP - INTERVAL '4 days', CURRENT_TIMESTAMP - INTERVAL '1 day', NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP - INTERVAL '4 days', B'1'),
+(6, 9, 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '3 days', NULL, 'Lic. Martha Elena Vázquez Torres', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Loan_id_seq', (SELECT MAX(id) FROM Loan));
 
 -- 11. Catálogo Oficial de Tipos de Servicios de Biblioteca (Service)

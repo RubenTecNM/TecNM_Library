@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   createCirculationLoan,
   getCirculationSummary,
@@ -283,6 +283,32 @@ const filteredLoans = computed(() => {
 
     return haystack.includes(query)
   })
+})
+
+const LOANS_PER_PAGE = 3
+
+const totalLoanPages = computed(() =>
+  Math.max(1, Math.ceil(filteredLoans.value.length / LOANS_PER_PAGE)),
+)
+
+const loanPageNumbers = computed(() =>
+  Array.from({ length: totalLoanPages.value }, (_, index) => index + 1),
+)
+
+const paginatedLoans = computed(() => {
+  const safePage = Math.min(Math.max(1, currentPage.value), totalLoanPages.value)
+  const start = (safePage - 1) * LOANS_PER_PAGE
+  return filteredLoans.value.slice(start, start + LOANS_PER_PAGE)
+})
+
+watch([activeTab, tableSearch, globalSearch, selectedCareer], () => {
+  currentPage.value = 1
+})
+
+watch(filteredLoans, () => {
+  if (currentPage.value > totalLoanPages.value) {
+    currentPage.value = totalLoanPages.value
+  }
 })
 
 function notify(message: string, tone: 'info' | 'success' | 'warning' = 'info') {
@@ -1058,7 +1084,7 @@ onBeforeUnmount(() => {
                     </tr>
 
                     <tr
-                      v-for="loan in filteredLoans"
+                      v-for="loan in paginatedLoans"
                       :key="loan.id"
                       :class="[
                         'transition-colors',
@@ -1254,27 +1280,41 @@ onBeforeUnmount(() => {
               <div class="px-5 py-3.5 bg-surface-container-low/40 border-t border-surface-container-high/60 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div class="font-body-sm text-[12px] text-on-surface-variant flex items-center gap-2">
                   <span>
-                    Mostrando <strong>{{ filteredLoans.length }}</strong> de
-                    <strong>{{ activeTab === 'historial' ? metricsBase.historyCount : metricsBase.activeLoans }}</strong>
-                    registros {{ activeTab === 'historial' ? 'en historial' : 'activos' }}
+                    Mostrando <strong>{{ paginatedLoans.length }}</strong> de
+                    <strong>{{ filteredLoans.length }}</strong>
+                    registros {{ activeTab === 'historial' ? 'en historial' : 'filtrados' }}
                   </span>
                   <span class="w-1 h-1 rounded-full bg-outline-variant"></span>
-                  <span>Página {{ currentPage }} de 29</span>
+                  <span>Página {{ currentPage }} de {{ totalLoanPages }}</span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                   <button
                     type="button"
-                    class="px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold transition-colors disabled:opacity-50"
+                    class="px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                     :disabled="currentPage <= 1"
                     @click="currentPage = Math.max(1, currentPage - 1)"
                   >
                     Anterior
                   </button>
                   <button
+                    v-for="page in loanPageNumbers"
+                    :key="page"
                     type="button"
-                    class="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold transition-colors shadow-xs disabled:opacity-50"
-                    :disabled="currentPage >= 29"
-                    @click="currentPage = Math.min(29, currentPage + 1)"
+                    :class="[
+                      'w-8 h-8 rounded-lg font-label-sm text-xs font-bold transition-colors cursor-pointer',
+                      currentPage === page
+                        ? 'bg-primary text-on-primary shadow-xs'
+                        : 'bg-surface-container hover:bg-surface-container-high text-primary',
+                    ]"
+                    @click="currentPage = page"
+                  >
+                    {{ page }}
+                  </button>
+                  <button
+                    type="button"
+                    class="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold transition-colors shadow-xs disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                    :disabled="currentPage >= totalLoanPages"
+                    @click="currentPage = Math.min(totalLoanPages, currentPage + 1)"
                   >
                     Siguiente
                   </button>

@@ -629,6 +629,28 @@ const filteredBooks = computed(() => {
   return sorted
 })
 
+const ITEMS_PER_PAGE = 4
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredBooks.value.length / ITEMS_PER_PAGE)),
+)
+
+const visiblePageNumbers = computed(() =>
+  Array.from({ length: totalPages.value }, (_, index) => index + 1),
+)
+
+const paginatedBooks = computed(() => {
+  const safePage = Math.min(Math.max(1, currentPage.value), totalPages.value)
+  const start = (safePage - 1) * ITEMS_PER_PAGE
+  return filteredBooks.value.slice(start, start + ITEMS_PER_PAGE)
+})
+
+watch(filteredBooks, () => {
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = totalPages.value
+  }
+})
+
 function toggleStatusFilter(status: 'all' | BookStatusKey) {
   selectedStatus.value = selectedStatus.value === status ? 'all' : status
 }
@@ -1164,11 +1186,11 @@ onBeforeUnmount(() => {
 
             <div class="bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-lg border border-white/40 text-on-surface">
               <form class="flex flex-col lg:flex-row items-stretch gap-2.5" @submit.prevent="runImmediateSearch">
-                <div class="relative min-w-[205px]">
+                <div class="relative min-w-[235px]">
                   <select
                     id="searchFieldSelector"
                     v-model="searchField"
-                    class="inventory-select w-full !h-11 !min-h-0 !px-3.5 !py-0 bg-slate-100 text-primary font-label-md !text-xs font-bold !rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-tecnm-gold cursor-pointer"
+                    class="inventory-select w-full !h-11 !min-h-0 !pl-3.5 !pr-10 !py-0 bg-slate-100 text-primary font-label-md !text-xs font-bold !rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-tecnm-gold cursor-pointer"
                     aria-label="Campo de búsqueda"
                   >
                     <option value="all">Todo (Título, Dewey, Folio)</option>
@@ -1360,7 +1382,7 @@ onBeforeUnmount(() => {
                   <select
                     id="sortSelector"
                     v-model="sortBy"
-                    class="inventory-select !w-auto !h-9 !min-h-0 !px-3 !py-0 bg-slate-50 text-slate-800 font-label-md !text-xs !rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                    class="inventory-select !w-auto min-w-[255px] !h-9 !min-h-0 !pl-3.5 !pr-10 !py-0 bg-slate-50 text-slate-800 font-label-md !text-xs !rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
                   >
                     <option value="dewey">Clasificación Dewey Ascendente</option>
                     <option value="status">Estado Administrativo</option>
@@ -1495,7 +1517,7 @@ onBeforeUnmount(() => {
               ]"
             >
               <article
-                v-for="book in filteredBooks"
+                v-for="book in paginatedBooks"
                 :key="book.id"
                 class="book-card group relative bg-white rounded-2xl p-4 shadow-[0_4px_18px_rgba(0,35,81,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(0,35,81,0.18)] border border-slate-200 hover:border-tecnm-gold/60 cursor-pointer flex flex-col justify-between overflow-visible transition-all duration-300"
                 @click="openFichaModal(book.id)"
@@ -1608,11 +1630,14 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Pagination Strip -->
-            <div class="mt-8 flex flex-col md:flex-row items-center justify-center gap-4 pt-5 border-t border-slate-200">
+            <div
+              v-if="filteredBooks.length > 0"
+              class="mt-8 flex flex-col md:flex-row items-center justify-center gap-4 pt-5 border-t border-slate-200"
+            >
               <div class="flex items-center justify-center flex-wrap gap-1.5">
                 <button
                   type="button"
-                  class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-40"
+                  class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
                   :disabled="currentPage <= 1"
                   aria-label="Página anterior"
                   @click="currentPage = Math.max(1, currentPage - 1)"
@@ -1620,11 +1645,11 @@ onBeforeUnmount(() => {
                   <span class="material-symbols-outlined text-base">chevron_left</span>
                 </button>
                 <button
-                  v-for="page in [1, 2, 3]"
+                  v-for="page in visiblePageNumbers"
                   :key="page"
                   type="button"
                   :class="[
-                    'w-9 h-9 rounded-lg font-label-md text-xs transition-colors',
+                    'w-9 h-9 rounded-lg font-label-md text-xs transition-colors cursor-pointer',
                     currentPage === page
                       ? 'bg-primary text-white font-bold shadow-sm'
                       : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200',
@@ -1633,30 +1658,17 @@ onBeforeUnmount(() => {
                 >
                   {{ page }}
                 </button>
-                <span class="px-1 text-slate-400 font-bold">...</span>
                 <button
                   type="button"
-                  :class="[
-                    'w-9 h-9 rounded-lg font-label-md text-xs transition-colors',
-                    currentPage === 8
-                      ? 'bg-primary text-white font-bold shadow-sm'
-                      : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200',
-                  ]"
-                  @click="currentPage = 8"
-                >
-                  8
-                </button>
-                <button
-                  type="button"
-                  class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 disabled:opacity-40"
-                  :disabled="currentPage >= 8"
+                  class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                  :disabled="currentPage >= totalPages"
                   aria-label="Página siguiente"
-                  @click="currentPage = Math.min(8, currentPage + 1)"
+                  @click="currentPage = Math.min(totalPages, currentPage + 1)"
                 >
                   <span class="material-symbols-outlined text-base">chevron_right</span>
                 </button>
                 <span class="ml-3 font-body-sm text-xs text-slate-500 font-medium">
-                  Página {{ currentPage }} de 8 ({{ filteredBooks.length }} mostrados de {{ displayMetrics.totalBooks.toLocaleString('es-MX') }} Registrados)
+                  Página {{ currentPage }} de {{ totalPages }} (Mostrando {{ paginatedBooks.length }} de {{ filteredBooks.length }} ejemplares)
                 </span>
               </div>
             </div>
@@ -2412,6 +2424,12 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.inventory-select {
+  padding-left: 0.875rem !important;
+  padding-right: 2.5rem !important;
+  background-position: right 0.75rem center !important;
+}
+
 /* Isolated grids to avoid collision with global.css .grid */
 .inventory-metrics-grid {
   display: grid;
