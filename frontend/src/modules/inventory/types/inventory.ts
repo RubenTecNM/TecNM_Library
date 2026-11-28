@@ -2,6 +2,8 @@ export type BookStatusKey = 'disponible' | 'prestado' | 'reparacion' | 'baja' | 
 
 export type InventorySortKey = 'dewey' | 'status' | 'relevance' | 'barcode'
 
+export type InventorySearchField = 'all' | 'title' | 'dewey' | 'folio'
+
 export interface StatusMeta {
   id: number
   key: BookStatusKey
@@ -39,6 +41,11 @@ export interface BookMetricsApiDto {
   catalogCount: number
 }
 
+export interface NextFolioApiDto {
+  nextFolio: string
+  numericFolio: number
+}
+
 export interface BookSearchParams {
   search?: string
   field?: 'all' | 'title' | 'author' | 'dewey' | 'cutter' | 'folio' | 'barcode' | 'shelf' | 'topic'
@@ -55,6 +62,18 @@ export interface CreateBookPayload {
   cutter: string
   statusId: number
   shelfId: number
+  shelfName?: string
+}
+
+export interface UpdateBookPayload {
+  title: string
+  author?: string
+  note?: string
+  folio?: string
+  dewey: string
+  cutter: string
+  statusId: number
+  shelfName?: string
 }
 
 export interface UpdateBookStatusPayload {
