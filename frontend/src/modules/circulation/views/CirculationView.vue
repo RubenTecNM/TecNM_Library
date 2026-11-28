@@ -291,9 +291,17 @@ const totalLoanPages = computed(() =>
   Math.max(1, Math.ceil(filteredLoans.value.length / LOANS_PER_PAGE)),
 )
 
-const loanPageNumbers = computed(() =>
-  Array.from({ length: totalLoanPages.value }, (_, index) => index + 1),
-)
+const visibleLoanPageItems = computed<(number | '...')[]>(() => {
+  const total = totalLoanPages.value
+  const current = currentPage.value
+  if (total <= 6) {
+    return Array.from({ length: total }, (_, index) => index + 1)
+  }
+  if (current <= 5 || current === total) {
+    return [1, 2, 3, 4, 5, '...', total]
+  }
+  return [1, 2, 3, 4, '...', current, '...', total]
+})
 
 const paginatedLoans = computed(() => {
   const safePage = Math.min(Math.max(1, currentPage.value), totalLoanPages.value)
@@ -1277,47 +1285,50 @@ onBeforeUnmount(() => {
                 </table>
               </div>
 
-              <div class="px-5 py-3.5 bg-surface-container-low/40 border-t border-surface-container-high/60 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div class="font-body-sm text-[12px] text-on-surface-variant flex items-center gap-2">
-                  <span>
-                    Mostrando <strong>{{ paginatedLoans.length }}</strong> de
-                    <strong>{{ filteredLoans.length }}</strong>
-                    registros {{ activeTab === 'historial' ? 'en historial' : 'filtrados' }}
-                  </span>
-                  <span class="w-1 h-1 rounded-full bg-outline-variant"></span>
-                  <span>Página {{ currentPage }} de {{ totalLoanPages }}</span>
-                </div>
-                <div class="flex items-center gap-1.5">
+              <div class="px-5 py-3.5 bg-surface-container-low/40 border-t border-surface-container-high/60 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <div class="flex items-center justify-center flex-wrap gap-1.5">
                   <button
                     type="button"
-                    class="px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                    class="w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-40 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                     :disabled="currentPage <= 1"
+                    aria-label="Página anterior"
                     @click="currentPage = Math.max(1, currentPage - 1)"
                   >
-                    Anterior
+                    <span class="material-symbols-outlined text-base">chevron_left</span>
                   </button>
+                  <template v-for="(item, idx) in visibleLoanPageItems" :key="`${item}-${idx}`">
+                    <span
+                      v-if="item === '...'"
+                      class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-600 font-label-md text-xs font-bold flex items-center justify-center select-none"
+                    >
+                      ...
+                    </span>
+                    <button
+                      v-else
+                      type="button"
+                      :class="[
+                        'w-9 h-9 rounded-lg font-label-md text-xs transition-colors cursor-pointer',
+                        currentPage === item
+                          ? 'bg-primary text-white font-bold shadow-sm'
+                          : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200',
+                      ]"
+                      @click="currentPage = item"
+                    >
+                      {{ item }}
+                    </button>
+                  </template>
                   <button
-                    v-for="page in loanPageNumbers"
-                    :key="page"
                     type="button"
-                    :class="[
-                      'w-8 h-8 rounded-lg font-label-sm text-xs font-bold transition-colors cursor-pointer',
-                      currentPage === page
-                        ? 'bg-primary text-on-primary shadow-xs'
-                        : 'bg-surface-container hover:bg-surface-container-high text-primary',
-                    ]"
-                    @click="currentPage = page"
-                  >
-                    {{ page }}
-                  </button>
-                  <button
-                    type="button"
-                    class="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold transition-colors shadow-xs disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                    class="w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 disabled:opacity-40 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                     :disabled="currentPage >= totalLoanPages"
+                    aria-label="Página siguiente"
                     @click="currentPage = Math.min(totalLoanPages, currentPage + 1)"
                   >
-                    Siguiente
+                    <span class="material-symbols-outlined text-base">chevron_right</span>
                   </button>
+                  <span class="ml-3 font-body-sm text-xs text-slate-500 font-medium">
+                    Página {{ currentPage }} de {{ totalLoanPages }} (Mostrando {{ paginatedLoans.length }} de {{ filteredLoans.length }} ejemplares)
+                  </span>
                 </div>
               </div>
             </div>

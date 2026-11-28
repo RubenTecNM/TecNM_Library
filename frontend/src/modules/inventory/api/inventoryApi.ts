@@ -72,6 +72,11 @@ export async function createShelf(name: string): Promise<{ id: number; name: str
   return response.data
 }
 
+export async function getTopics(): Promise<{ id: number; name: string }[]> {
+  const response = await http.get<{ id: number; name: string }[]>('/books/topics')
+  return Array.isArray(response.data) ? response.data : []
+}
+
 export async function createTopic(name: string): Promise<{ id: number; name: string }> {
   const response = await http.post<{ id: number; name: string }>('/books/topics', { name })
   return response.data
