@@ -137,9 +137,9 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.BookId).HasColumnName("book_id");
             entity.Property(e => e.BorrowerId).HasColumnName("borrower_id");
-            entity.Property(e => e.StartDate).HasColumnName("startdate");
-            entity.Property(e => e.DueDate).HasColumnName("duedate");
-            entity.Property(e => e.ReturnDate).HasColumnName("returndate");
+            entity.Property(e => e.StartDate).HasColumnName("startdate").HasColumnType("date");
+            entity.Property(e => e.DueDate).HasColumnName("duedate").HasColumnType("date");
+            entity.Property(e => e.ReturnDate).HasColumnName("returndate").HasColumnType("date");
             entity.Property(e => e.Responsible).HasColumnName("responsible").HasMaxLength(150).IsRequired();
 
             entity.HasOne(e => e.Book)
@@ -213,14 +213,20 @@ public sealed class TecNMDbContext(DbContextOptions<TecNMDbContext> options) : D
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.BorrowerId).HasColumnName("borrower_id");
+            entity.Property(e => e.LibrarianId).HasColumnName("librarian_id");
             entity.Property(e => e.ServiceId).HasColumnName("service_id");
             entity.Property(e => e.EntryDate).HasColumnName("entrydate");
-            entity.Property(e => e.ExitDate).HasColumnName("exitdate");
             entity.Property(e => e.Notes).HasColumnName("notes");
 
             entity.HasOne(e => e.Borrower)
                   .WithMany(b => b.Visits)
-                  .HasForeignKey(e => e.BorrowerId);
+                  .HasForeignKey(e => e.BorrowerId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Librarian)
+                  .WithMany()
+                  .HasForeignKey(e => e.LibrarianId)
+                  .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(e => e.Service)
                   .WithMany(s => s.Visits)

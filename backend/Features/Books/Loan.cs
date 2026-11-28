@@ -5,9 +5,9 @@ public class Loan
     public int Id { get; set; }
     public int BookId { get; set; }
     public int BorrowerId { get; set; }
-    public DateTime StartDate { get; set; } = DateTime.UtcNow;
-    public DateTime DueDate { get; set; }
-    public DateTime? ReturnDate { get; set; }
+    public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    public DateOnly DueDate { get; set; }
+    public DateOnly? ReturnDate { get; set; }
     public string Responsible { get; set; } = string.Empty;
 
     public int IdUserCreate { get; set; } = 1;

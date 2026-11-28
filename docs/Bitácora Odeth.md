@@ -24,6 +24,13 @@
 | **12** | 2026-11-25 | *pendiente* | Infra / Seguridad | Gestión estricta de credenciales vía `.env` (cero hardcoded en Compose) y volumen persistente en `db_replica` |
 | **13** | 2026-11-26 | *pendiente* | Frontend | Limpieza del modal *Ficha Técnica* en Inventario (retiro de barra *Disponibilidad en Acervo* y subtítulo) |
 | **14** | 2026-11-26 | *pendiente* | BD + Backend | Cálculo automático de turno (`Matutino`/`Vespertino`, corte `15:00`) desde `Visit.entryDate` y `Borrower.time` opcional |
+| **15** | 2026-11-26 | *pendiente* | BD + Backend | Eliminación de columna `exitDate` en `Visit` (`database.sql`, `Visit.cs` y `TecNMDbContext.cs`) |
+| **16** | 2026-11-26 | *pendiente* | Frontend | Rediseño completo de **Registro de Asistencia** (formulario *Nueva Visita*, historial filtrable por rango/presets y CSV) |
+| **17** | 2026-11-26 | *pendiente* | Frontend | Selector **Tipo de Visitante** y tabla de 6 columnas (sin Matrícula, con rol bajo Nombre) en **Registro de Asistencia** |
+| **18** | 2026-11-27 | *pendiente* | BD + Backend | Columna `librarian_id` (FK a `Borrower`) en `Visit` para registrar al encargado en turno |
+| **19** | 2026-11-27 | *pendiente* | BD + Backend | Cambio de `startDate`, `dueDate` y `returnDate` en `Loan` de `TIMESTAMP` a `DATE` (solo fecha) |
+| **20** | 2026-11-27 | *pendiente* | BD | Alineación del catálogo `Service` en `database.sql` con los 6 servicios de `AttendanceView.vue` |
+| **21** | 2026-11-27 | *pendiente* | BD | Soporte para `borrower_type = 'Otro'` en restricciones `CHECK` de `Borrower` (`database.sql`) |
 
 ---
 
@@ -403,6 +410,125 @@ En el TecNM Campus Monclova las clases del turno matutino son de 7:00 AM a 3:00 
 
 ### Nota para bases de datos ya inicializadas en Docker
 Como PostgreSQL solo ejecuta `database.sql` al inicializar un volumen vacío, si ya tienes un contenedor levantado y quieres aplicar el cambio sin borrar datos puedes ejecutar el `ALTER TABLE` y el `CREATE OR REPLACE VIEW`, o recrear el volumen con `docker compose down -v && docker compose up -d`.
+
+---
+
+## Entrada 15 — Eliminación de `exitDate` en `Visit`
+
+**Fecha:** 2026-11-26  
+**Alcance:** Base de datos (`database.sql`) y Backend (`backend/Features/Books/Visit.cs`, `backend/Data/TecNMDbContext.cs`).
+
+### Qué se modificó archivo por archivo
+- **`database.sql`:**
+  - Se eliminó la columna `exitDate TIMESTAMP NULL` de la definición de la tabla `Visit` (conservando `entryDate` como marca de tiempo de registro de la visita).
+  - Se actualizaron los `INSERT INTO Visit` semilla removiendo la columna y sus valores.
+- **`backend/Features/Books/Visit.cs`:** se eliminó la propiedad `ExitDate` (`DateTime?`).
+- **`backend/Data/TecNMDbContext.cs`:** se retiró el mapeo `entity.Property(e => e.ExitDate).HasColumnName("exitdate")` para mantener paridad con `database.sql`.
+
+---
+
+## Entrada 16 — Rediseño completo de la vista **Registro de Asistencia**
+
+**Fecha:** 2026-11-26  
+**Alcance:** Frontend (`frontend/src/modules/attendance/views/AttendanceView.vue`).
+
+### Qué se cambió en `AttendanceView.vue`
+Se reemplazó la vista anterior (basada en donas y matriz mensual) por el nuevo diseño operativo de mostrador para registro diario e historial de visitas, integrado dentro del `MainLayout.vue` compartido (sin duplicar la barra lateral):
+
+- **Encabezado institucional y banner superior:**
+  - Barra superior con título *"Biblioteca Tec Monclova"* e indicador de estado *"Servicio Activo • Sala General"*.
+  - Banner *"Registro de Asistencias y Visitas Diarias"* con periodo vigente (*Ago - Dic 2026*).
+- **Tarjeta de captura *Nueva Visita*:**
+  - **Fecha** (`type="date"`, inicializada a la fecha actual) y **Turno** (`Matutino` / `Vespertino`, seleccionado automáticamente con el corte institucional de las `15:00`) distribuidos con cuadrícula scoped `.attendance-date-shift-grid` (aislada de `.grid` de `global.css`).
+  - **Nombre del Visitante** con búsqueda/autocompletado sobre el directorio local (`findMatchingVisitor`) por nombre o matrícula/clave de empleado.
+  - **Servicio / Motivo** en botones tipo *pill*: `Presencial` (activo por defecto), `Virtual`, `Reunión`, `Clase`, `Mantenimiento` y `Otra`.
+  - **Nota / Observaciones** opcional.
+  - **Registrar grupo + Cantidad** (`1` a `60`, habilitado al marcar el checkbox).
+  - Botón principal **Registrar Visita** (`handleRegisterVisit`) que inserta la visita al inicio del historial, actualiza contadores y muestra una notificación flotante (*toast* animado con `showToast`).
+- **Tarjeta *Historial de Visitas Registradas*:**
+  - **3 métricas reactivas del periodo:** `Total periodo`, `Matutino` y `Vespertino`.
+  - **Barra de periodo de consulta:** selector de fechas *desde / al*, botón **Filtrar** (`applyDateFilter`), accesos rápidos **Hoy**, **Semana** y **Mes** (`setFilterPreset`), y botón **Exportar CSV** (`exportToCSV`) que descarga el archivo `.csv` con BOM UTF-8.
+  - **Tabla interactiva (`#visitasTable`):** columnas `Fecha`, `Hora`, `Matrícula`, `Nombre` (con nota si existe), `Carrera`, `Servicio` (badge por color) y botón **Anular** (`handleDeleteVisit`), con paginación funcional de 6 registros por página.
+
+---
+
+## Entrada 17 — Selector *Tipo de Visitante* y simplificación de tabla en **Registro de Asistencia**
+
+**Fecha:** 2026-11-26  
+**Alcance:** Frontend (`frontend/src/modules/attendance/views/AttendanceView.vue`).
+
+### Qué se comparó y actualizó en `AttendanceView.vue`
+- **Formulario *Nueva Visita*:**
+  - Se agregó el selector interactivo **Tipo de Visitante** (`VISITOR_ROLE_OPTIONS` y `selectVisitorRole`) debajo de *Nombre del Visitante* con 4 botones *pill*: **Alumno** (`school`, activo por defecto), **Docente** (`badge`), **Administrativo** (`corporate_fare`) y **Otro** (`person_outline`).
+  - Se ajustó el placeholder de *Nombre del Visitante* a `"Ej. Juan Carlos Pérez Morales"`.
+- **Tabla *Historial de Visitas Registradas* (`#visitasTable`):**
+  - Se eliminó la columna **Matrícula**, dejando **6 columnas**: `Fecha`, `Hora`, `Nombre`, `Carrera`, `Servicio` y `Acción`.
+  - En la columna **Nombre**, debajo del nombre del visitante se muestra ahora la etiqueta con ícono y color de su **Tipo de Visitante** (`Alumno`, `Docente`, `Administrativo`, `Otro`).
+  - Se limpiaron las etiquetas de **Carrera** (ej. `Ing. Informática`, `Informática / Docente Titular`, `Soporte Técnico / TI`) para evitar duplicar el rol.
+- **Exportación CSV (`exportToCSV`):** se reemplazó la columna `Matrícula` por `Tipo de Visitante` para mantener coherencia con la tabla.
+
+---
+
+## Entrada 18 — Campo `librarian_id` en `Visit` (encargado que registra la visita)
+
+**Fecha:** 2026-11-27  
+**Alcance:** Base de datos (`database.sql`) y Backend (`backend/Features/Books/Visit.cs`, `backend/Data/TecNMDbContext.cs`).
+
+### Qué se modificó
+- **`database.sql`:**
+  - Se agregó `librarian_id INT NOT NULL` en `Visit` con llave foránea `fk_visit_librarian` hacia `Borrower(id)` (`ON UPDATE CASCADE ON DELETE RESTRICT`).
+  - Se actualizaron los `INSERT INTO Visit` semilla asignando a los encargados existentes en `Borrower` (`6` Admin / `7` Bibliotecario).
+- **`backend/Features/Books/Visit.cs`:** se agregaron `LibrarianId` (`int`) y navegación `Librarian` (`Borrower?`).
+- **`backend/Data/TecNMDbContext.cs`:** se mapeó `librarian_id` y se configuró explícitamente la segunda relación `HasOne(e => e.Librarian).WithMany().HasForeignKey(e => e.LibrarianId)` con `DeleteBehavior.Restrict` para evitar ambigüedad con `Borrower.Visits`.
+
+### Por qué es mejor
+Cumple **3FN** sin crear una tabla redundante de responsables ni guardar nombres repetidos en texto; reutiliza `Borrower` + `Role` y garantiza integridad referencial en PostgreSQL.
+
+---
+
+## Entrada 19 — Cambio de fechas de `Loan` a tipo `DATE` (sin hora)
+
+**Fecha:** 2026-11-27  
+**Alcance:** Base de datos (`database.sql`) y Backend (`backend/Features/Books/Loan.cs`, `backend/Data/TecNMDbContext.cs`).
+
+### Qué se modificó
+- **`database.sql`:**
+  - En `Loan`: `startDate`, `dueDate` y `returnDate` cambiaron de `TIMESTAMP` a **`DATE`** (`startDate DATE NOT NULL DEFAULT CURRENT_DATE`, `dueDate DATE NOT NULL`, `returnDate DATE NULL`) para insertar y consultar fechas en formato `YYYY-MM-DD` sin hora.
+  - Se actualizaron los `INSERT INTO Loan` semilla usando `CURRENT_DATE`.
+  - En la vista `vw_active_loans_detail`: se ajustó la comparación a `l.dueDate < CURRENT_DATE` y `l.dueDate = CURRENT_DATE` (evitando marcar como vencidos los préstamos que vencen hoy).
+- **`backend/Features/Books/Loan.cs`:** `StartDate`, `DueDate` y `ReturnDate` cambiaron de `DateTime` / `DateTime?` a **`DateOnly` / `DateOnly?`**.
+- **`backend/Data/TecNMDbContext.cs`:** se agregó `.HasColumnType("date")` en las 3 columnas de `Loan`.
+
+---
+
+## Entrada 20 — Alineación del catálogo `Service` en `database.sql` con Asistencia
+
+**Fecha:** 2026-11-27  
+**Alcance:** Base de datos (`database.sql`).
+
+### Qué se modificó
+- **`database.sql` (`INSERT INTO Service`):**
+  - Se renombró el servicio `1` de `'Física'` a `'Presencial'`.
+  - Se agregaron los servicios `5: 'Mantenimiento'` y `6: 'Otra'` para igualar exactamente los 6 botones de `AttendanceView.vue` (`Presencial`, `Virtual`, `Reunión`, `Clase`, `Mantenimiento`, `Otra`).
+
+---
+
+## Entrada 21 — Soporte para tipo de visitante `'Otro'` en `Borrower`
+
+**Fecha:** 2026-11-27  
+**Alcance:** Base de datos (`database.sql`).
+
+### Qué se modificó
+- **`database.sql` (`CREATE TABLE Borrower`):**
+  - `chk_borrower_type`: se agregó `'Otro'` → `IN ('Alumno', 'Docente', 'Administrativo', 'Otro')`.
+  - `chk_borrower_identifier_by_type`: se agregó la rama `(borrower_type = 'Otro' AND studentid IS NULL AND semester IS NULL)` para permitir visitantes externos con o sin clave `employeeid` (sin exigir matrícula de alumno ni semestre).
+
+
+
+
+
+
+
 
 
 
