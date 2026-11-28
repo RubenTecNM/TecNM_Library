@@ -186,7 +186,7 @@ const initialBooks: BookItem[] = [
     id: 2,
     title: 'Mecatrónica: Control Electrónico',
     author: 'William Bolton',
-    shelf: '9.2.3',
+    shelf: '8.2.3',
     shelfId: 2,
     dewey: 'TJ223',
     cutter: '.B65',
@@ -481,6 +481,7 @@ let latestSearchRequestId = 0
 
 const baseMetrics = ref<MetricsSummary>({
   totalBooks: 5240,
+  availableCount: 5093,
   borrowedCount: 85,
   repairCount: 14,
   discardCount: 6,
@@ -504,11 +505,7 @@ const DEFAULT_TOPICS = [
   'Ingeniería de Software',
   'Bases de Datos',
   'Redes de Computadoras',
-  'Sistemas Operativos',
   'Algoritmos y Estructuras de Datos',
-  'Cálculo Diferencial e Integral',
-  'Inteligencia Artificial y Aprendizaje Automático',
-  'Administración y Gestión de Proyectos',
   'Literatura',
   'Derecho y Legislación',
   'Economía y Finanzas',
@@ -765,6 +762,7 @@ async function fetchMetrics() {
     const metrics = await getInventoryMetrics()
     baseMetrics.value = {
       totalBooks: Number(metrics.totalBooks ?? 0),
+      availableCount: Number(metrics.availableCount ?? 0),
       borrowedCount: Number(metrics.borrowedCount ?? 0),
       repairCount: Number(metrics.repairCount ?? 0),
       discardCount: Number(metrics.discardCount ?? 0),
@@ -904,7 +902,41 @@ async function applyDirectStatusChange() {
     activeBook.value.status = newStatus
     activeBook.value.available = updatedAvailability.text
     activeBook.value.barWidth = updatedAvailability.width
+    feedbackMessage.value = `Estado del ejemplar (Folio ${activeBook.value.folio}) actualizado a "${STATUS_META[newStatus].label}".`
     showCambiarEstadoModal.value = false
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+async function darDeBajaActiveBook() {
+  if (isSubmitting.value || !activeBook.value) return
+  const book = activeBook.value
+  const confirmed = window.confirm(
+    `¿Confirmas dar de baja el ejemplar "${book.title}" (Folio: ${book.folio})?\n\nSu estado cambiará a "En proceso de baja" y se reflejará en el contador EN BAJA.`,
+  )
+  if (!confirmed) return
+
+  isSubmitting.value = true
+  try {
+    const newStatus: BookStatusKey = 'baja'
+    const statusId = STATUS_META[newStatus].id
+
+    try {
+      await updateBookStatus(book.id, {
+        statusId,
+        note: book.note,
+      })
+      void fetchMetrics()
+    } catch {
+      // Continúa actualizando estado local si la API no está conectada
+    }
+
+    const updatedAvailability = availabilityByStatus(newStatus)
+    book.status = newStatus
+    book.available = updatedAvailability.text
+    book.barWidth = updatedAvailability.width
+    feedbackMessage.value = `Ejemplar "${book.title}" (Folio ${book.folio}) cambiado a estado "En proceso de baja".`
   } finally {
     isSubmitting.value = false
   }
@@ -1294,20 +1326,20 @@ onBeforeUnmount(() => {
           </div>
         </section>
 
-        <!-- Metric & Inventory Quick Status Strip -->
+        <!-- Metric & Inventory Quick Status Strip (3 columns x 2 rows = 6 cards) -->
         <section class="w-full px-4 sm:px-space-xl pt-5 pb-1 relative z-20">
           <div class="max-w-[1600px] mx-auto inventory-metrics-grid">
-            <!-- Metric 1: Total -->
+            <!-- Fila 1, Columna 1: TOTAL -->
             <button
               type="button"
               :class="[
-                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-tecnm-gold/50 transition-all',
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-tecnm-gold/50 transition-all cursor-pointer',
                 selectedStatus === 'all' ? 'border-primary/40 ring-2 ring-primary/15' : 'border-slate-200/80',
               ]"
               @click="setStatusFilter('all')"
             >
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#002351] to-[#1b396a] text-[#ecd49c] flex items-center justify-center shrink-0 shadow-sm">
-                <span class="material-symbols-outlined text-[24px]">menu_book</span>
+              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#002351] to-[#1b396a] text-[#ecd49c] flex items-center justify-center shrink-0 shadow-sm">
+                <span class="material-symbols-outlined text-[22px]">menu_book</span>
               </div>
               <div class="flex flex-col min-w-0">
                 <span class="font-headline-md text-xl xl:text-2xl text-primary font-bold leading-tight tracking-tight whitespace-nowrap">
@@ -1319,17 +1351,39 @@ onBeforeUnmount(() => {
               </div>
             </button>
 
-            <!-- Metric 2: Prestados -->
+            <!-- Fila 1, Columna 2: DISPONIBLES -->
             <button
               type="button"
               :class="[
-                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-blue-400/50 transition-all',
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-emerald-400/50 transition-all cursor-pointer',
+                selectedStatus === 'disponible' ? 'border-[#15803D] ring-2 ring-[#15803D]/20' : 'border-slate-200/80',
+              ]"
+              @click="toggleStatusFilter('disponible')"
+            >
+              <div class="w-11 h-11 rounded-xl bg-[#D1FAE5] text-[#15803D] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[22px]">check_circle</span>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <span class="font-headline-md text-xl xl:text-2xl text-[#15803D] font-bold leading-tight tracking-tight whitespace-nowrap">
+                  {{ displayMetrics.availableCount.toLocaleString('es-MX') }}
+                </span>
+                <span class="font-label-md text-[11px] xl:text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 whitespace-nowrap">
+                  Disponibles
+                </span>
+              </div>
+            </button>
+
+            <!-- Fila 1, Columna 3: PRESTADOS -->
+            <button
+              type="button"
+              :class="[
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-blue-400/50 transition-all cursor-pointer',
                 selectedStatus === 'prestado' ? 'border-[#1D4ED8] ring-2 ring-[#1D4ED8]/20' : 'border-slate-200/80',
               ]"
               @click="toggleStatusFilter('prestado')"
             >
-              <div class="w-10 h-10 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-[20px]">sync_alt</span>
+              <div class="w-11 h-11 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[22px]">sync_alt</span>
               </div>
               <div class="flex flex-col min-w-0">
                 <span class="font-headline-md text-xl xl:text-2xl text-[#1D4ED8] font-bold leading-tight tracking-tight whitespace-nowrap">
@@ -1341,17 +1395,17 @@ onBeforeUnmount(() => {
               </div>
             </button>
 
-            <!-- Metric 3: Reparación -->
+            <!-- Fila 2, Columna 1: REPARACIÓN -->
             <button
               type="button"
               :class="[
-                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-amber-400/50 transition-all',
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-amber-400/50 transition-all cursor-pointer',
                 selectedStatus === 'reparacion' ? 'border-[#D97706] ring-2 ring-[#D97706]/20' : 'border-slate-200/80',
               ]"
               @click="toggleStatusFilter('reparacion')"
             >
-              <div class="w-10 h-10 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-[20px]">build_circle</span>
+              <div class="w-11 h-11 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[22px]">build_circle</span>
               </div>
               <div class="flex flex-col min-w-0">
                 <span class="font-headline-md text-xl xl:text-2xl text-[#D97706] font-bold leading-tight tracking-tight whitespace-nowrap">
@@ -1363,17 +1417,17 @@ onBeforeUnmount(() => {
               </div>
             </button>
 
-            <!-- Metric 4: En Baja -->
+            <!-- Fila 2, Columna 2: EN BAJA -->
             <button
               type="button"
               :class="[
-                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-rose-400/50 transition-all',
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-rose-400/50 transition-all cursor-pointer',
                 selectedStatus === 'baja' ? 'border-[#DC2626] ring-2 ring-[#DC2626]/20' : 'border-slate-200/80',
               ]"
               @click="toggleStatusFilter('baja')"
             >
-              <div class="w-10 h-10 rounded-xl bg-[#FEE2E2] text-[#DC2626] flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-[20px]">delete_forever</span>
+              <div class="w-11 h-11 rounded-xl bg-[#FEE2E2] text-[#DC2626] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[22px]">delete_forever</span>
               </div>
               <div class="flex flex-col min-w-0">
                 <span class="font-headline-md text-xl xl:text-2xl text-[#DC2626] font-bold leading-tight tracking-tight whitespace-nowrap">
@@ -1385,17 +1439,17 @@ onBeforeUnmount(() => {
               </div>
             </button>
 
-            <!-- Metric 5: Catálogo -->
+            <!-- Fila 2, Columna 3: CATÁLOGO -->
             <button
               type="button"
               :class="[
-                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-purple-400/50 transition-all inventory-metric-last',
+                'bg-white p-4 rounded-2xl shadow-sm border text-left flex items-center gap-3.5 hover:border-purple-400/50 transition-all cursor-pointer',
                 selectedStatus === 'catalogo' ? 'border-[#7C3AED] ring-2 ring-[#7C3AED]/20' : 'border-slate-200/80',
               ]"
               @click="toggleStatusFilter('catalogo')"
             >
-              <div class="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-[20px]">auto_stories</span>
+              <div class="w-11 h-11 rounded-xl bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[22px]">auto_stories</span>
               </div>
               <div class="flex flex-col min-w-0">
                 <span class="font-headline-md text-xl xl:text-2xl text-[#7C3AED] font-bold leading-tight tracking-tight whitespace-nowrap">
@@ -1834,10 +1888,10 @@ onBeforeUnmount(() => {
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   Acciones del Ejemplar:
                 </span>
-                <div class="inv-grid-2">
+                <div class="inv-grid-3">
                   <button
                     type="button"
-                    class="h-11 px-4 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md hover:shadow-lg active:scale-[0.99]"
+                    class="h-11 px-4 bg-primary hover:bg-[#184580] text-white font-label-sm text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer"
                     @click="openCambiarEstadoModal"
                   >
                     <span class="material-symbols-outlined text-lg text-tecnm-gold-light">published_with_changes</span>
@@ -1845,11 +1899,20 @@ onBeforeUnmount(() => {
                   </button>
                   <button
                     type="button"
-                    class="h-11 px-4 bg-white hover:bg-slate-50 text-primary border-2 border-primary/25 hover:border-primary font-label-sm text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99]"
+                    class="h-11 px-4 bg-white hover:bg-slate-50 text-primary border-2 border-primary/25 hover:border-primary font-label-sm text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99] cursor-pointer"
                     @click="openEditarFichaModal"
                   >
                     <span class="material-symbols-outlined text-lg text-primary">edit_square</span>
                     <span>Editar Ficha</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="h-11 px-4 bg-white hover:bg-slate-50 text-primary border-2 border-primary/25 hover:border-primary font-label-sm text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99] cursor-pointer disabled:opacity-50"
+                    :disabled="isSubmitting || activeBook.status === 'baja'"
+                    @click="darDeBajaActiveBook"
+                  >
+                    <span class="material-symbols-outlined text-lg text-primary">delete</span>
+                    <span>Dar de Baja</span>
                   </button>
                 </div>
               </div>
@@ -2259,7 +2322,7 @@ onBeforeUnmount(() => {
                     id="newShelf"
                     v-model="newBookForm.shelf"
                     class="inventory-input w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 font-citation-code font-bold focus:ring-2 focus:ring-primary focus:border-primary !text-xs"
-                    placeholder="Ej. 1.1.1 (Pabellón.Fila.Nivel)"
+                    placeholder="Ej. 1.1.1 a 8.3.5 (Estante.Columna.Repisa)"
                     required
                     type="text"
                   />
@@ -2396,7 +2459,7 @@ onBeforeUnmount(() => {
                   id="estanteCodigo"
                   v-model="estanteCodigo"
                   class="inventory-input w-full !h-10 !min-h-0 !px-3 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 font-citation-code font-bold focus:ring-2 focus:ring-primary focus:border-primary !text-xs"
-                  placeholder="Ej. 1.3.2"
+                  placeholder="Ej. 1.1.1 hasta 8.3.5 (Estante.Columna.Repisa)"
                   required
                   type="text"
                 />
@@ -2503,27 +2566,19 @@ onBeforeUnmount(() => {
 /* Isolated grids to avoid collision with global.css .grid */
 .inventory-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 1rem;
-}
-
-.inventory-metric-last {
-  grid-column: span 2 / span 2;
 }
 
 @media (min-width: 640px) {
   .inventory-metrics-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .inventory-metric-last {
-    grid-column: span 1 / span 1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1024px) {
   .inventory-metrics-grid {
-    grid-template-columns: 1.25fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

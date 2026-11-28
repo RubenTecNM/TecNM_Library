@@ -296,14 +296,14 @@ INSERT INTO BookStatus (id, name, idUserCreate, dateCreate, idStatus) VALUES
 (5, 'En catálogo', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('BookStatus_id_seq', (SELECT MAX(id) FROM BookStatus));
 
--- 2. Estantes (Shelf)
+-- 2. Estantes (Shelf) — Formato institucional: <Estante>.<Columna (1-3)>.<Repisa (1-5)> (del 1.1.1 al 8.3.5)
 INSERT INTO Shelf (id, name, idUserCreate, dateCreate, idStatus) VALUES
-(1, 'Estante A-1: Ingeniería de Software y Programación', 1, CURRENT_TIMESTAMP, B'1'),
-(2, 'Estante A-2: Bases de Datos y Sistemas de Información', 1, CURRENT_TIMESTAMP, B'1'),
-(3, 'Estante B-1: Redes, Telecomunicaciones y Ciberseguridad', 1, CURRENT_TIMESTAMP, B'1'),
-(4, 'Estante B-2: Sistemas Operativos y Arquitectura de Computadoras', 1, CURRENT_TIMESTAMP, B'1'),
-(5, 'Estante C-1: Ciencias Básicas y Matemáticas Aplicadas', 1, CURRENT_TIMESTAMP, B'1'),
-(6, 'Estante D-1: Gestión Empresarial e Ingeniería Industrial', 1, CURRENT_TIMESTAMP, B'1'),
+(1, 'Estante 1.2.1', 1, CURRENT_TIMESTAMP, B'1'),
+(2, 'Estante 2.1.1', 1, CURRENT_TIMESTAMP, B'1'),
+(3, 'Estante 3.1.1', 1, CURRENT_TIMESTAMP, B'1'),
+(4, 'Estante 4.2.1', 1, CURRENT_TIMESTAMP, B'1'),
+(5, 'Estante 6.2.3', 1, CURRENT_TIMESTAMP, B'1'),
+(6, 'Estante 8.3.5', 1, CURRENT_TIMESTAMP, B'1'),
 (7, 'Estante 1.1.1', 1, CURRENT_TIMESTAMP, B'1'),
 (8, 'Estante 1.1.2', 1, CURRENT_TIMESTAMP, B'1'),
 (9, 'Estante 1.1.3', 1, CURRENT_TIMESTAMP, B'1'),
@@ -311,42 +311,27 @@ INSERT INTO Shelf (id, name, idUserCreate, dateCreate, idStatus) VALUES
 (11, 'Estante 1.1.5', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Shelf_id_seq', (SELECT MAX(id) FROM Shelf));
 
--- 3. Temas (Topic)
+-- 3. Temas (Topic) — Únicamente los 11 temas reales presentes en el catálogo del Excel
 INSERT INTO Topic (id, name, idUserCreate, dateCreate, idStatus) VALUES
 (1, 'Ingeniería de Software', 1, CURRENT_TIMESTAMP, B'1'),
 (2, 'Bases de Datos', 1, CURRENT_TIMESTAMP, B'1'),
 (3, 'Redes de Computadoras', 1, CURRENT_TIMESTAMP, B'1'),
-(4, 'Sistemas Operativos', 1, CURRENT_TIMESTAMP, B'1'),
-(5, 'Algoritmos y Estructuras de Datos', 1, CURRENT_TIMESTAMP, B'1'),
-(6, 'Cálculo Diferencial e Integral', 1, CURRENT_TIMESTAMP, B'1'),
-(7, 'Inteligencia Artificial y Aprendizaje Automático', 1, CURRENT_TIMESTAMP, B'1'),
-(8, 'Administración y Gestión de Proyectos', 1, CURRENT_TIMESTAMP, B'1'),
-(9, 'Literatura', 1, CURRENT_TIMESTAMP, B'1'),
-(10, 'Derecho y Legislación', 1, CURRENT_TIMESTAMP, B'1'),
-(11, 'Economía y Finanzas', 1, CURRENT_TIMESTAMP, B'1'),
-(12, 'Energía y Electricidad', 1, CURRENT_TIMESTAMP, B'1'),
-(13, 'Enciclopedias y Diccionarios', 1, CURRENT_TIMESTAMP, B'1'),
-(14, 'Ingeniería Mecánica y Manufactura', 1, CURRENT_TIMESTAMP, B'1'),
-(15, 'Psicología y Desarrollo', 1, CURRENT_TIMESTAMP, B'1');
+(4, 'Algoritmos y Estructuras de Datos', 1, CURRENT_TIMESTAMP, B'1'),
+(5, 'Literatura', 1, CURRENT_TIMESTAMP, B'1'),
+(6, 'Derecho y Legislación', 1, CURRENT_TIMESTAMP, B'1'),
+(7, 'Economía y Finanzas', 1, CURRENT_TIMESTAMP, B'1'),
+(8, 'Energía y Electricidad', 1, CURRENT_TIMESTAMP, B'1'),
+(9, 'Enciclopedias y Diccionarios', 1, CURRENT_TIMESTAMP, B'1'),
+(10, 'Ingeniería Mecánica y Manufactura', 1, CURRENT_TIMESTAMP, B'1'),
+(11, 'Psicología y Desarrollo', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Topic_id_seq', (SELECT MAX(id) FROM Topic));
 
--- 4. Autores (Author)
-INSERT INTO Author (id, name, lastName, idUserCreate, dateCreate, idStatus) VALUES
-(1, 'Andrew S.', 'Tanenbaum', 1, CURRENT_TIMESTAMP, B'1'),
-(2, 'Ian', 'Sommerville', 1, CURRENT_TIMESTAMP, B'1'),
-(3, 'Robert C.', 'Martin', 1, CURRENT_TIMESTAMP, B'1'),
-(4, 'Abraham', 'Silberschatz', 1, CURRENT_TIMESTAMP, B'1'),
-(5, 'James F.', 'Kurose', 1, CURRENT_TIMESTAMP, B'1'),
-(6, 'Keith W.', 'Ross', 1, CURRENT_TIMESTAMP, B'1'),
-(7, 'James', 'Stewart', 1, CURRENT_TIMESTAMP, B'1'),
-(8, 'Thomas H.', 'Cormen', 1, CURRENT_TIMESTAMP, B'1'),
-(9, 'Roger S.', 'Pressman', 1, CURRENT_TIMESTAMP, B'1');
-SELECT setval('Author_id_seq', (SELECT MAX(id) FROM Author));
+-- 4. Autores (Author) — Se puebla automáticamente a partir de los libros reales del catálogo (ver paso 6)
 
--- 5. Libros de acervo universitario (Book) - 8 títulos clásicos
+-- 5. Libros de acervo universitario (Book)
 INSERT INTO Book (title, note, author, folio, dewey, cutter, status_id, shelf_id, idUserCreate, dateCreate, idStatus) VALUES
 ('Diccionario de Informática', NULL, 'Cultural, S. A.', '69', 'C004', 'D545', 1, 7, 1, CURRENT_TIMESTAMP, B'1'),
-('Enciclopedia Universal Diana', NULL, NULL, 'SIN-FOLIO-001', 'C030', 'E56', 1, 7, 1, CURRENT_TIMESTAMP, B'1'),
+('Enciclopedia Universal Diana', NULL, NULL, '5000', 'C030', 'E56', 1, 7, 1, CURRENT_TIMESTAMP, B'1'),
 ('Diccionario ilustrado de Computación para Inexpertos', NULL, 'Dan Gookin. Wally Wang. Chris Van Buren.', '74', 'C004', 'G659', 1, 7, 1, CURRENT_TIMESTAMP, B'1'),
 ('Diccionario Enciclopédico de Informática', 'Volumen 1', 'Héctor G. Tejera.', '1460', 'C004', 'T253d V.1', 1, 7, 1, CURRENT_TIMESTAMP, B'1'),
 ('Diccionario Enciclopédico de Informática', 'Volumen 2', 'Héctor G. Tejera.', '1461', 'C004', 'T253dV.2', 1, 7, 1, CURRENT_TIMESTAMP, B'1'),
@@ -452,15 +437,15 @@ INSERT INTO Book (title, note, author, folio, dewey, cutter, status_id, shelf_id
 ('Fisco Agenda 2001', NULL, 'Ediciones Fiscales ISEF.', '825', 'C348.02', 'F528 EJ.2', 1, 10, 1, CURRENT_TIMESTAMP, B'1'),
 ('Código Fiscal de la Federación', NULL, 'Editorial Porrúa', '858', 'C348.023', 'L681', 1, 10, 1, CURRENT_TIMESTAMP, B'1'),
 ('Agenda Fiscal 2000', NULL, 'Ediciones Fiscales ISEF.', '859', 'C348.023', 'A265', 1, 10, 1, CURRENT_TIMESTAMP, B'1'),
-('Código Civil', 'Trigesima Octava Edición', 'Ediciones Delma', '838', 'C348.02372', 'C669', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Código Fiscal de la Federación y su Reglamento', 'Primera Edición', 'Ediciones Delma', '852', 'C348.02372', 'C669 2001 EJ.1', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Código Fiscal de la Federación y su Reglamento', 'Primera Edición', 'Ediciones Delma', '853', 'C348.02372', 'C669 2001 EJ.2', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Código Fiscal de la Federación y su Reglamento', 'Primera Edición', 'Ediciones Delma', '854', 'C348.02372', 'C669 2001 EJ.3', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Código Civil', 'Trigesima Octava Edición', 'Ediciones Delma.', '838', 'C348.02372', 'C669', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Código Fiscal de la Federación y su Reglamento', 'Primera Edición', 'Ediciones Delma.', '852', 'C348.02372', 'C669 2001 EJ.1', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Código Fiscal de la Federación y su Reglamento', 'Primera Edición', 'Ediciones Delma.', '853', 'C348.02372', 'C669 2001 EJ.2', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Código Fiscal de la Federación y su Reglamento', 'Primera Edición', 'Ediciones Delma.', '854', 'C348.02372', 'C669 2001 EJ.3', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
 ('Código Civil Para el Estado de Coahuila de Zaragoza', NULL, 'Lazcano Garza Editores.', '840', 'C348.0237214', 'C669', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
 ('Código Civil Para el  Distrito Federal', NULL, 'Editorial Porrúa', '839', 'C348.0237253', 'L681', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Ley  del Impuesto Sobre la Renta y su Reglamento', NULL, 'Ediciones Delma', '855', 'C348.024', 'L681  EJ.1', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Ley  del Impuesto Sobre la Renta y su Reglamento', NULL, 'Ediciones Delma', '856', 'C348.024', 'L681 EJ.2', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Ley  del Impuesto Sobre la Renta y su Reglamento', NULL, 'Ediciones Delma', '857', 'C348.024', 'L681 EJ.3', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Ley  del Impuesto Sobre la Renta y su Reglamento', NULL, 'Ediciones Delma.', '855', 'C348.024', 'L681  EJ.1', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Ley  del Impuesto Sobre la Renta y su Reglamento', NULL, 'Ediciones Delma.', '856', 'C348.024', 'L681 EJ.2', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Ley  del Impuesto Sobre la Renta y su Reglamento', NULL, 'Ediciones Delma.', '857', 'C348.024', 'L681 EJ.3', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
 ('Ley del Impuesto Sobre la Renta 2010', NULL, 'Intituto Mexicano de Contadores Publicos.', '3555', 'C348.024', 'L681 2010 EJ.1', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
 ('Manual de Fórmulas Financieras', NULL, 'José de Jesús Gonzáles Serna.', '4731', 'C352.4', 'G643m', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
 ('Manual del Derecho Ambiental Mexicano', NULL, 'Raúl Brañes.', '3858', 'C352.3', 'B812 EJ.1', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
@@ -481,20 +466,20 @@ INSERT INTO Book (title, note, author, folio, dewey, cutter, status_id, shelf_id
 ('Ley del Seguro Social', NULL, 'Interpac.', '3499', 'C368.3822', 'N964 2010', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
 ('Programa Jóvenes destacados de Coahuila', NULL, 'Nazario S. Ortiz Garza. Lic. Francisco Lopez Serrano.', '736', 'C370.08427214', 'L8642p', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
 ('Palabras Frases y Hechos', NULL, 'Carlos Flores Revuelta', '2135', 'C401.4', 'F634p EJ.1', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Marco Juridico del Acuerdo Educativo Nacional', NULL, 'SEP', 'SIN-FOLIO-002', 'C004.6730', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Nuevos Escenarios Educativos', NULL, 'Ruth Harf, Delia Azzerboni, Sandra Sánchez y Néstor Zorzoli', 'SIN-FOLIO-003', 'C004.6731', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Diccionario de Sinónimos y Antónimos', NULL, 'Larousse', 'SIN-FOLIO-004', 'C004.6732', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
-('Diccionario Enciclopédico', NULL, NULL, 'SIN-FOLIO-005', 'C004.6733', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1');
+('Marco Juridico del Acuerdo Educativo Nacional', NULL, 'SEP', '5001', 'C004.6730', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Nuevos Escenarios Educativos', NULL, 'Ruth Harf, Delia Azzerboni, Sandra Sánchez y Néstor Zorzoli', '5002', 'C004.6731', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Diccionario de Sinónimos y Antónimos', NULL, 'Larousse', '5003', 'C004.6732', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1'),
+('Diccionario Enciclopédico', NULL, NULL, '5004', 'C004.6733', 'S/C', 1, 11, 1, CURRENT_TIMESTAMP, B'1');
 
 INSERT INTO Book (title, note, author, folio, dewey, cutter, status_id, shelf_id, idUserCreate, dateCreate, idStatus) VALUES
 ('Lecciones de Electricidad', NULL, 'J. Ney / G. Louis', '1932', '333.7932', 'N568L', 2, 6, 1, CURRENT_TIMESTAMP, B'1'),
 ('Programación TRANSACT', NULL, 'Manuel Torres', '4346', '005.133', 'T636s', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
-('Aprenda Programación Microsoft SQL', NULL, 'Rebeca M. Riordan', 'SIN-FOLIO-PRESTAMO-001', '005.74', 'R56', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Aprenda Programación Microsoft SQL', NULL, 'Rebeca M. Riordan', '5005', '005.74', 'R56', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
 ('Tecnología de las Máquinas Herramientas', NULL, 'Steve F. Krar / Arthur. Gill / Peter Smid', '4343', '621.902', 'K898t 2009', 2, 6, 1, CURRENT_TIMESTAMP, B'1'),
 ('C++ Como Programar', NULL, 'Daitel', '4075', '005.133', 'D324e Ej.1', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
 ('Ruta Interior', NULL, 'Hermann Hesse', '1611', '830.39', 'H586r', 2, 5, 1, CURRENT_TIMESTAMP, B'1'),
 ('La Inteligencia Emocional', NULL, 'Vergara', '3547', '153.9', 'G625I', 1, 5, 1, CURRENT_TIMESTAMP, B'1'),
-('Programacion en algoritmos', NULL, 'Luis Joyanes Agilar', '1799', '005.13', 'E96XJ', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
+('Programacion en algoritmos', NULL, 'Luis Joyanes Aguilar', '1799', '005.13', 'E96XJ', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
 ('Estructuras de datos Básicas', NULL, 'Silvia Guardiati', '4812', '005.73', 'G914e', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
 ('Estructuras de datos', NULL, 'Luis Joyanes Aguilar', '1765', '005.73', 'J88E', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
 ('Estructuras de datos a objetos algoritmos', NULL, 'Silvia Guardiati', '4686', '005.73', 'G914e', 2, 1, 1, CURRENT_TIMESTAMP, B'1'),
@@ -511,34 +496,63 @@ INSERT INTO Book (title, note, author, folio, dewey, cutter, status_id, shelf_id
 ('Libros Condensados', NULL, NULL, '3002', '810.6', 'L6979', 2, 5, 1, CURRENT_TIMESTAMP, B'1')
 ON CONFLICT (folio) DO NOTHING;
 
--- 6. Relaciones N:M Book_Author
-INSERT INTO Book_Author (book_id, author_id, idUserCreate, dateCreate, idStatus) VALUES
-(1, 1, 1, CURRENT_TIMESTAMP, B'1'), -- Tanenbaum -> Sistemas Operativos Modernos
-(2, 9, 1, CURRENT_TIMESTAMP, B'1'), -- Pressman -> Ing. de Software
-(3, 3, 1, CURRENT_TIMESTAMP, B'1'), -- Martin -> Código Limpio
-(4, 4, 1, CURRENT_TIMESTAMP, B'1'), -- Silberschatz -> Bases de Datos
-(5, 5, 1, CURRENT_TIMESTAMP, B'1'), -- Kurose -> Redes
-(5, 6, 1, CURRENT_TIMESTAMP, B'1'), -- Ross -> Redes (coautor)
-(6, 7, 1, CURRENT_TIMESTAMP, B'1'), -- Stewart -> Cálculo
-(7, 8, 1, CURRENT_TIMESTAMP, B'1'), -- Cormen -> Algoritmos
-(8, 2, 1, CURRENT_TIMESTAMP, B'1'); -- Sommerville -> Ing. del Software
+-- 6. Catálogo de Autores (Author) y Relaciones N:M (Book_Author) generados desde los 162 libros reales
+INSERT INTO Author (name, lastName, idUserCreate, dateCreate, idStatus)
+SELECT
+    CASE
+        WHEN strpos(clean_author, ' ') > 0
+            THEN btrim(regexp_replace(clean_author, '\s+\S+$', ''))
+        ELSE clean_author
+    END AS name,
+    CASE
+        WHEN strpos(clean_author, ' ') > 0
+            THEN btrim(regexp_replace(clean_author, '^.*\s+(\S+)$', '\1'))
+        ELSE 'Institucional'
+    END AS lastName,
+    1,
+    CURRENT_TIMESTAMP,
+    B'1'
+FROM (
+    SELECT DISTINCT btrim(author) AS clean_author
+    FROM Book
+    WHERE author IS NOT NULL AND btrim(author) <> ''
+    ORDER BY clean_author
+) AS distinct_authors;
+
+INSERT INTO Book_Author (book_id, author_id, idUserCreate, dateCreate, idStatus)
+SELECT
+    b.id,
+    a.id,
+    1,
+    CURRENT_TIMESTAMP,
+    B'1'
+FROM Book b
+INNER JOIN Author a
+    ON (
+        CASE
+            WHEN a.lastName = 'Institucional' THEN a.name
+            ELSE a.name || ' ' || a.lastName
+        END
+    ) = btrim(b.author)
+WHERE b.author IS NOT NULL AND btrim(b.author) <> ''
+ON CONFLICT (book_id, author_id) DO NOTHING;
 
 -- 7. Relaciones N:M Book_Topic (Asignación de temas para todos los libros del catálogo)
 INSERT INTO Book_Topic (book_id, topic_id, idUserCreate, dateCreate, idStatus)
 SELECT
     b.id,
     CASE
-        WHEN b.dewey IN ('830.39', '810.6') OR b.title ILIKE '%Ruta Interior%' OR b.title ILIKE '%Libros Condensados%' THEN 9 -- Literatura
+        WHEN b.dewey IN ('830.39', '810.6') OR b.title ILIKE '%Ruta Interior%' OR b.title ILIKE '%Libros Condensados%' THEN 5 -- Literatura
         WHEN b.dewey ILIKE '005.74%' OR b.title ILIKE '%SQL%' THEN 2 -- Bases de Datos
         WHEN b.dewey ILIKE '%004.6%' OR b.title ILIKE '%redes%' THEN 3 -- Redes de Computadoras
-        WHEN b.dewey ILIKE '005.%' THEN 5 -- Algoritmos y Estructuras de Datos
-        WHEN b.dewey ILIKE 'C004%' THEN 1 -- Ingeniería de Software / Informática
-        WHEN b.dewey ILIKE '%333.79%' THEN 12 -- Energía y Electricidad
-        WHEN b.dewey ILIKE 'C330%' OR b.dewey ILIKE 'C338%' OR b.dewey ILIKE 'C352.4%' THEN 11 -- Economía y Finanzas
-        WHEN b.dewey ILIKE 'C34%' OR b.dewey ILIKE 'C35%' OR b.dewey ILIKE 'C368%' OR b.title ILIKE '%Ley%' OR b.title ILIKE '%Código%' OR b.title ILIKE '%Constitución%' THEN 10 -- Derecho y Legislación
-        WHEN b.dewey ILIKE '621.%' THEN 14 -- Ingeniería Mecánica y Manufactura
-        WHEN b.dewey ILIKE '153.%' THEN 15 -- Psicología y Desarrollo
-        ELSE 13 -- Enciclopedias y Diccionarios
+        WHEN b.dewey ILIKE '005.%' THEN 4 -- Algoritmos y Estructuras de Datos
+        WHEN b.dewey ILIKE 'C004%' THEN 1 -- Ingeniería de Software
+        WHEN b.dewey ILIKE '%333.79%' THEN 8 -- Energía y Electricidad
+        WHEN b.dewey ILIKE 'C330%' OR b.dewey ILIKE 'C338%' OR b.dewey ILIKE 'C352.4%' THEN 7 -- Economía y Finanzas
+        WHEN b.dewey ILIKE 'C34%' OR b.dewey ILIKE 'C35%' OR b.dewey ILIKE 'C368%' OR b.title ILIKE '%Ley%' OR b.title ILIKE '%Código%' OR b.title ILIKE '%Constitución%' THEN 6 -- Derecho y Legislación
+        WHEN b.dewey ILIKE '621.%' THEN 10 -- Ingeniería Mecánica y Manufactura
+        WHEN b.dewey ILIKE '153.%' THEN 11 -- Psicología y Desarrollo
+        ELSE 9 -- Enciclopedias y Diccionarios
     END AS topic_id,
     1,
     CURRENT_TIMESTAMP,
@@ -586,7 +600,7 @@ ON CONFLICT (studentid) DO NOTHING;
 INSERT INTO Loan (book_id, borrower_id, startDate, dueDate, returnDate, responsible, idUserCreate, dateCreate, idStatus) VALUES
 ((SELECT id FROM Book WHERE folio = '1932'), (SELECT id FROM Borrower WHERE studentid = 'N24050251'), '2026-09-01', '2026-09-04', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
 ((SELECT id FROM Book WHERE folio = '4346'), (SELECT id FROM Borrower WHERE studentid = 'I21050385'), '2026-09-02', '2026-09-05', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
-((SELECT id FROM Book WHERE folio = 'SIN-FOLIO-PRESTAMO-001'), (SELECT id FROM Borrower WHERE studentid = 'I21050385'), '2026-09-02', '2026-09-05', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
+((SELECT id FROM Book WHERE folio = '5005'), (SELECT id FROM Borrower WHERE studentid = 'I21050385'), '2026-09-02', '2026-09-05', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),
 ((SELECT id FROM Book WHERE folio = '4343'), (SELECT id FROM Borrower WHERE studentid = 'I25050370'), '2026-09-04', '2026-09-08', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
 ((SELECT id FROM Book WHERE folio = '4075'), (SELECT id FROM Borrower WHERE studentid = 'INE-OSCAR'), '2026-09-04', '2026-09-08', NULL, 'Oscar', 1, CURRENT_TIMESTAMP, B'1'),
 ((SELECT id FROM Book WHERE folio = '1611'), (SELECT id FROM Borrower WHERE studentid = 'N25050276'), '2026-09-02', '2026-09-05', NULL, 'Araceli', 1, CURRENT_TIMESTAMP, B'1'),

@@ -114,6 +114,7 @@ export interface BookItem {
 
 export interface MetricsSummary {
   totalBooks: number
+  availableCount: number
   borrowedCount: number
   repairCount: number
   discardCount: number
