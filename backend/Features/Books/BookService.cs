@@ -260,6 +260,11 @@ public sealed class BookService(TecNMDbContext db) : IBookService
         db.Books.Add(book);
         await db.SaveChangesAsync();
 
+        if (req.Topics is { Count: > 0 })
+        {
+            await SyncBookTopicsAsync(book.Id, req.Topics);
+        }
+
         var created = await GetBookByIdAsync(book.Id);
         return (created, null, false);
     }
@@ -280,12 +285,6 @@ public sealed class BookService(TecNMDbContext db) : IBookService
         if (!string.IsNullOrWhiteSpace(req.Folio))
         {
             var cleanedFolio = NormalizeFolio(req.Folio);
-            if (int.TryParse(cleanedFolio, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
-                && parsed < MinimumStartingFolio)
-            {
-                return (null, $"El folio debe ser igual o mayor a {MinimumStartingFolio}.", false, false);
-            }
-
             var duplicate = await db.Books
                 .IgnoreQueryFilters()
                 .AnyAsync(b => b.Id != id && (b.Folio == cleanedFolio || b.Folio == "#" + cleanedFolio));
@@ -316,6 +315,11 @@ public sealed class BookService(TecNMDbContext db) : IBookService
 
         book.DateUpdate = DateTime.UtcNow;
         await db.SaveChangesAsync();
+
+        if (req.Topics is not null)
+        {
+            await SyncBookTopicsAsync(book.Id, req.Topics);
+        }
 
         var updated = await GetBookByIdAsync(book.Id);
         return (updated, null, false, false);
@@ -449,6 +453,59 @@ public sealed class BookService(TecNMDbContext db) : IBookService
         db.Shelves.Add(newShelf);
         await db.SaveChangesAsync();
         return newShelf;
+    }
+
+    private async Task SyncBookTopicsAsync(int bookId, IReadOnlyList<string> rawTopics)
+    {
+        var cleanedNames = rawTopics
+            .SelectMany(t => t.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var existingLinks = await db.BookTopics
+            .Where(bt => bt.BookId == bookId)
+            .ToListAsync();
+
+        if (existingLinks.Count > 0)
+        {
+            db.BookTopics.RemoveRange(existingLinks);
+            await db.SaveChangesAsync();
+        }
+
+        if (cleanedNames.Count == 0)
+        {
+            return;
+        }
+
+        var allTopics = await db.Topics.ToListAsync();
+        foreach (var topicName in cleanedNames)
+        {
+            var norm = NormalizeSearchText(topicName);
+            var topic = allTopics.FirstOrDefault(t => NormalizeSearchText(t.Name) == norm);
+            if (topic is null)
+            {
+                topic = new Topic
+                {
+                    Name = topicName.Trim(),
+                    DateCreate = DateTime.UtcNow,
+                    IdStatus = true
+                };
+                db.Topics.Add(topic);
+                await db.SaveChangesAsync();
+                allTopics.Add(topic);
+            }
+
+            db.BookTopics.Add(new BookTopic
+            {
+                BookId = bookId,
+                TopicId = topic.Id,
+                DateCreate = DateTime.UtcNow,
+                IdStatus = true
+            });
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static BookDto MapToDto(Book b)

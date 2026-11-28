@@ -63,6 +63,7 @@ export interface CreateBookPayload {
   statusId: number
   shelfId: number
   shelfName?: string
+  topics?: string[]
 }
 
 export interface UpdateBookPayload {
@@ -74,6 +75,7 @@ export interface UpdateBookPayload {
   cutter: string
   statusId: number
   shelfName?: string
+  topics?: string[]
 }
 
 export interface UpdateBookStatusPayload {

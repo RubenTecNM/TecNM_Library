@@ -320,7 +320,14 @@ INSERT INTO Topic (id, name, idUserCreate, dateCreate, idStatus) VALUES
 (5, 'Algoritmos y Estructuras de Datos', 1, CURRENT_TIMESTAMP, B'1'),
 (6, 'Cálculo Diferencial e Integral', 1, CURRENT_TIMESTAMP, B'1'),
 (7, 'Inteligencia Artificial y Aprendizaje Automático', 1, CURRENT_TIMESTAMP, B'1'),
-(8, 'Administración y Gestión de Proyectos', 1, CURRENT_TIMESTAMP, B'1');
+(8, 'Administración y Gestión de Proyectos', 1, CURRENT_TIMESTAMP, B'1'),
+(9, 'Literatura', 1, CURRENT_TIMESTAMP, B'1'),
+(10, 'Derecho y Legislación', 1, CURRENT_TIMESTAMP, B'1'),
+(11, 'Economía y Finanzas', 1, CURRENT_TIMESTAMP, B'1'),
+(12, 'Energía y Electricidad', 1, CURRENT_TIMESTAMP, B'1'),
+(13, 'Enciclopedias y Diccionarios', 1, CURRENT_TIMESTAMP, B'1'),
+(14, 'Ingeniería Mecánica y Manufactura', 1, CURRENT_TIMESTAMP, B'1'),
+(15, 'Psicología y Desarrollo', 1, CURRENT_TIMESTAMP, B'1');
 SELECT setval('Topic_id_seq', (SELECT MAX(id) FROM Topic));
 
 -- 4. Autores (Author)
@@ -516,17 +523,28 @@ INSERT INTO Book_Author (book_id, author_id, idUserCreate, dateCreate, idStatus)
 (7, 8, 1, CURRENT_TIMESTAMP, B'1'), -- Cormen -> Algoritmos
 (8, 2, 1, CURRENT_TIMESTAMP, B'1'); -- Sommerville -> Ing. del Software
 
--- 7. Relaciones N:M Book_Topic
-INSERT INTO Book_Topic (book_id, topic_id, idUserCreate, dateCreate, idStatus) VALUES
-(1, 4, 1, CURRENT_TIMESTAMP, B'1'), -- Sistemas Operativos
-(2, 1, 1, CURRENT_TIMESTAMP, B'1'), -- Ingeniería de Software
-(3, 1, 1, CURRENT_TIMESTAMP, B'1'), -- Ingeniería de Software
-(3, 5, 1, CURRENT_TIMESTAMP, B'1'), -- Algoritmos
-(4, 2, 1, CURRENT_TIMESTAMP, B'1'), -- Bases de Datos
-(5, 3, 1, CURRENT_TIMESTAMP, B'1'), -- Redes de Computadoras
-(6, 6, 1, CURRENT_TIMESTAMP, B'1'), -- Cálculo
-(7, 5, 1, CURRENT_TIMESTAMP, B'1'), -- Algoritmos y Estructuras de Datos
-(8, 1, 1, CURRENT_TIMESTAMP, B'1'); -- Ingeniería de Software
+-- 7. Relaciones N:M Book_Topic (Asignación de temas para todos los libros del catálogo)
+INSERT INTO Book_Topic (book_id, topic_id, idUserCreate, dateCreate, idStatus)
+SELECT
+    b.id,
+    CASE
+        WHEN b.dewey IN ('830.39', '810.6') OR b.title ILIKE '%Ruta Interior%' OR b.title ILIKE '%Libros Condensados%' THEN 9 -- Literatura
+        WHEN b.dewey ILIKE '005.74%' OR b.title ILIKE '%SQL%' THEN 2 -- Bases de Datos
+        WHEN b.dewey ILIKE '%004.6%' OR b.title ILIKE '%redes%' THEN 3 -- Redes de Computadoras
+        WHEN b.dewey ILIKE '005.%' THEN 5 -- Algoritmos y Estructuras de Datos
+        WHEN b.dewey ILIKE 'C004%' THEN 1 -- Ingeniería de Software / Informática
+        WHEN b.dewey ILIKE '%333.79%' THEN 12 -- Energía y Electricidad
+        WHEN b.dewey ILIKE 'C330%' OR b.dewey ILIKE 'C338%' OR b.dewey ILIKE 'C352.4%' THEN 11 -- Economía y Finanzas
+        WHEN b.dewey ILIKE 'C34%' OR b.dewey ILIKE 'C35%' OR b.dewey ILIKE 'C368%' OR b.title ILIKE '%Ley%' OR b.title ILIKE '%Código%' OR b.title ILIKE '%Constitución%' THEN 10 -- Derecho y Legislación
+        WHEN b.dewey ILIKE '621.%' THEN 14 -- Ingeniería Mecánica y Manufactura
+        WHEN b.dewey ILIKE '153.%' THEN 15 -- Psicología y Desarrollo
+        ELSE 13 -- Enciclopedias y Diccionarios
+    END AS topic_id,
+    1,
+    CURRENT_TIMESTAMP,
+    B'1'
+FROM Book b
+ON CONFLICT (book_id, topic_id) DO NOTHING;
 
 -- 8. Catálogo de Roles del Módulo de Biblioteca (Role)
 INSERT INTO Role (id, name, description, idUserCreate, dateCreate, idStatus) VALUES

@@ -7,6 +7,7 @@ import {
   createTopic,
   getInventoryMetrics,
   getNextAvailableFolio,
+  getTopics,
   searchBooks,
   updateBook,
   updateBookStatus,
@@ -499,6 +500,41 @@ const feedbackMessage = ref('')
 const estanteCodigo = ref('')
 const temaNombre = ref('')
 
+const DEFAULT_TOPICS = [
+  'Ingeniería de Software',
+  'Bases de Datos',
+  'Redes de Computadoras',
+  'Sistemas Operativos',
+  'Algoritmos y Estructuras de Datos',
+  'Cálculo Diferencial e Integral',
+  'Inteligencia Artificial y Aprendizaje Automático',
+  'Administración y Gestión de Proyectos',
+  'Literatura',
+  'Derecho y Legislación',
+  'Economía y Finanzas',
+  'Energía y Electricidad',
+  'Enciclopedias y Diccionarios',
+  'Ingeniería Mecánica y Manufactura',
+  'Psicología y Desarrollo',
+]
+
+const availableTopics = ref<string[]>([...DEFAULT_TOPICS])
+
+async function fetchTopics() {
+  try {
+    const apiTopics = await getTopics()
+    const merged = new Set<string>(availableTopics.value)
+    for (const item of apiTopics) {
+      if (item?.name?.trim()) {
+        merged.add(item.name.trim())
+      }
+    }
+    availableTopics.value = Array.from(merged).sort((a, b) => a.localeCompare(b, 'es-MX'))
+  } catch {
+    // Mantiene la lista local de temas si el backend no responde
+  }
+}
+
 const directStatusSelection = ref<BookStatusKey>('disponible')
 
 const editForm = ref({
@@ -510,6 +546,7 @@ const editForm = ref({
   dewey: '',
   cutter: '',
   shelf: '',
+  topic: '',
   recommendation: '',
 })
 
@@ -629,15 +666,23 @@ const filteredBooks = computed(() => {
   return sorted
 })
 
-const ITEMS_PER_PAGE = 4
+const ITEMS_PER_PAGE = 12
 
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(filteredBooks.value.length / ITEMS_PER_PAGE)),
 )
 
-const visiblePageNumbers = computed(() =>
-  Array.from({ length: totalPages.value }, (_, index) => index + 1),
-)
+const visiblePageItems = computed<(number | '...')[]>(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  if (total <= 6) {
+    return Array.from({ length: total }, (_, index) => index + 1)
+  }
+  if (current <= 5 || current === total) {
+    return [1, 2, 3, 4, 5, '...', total]
+  }
+  return [1, 2, 3, 4, '...', current, '...', total]
+})
 
 const paginatedBooks = computed(() => {
   const safePage = Math.min(Math.max(1, currentPage.value), totalPages.value)
@@ -867,6 +912,10 @@ async function applyDirectStatusChange() {
 
 function openEditarFichaModal() {
   if (!activeBook.value) return
+  const currentTopic = activeBook.value.topics[0]?.trim() || availableTopics.value[0] || 'Ingeniería de Software'
+  if (currentTopic && !availableTopics.value.includes(currentTopic)) {
+    availableTopics.value = [...availableTopics.value, currentTopic].sort((a, b) => a.localeCompare(b, 'es-MX'))
+  }
   editForm.value = {
     folio: activeBook.value.folio,
     status: activeBook.value.status,
@@ -876,6 +925,7 @@ function openEditarFichaModal() {
     dewey: activeBook.value.dewey,
     cutter: activeBook.value.cutter,
     shelf: activeBook.value.shelf,
+    topic: currentTopic,
     recommendation: activeBook.value.recommendation,
   }
   showEditarFichaModal.value = true
@@ -892,6 +942,10 @@ async function saveFichaEdits() {
     const previousStatus = activeBook.value.status
     const nextStatus = editForm.value.status
     const cleanedFolio = normalizeFolioValue(editForm.value.folio)
+    const parsedTopics = editForm.value.topic
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
 
     if (cleanedFolio && folioAlreadyExists(cleanedFolio, activeBook.value.id)) {
       searchError.value = `El folio ${cleanedFolio} ya existe en el inventario. No se permiten folios duplicados.`
@@ -908,6 +962,7 @@ async function saveFichaEdits() {
         cutter: editForm.value.cutter.trim(),
         statusId: STATUS_META[nextStatus].id,
         shelfName: editForm.value.shelf.trim(),
+        topics: parsedTopics,
       })
       void fetchMetrics()
     } catch {
@@ -920,8 +975,13 @@ async function saveFichaEdits() {
     activeBook.value.dewey = editForm.value.dewey.trim()
     activeBook.value.cutter = editForm.value.cutter.trim()
     activeBook.value.shelf = editForm.value.shelf.trim()
+    activeBook.value.topics = parsedTopics
     activeBook.value.status = nextStatus
-    activeBook.value.recommendation = editForm.value.recommendation.trim()
+    activeBook.value.recommendation =
+      editForm.value.recommendation.trim() ||
+      (parsedTopics.length > 0
+        ? `Temas asociados: ${parsedTopics.join(', ')}. Ejemplar registrado en la base de datos del Sistema de Biblioteca TecNM Campus Monclova.`
+        : activeBook.value.recommendation)
     activeBook.value.code = activeBook.value.dewey
     activeBook.value.shortTitle = buildShortTitle(activeBook.value.title)
 
@@ -1098,13 +1158,21 @@ async function saveNewTema() {
 
   isSubmitting.value = true
   try {
+    let savedName = nombre
     try {
-      await createTopic(nombre)
+      const created = await createTopic(nombre)
+      if (created?.name?.trim()) {
+        savedName = created.name.trim()
+      }
     } catch {
       // Continúa en modo local si el backend no está disponible
     }
+    if (!availableTopics.value.some((t) => t.toLowerCase() === savedName.toLowerCase())) {
+      availableTopics.value = [...availableTopics.value, savedName].sort((a, b) => a.localeCompare(b, 'es-MX'))
+    }
+    void fetchTopics()
     showTemasModal.value = false
-    feedbackMessage.value = `Tema "${nombre}" registrado correctamente en el catálogo.`
+    feedbackMessage.value = `Tema "${savedName}" registrado y disponible en el selector de Editar Ficha.`
   } finally {
     isSubmitting.value = false
   }
@@ -1140,7 +1208,7 @@ watch([selectedStatus, sortBy, searchField], () => {
 })
 
 onMounted(() => {
-  void Promise.all([executeBackendSearch(), fetchMetrics()])
+  void Promise.all([executeBackendSearch(), fetchMetrics(), fetchTopics()])
   window.addEventListener('keydown', handleEscapeKey)
 })
 
@@ -1186,19 +1254,6 @@ onBeforeUnmount(() => {
 
             <div class="bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-lg border border-white/40 text-on-surface">
               <form class="flex flex-col lg:flex-row items-stretch gap-2.5" @submit.prevent="runImmediateSearch">
-                <div class="relative min-w-[235px]">
-                  <select
-                    id="searchFieldSelector"
-                    v-model="searchField"
-                    class="inventory-select w-full !h-11 !min-h-0 !pl-3.5 !pr-10 !py-0 bg-slate-100 text-primary font-label-md !text-xs font-bold !rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-tecnm-gold cursor-pointer"
-                    aria-label="Campo de búsqueda"
-                  >
-                    <option value="all">Todo (Título, Dewey, Folio)</option>
-                    <option value="title">Solo Título de la Obra</option>
-                    <option value="dewey">Código Dewey (CDD)</option>
-                    <option value="folio">Folio (5000+)</option>
-                  </select>
-                </div>
                 <div class="relative flex-1 flex items-center">
                   <span
                     :class="[
@@ -1212,7 +1267,7 @@ onBeforeUnmount(() => {
                     id="searchKeyword"
                     v-model="searchKeyword"
                     class="inventory-input w-full !h-11 !min-h-0 !pl-11 !pr-10 !py-0 bg-slate-50 text-on-surface font-body-md !text-xs placeholder:text-slate-400 !rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-tecnm-gold focus:bg-white transition-all shadow-inner"
-                    placeholder="Buscar por título (con o sin acentos), código Dewey o folio (5000+)..."
+                    placeholder="Buscar por título, tema (ej. Literatura, Derecho), código Dewey o folio..."
                     type="text"
                     autocomplete="off"
                     aria-label="Buscar en el inventario"
@@ -1375,22 +1430,6 @@ onBeforeUnmount(() => {
               </div>
 
               <div class="flex items-center flex-wrap gap-2.5 w-full md:w-auto justify-end">
-                <div class="flex items-center gap-2">
-                  <label class="font-label-sm text-xs text-slate-500 font-semibold whitespace-nowrap" for="sortSelector">
-                    Ordenar:
-                  </label>
-                  <select
-                    id="sortSelector"
-                    v-model="sortBy"
-                    class="inventory-select !w-auto min-w-[255px] !h-9 !min-h-0 !pl-3.5 !pr-10 !py-0 bg-slate-50 text-slate-800 font-label-md !text-xs !rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-                  >
-                    <option value="dewey">Clasificación Dewey Ascendente</option>
-                    <option value="status">Estado Administrativo</option>
-                    <option value="relevance">Plan de Estudios Tec Monclova</option>
-                    <option value="barcode">Número de Inventario</option>
-                  </select>
-                </div>
-
                 <div class="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
                   <button
                     type="button"
@@ -1637,30 +1676,37 @@ onBeforeUnmount(() => {
               <div class="flex items-center justify-center flex-wrap gap-1.5">
                 <button
                   type="button"
-                  class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                  class="w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 disabled:opacity-40 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                   :disabled="currentPage <= 1"
                   aria-label="Página anterior"
                   @click="currentPage = Math.max(1, currentPage - 1)"
                 >
                   <span class="material-symbols-outlined text-base">chevron_left</span>
                 </button>
+                <template v-for="(item, idx) in visiblePageItems" :key="`${item}-${idx}`">
+                  <span
+                    v-if="item === '...'"
+                    class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-600 font-label-md text-xs font-bold flex items-center justify-center select-none"
+                  >
+                    ...
+                  </span>
+                  <button
+                    v-else
+                    type="button"
+                    :class="[
+                      'w-9 h-9 rounded-lg font-label-md text-xs transition-colors cursor-pointer',
+                      currentPage === item
+                        ? 'bg-primary text-white font-bold shadow-sm'
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200',
+                    ]"
+                    @click="currentPage = item"
+                  >
+                    {{ item }}
+                  </button>
+                </template>
                 <button
-                  v-for="page in visiblePageNumbers"
-                  :key="page"
                   type="button"
-                  :class="[
-                    'w-9 h-9 rounded-lg font-label-md text-xs transition-colors cursor-pointer',
-                    currentPage === page
-                      ? 'bg-primary text-white font-bold shadow-sm'
-                      : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200',
-                  ]"
-                  @click="currentPage = page"
-                >
-                  {{ page }}
-                </button>
-                <button
-                  type="button"
-                  class="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                  class="w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 disabled:opacity-40 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                   :disabled="currentPage >= totalPages"
                   aria-label="Página siguiente"
                   @click="currentPage = Math.min(totalPages, currentPage + 1)"
@@ -1765,6 +1811,15 @@ onBeforeUnmount(() => {
                     {{ activeBook.shelf }}
                   </span>
                 </div>
+              </div>
+
+              <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
+                <span class="text-slate-400 font-medium text-[10.5px] uppercase tracking-wider">
+                  Tema / Especialidad:
+                </span>
+                <span class="font-label-sm text-xs font-bold text-primary">
+                  {{ activeBook.topics.length > 0 ? activeBook.topics.join(', ') : 'Acervo General' }}
+                </span>
               </div>
 
               <div class="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-slate-700 leading-relaxed">
@@ -1943,6 +1998,21 @@ onBeforeUnmount(() => {
                     type="text"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1" for="editTopic">
+                  Tema / Especialidad de la Obra:
+                </label>
+                <select
+                  id="editTopic"
+                  v-model="editForm.topic"
+                  class="inventory-select w-full !h-10 !min-h-0 !pl-3.5 !pr-10 !py-0 bg-white text-slate-800 !rounded-lg border border-slate-300 font-semibold focus:ring-2 focus:ring-primary focus:border-primary !text-xs cursor-pointer"
+                >
+                  <option v-for="topicOption in availableTopics" :key="topicOption" :value="topicOption">
+                    {{ topicOption }}
+                  </option>
+                </select>
               </div>
 
               <div>

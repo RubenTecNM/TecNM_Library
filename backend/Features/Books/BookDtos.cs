@@ -47,7 +47,8 @@ public record CreateBookRequest(
     string Cutter,
     int StatusId,
     int ShelfId,
-    string? ShelfName = null
+    string? ShelfName = null,
+    IReadOnlyList<string>? Topics = null
 );
 
 public record UpdateBookRequest(
@@ -58,7 +59,8 @@ public record UpdateBookRequest(
     string Dewey,
     string Cutter,
     int StatusId,
-    string? ShelfName = null
+    string? ShelfName = null,
+    IReadOnlyList<string>? Topics = null
 );
 
 public record UpdateBookStatusRequest(

@@ -36,14 +36,16 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
     public async Task<CirculationSummaryDto> GetCirculationSummaryAsync()
     {
         var now = DateTime.UtcNow;
+        var today = DateOnly.FromDateTime(now);
         var loans = await db.Loans
             .Include(l => l.Book)
             .Include(l => l.Borrower)
             .AsNoTracking()
             .OrderByDescending(l => l.StartDate)
+            .ThenByDescending(l => l.Id)
             .ToListAsync();
 
-        var mappedLoans = loans.Select(l => MapLoanToDto(l, now)).ToList();
+        var mappedLoans = loans.Select(l => MapLoanToDto(l, today)).ToList();
 
         var blockedStudents = mappedLoans
             .Where(l => l.HasEnrollmentBlock)
@@ -62,20 +64,21 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
             .ToList();
 
         var todayReturns = loans
-            .Where(l => l.ReturnDate.HasValue && l.ReturnDate.Value.Date == now.Date)
-            .OrderByDescending(l => l.ReturnDate)
+            .Where(l => l.ReturnDate.HasValue && l.ReturnDate.Value == today)
+            .OrderByDescending(l => l.DateUpdate ?? l.DateCreate)
             .Select(l =>
             {
-                var wasOverdueWhenReturned = l.ReturnDate!.Value.Date > l.DueDate.Date;
+                var wasOverdueWhenReturned = l.ReturnDate!.Value > l.DueDate;
                 var control = l.Borrower?.InstitutionalId
                               ?? l.Borrower?.StudentId
                               ?? l.Borrower?.EmployeeId
                               ?? "S/N";
+                var timeStamp = (l.DateUpdate ?? l.DateCreate).ToLocalTime();
                 return new TodayReturnDto(
                     Id: l.Id,
                     Folio: BookService.NormalizeFolio(l.Book?.Folio),
                     BookTitle: l.Book?.Title ?? "Ejemplar bibliográfico",
-                    Time: l.ReturnDate.Value.ToLocalTime().ToString("HH:mm 'hrs'", CultureInfo.InvariantCulture),
+                    Time: timeStamp.ToString("HH:mm 'hrs'", CultureInfo.InvariantCulture),
                     StudentInfo: $"{l.Borrower?.Name ?? "Estudiante"} (No. {control})",
                     Detail: wasOverdueWhenReturned
                         ? "Entregado con retraso • Bloqueo de inscripción liberado"
@@ -114,6 +117,7 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
 
         var control = req.ControlNumber.Trim();
         var now = DateTime.UtcNow;
+        var today = DateOnly.FromDateTime(now);
 
         // Verificar si el estudiante tiene actualmente un bloqueo de inscripción por libro vencido
         var borrower = await db.Borrowers
@@ -122,7 +126,7 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
         if (borrower is not null)
         {
             var hasOverdueLoan = await db.Loans
-                .AnyAsync(l => l.BorrowerId == borrower.Id && l.ReturnDate == null && l.DueDate < now);
+                .AnyAsync(l => l.BorrowerId == borrower.Id && l.ReturnDate == null && l.DueDate < today);
 
             if (hasOverdueLoan)
             {
@@ -167,7 +171,7 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
         {
             if (int.TryParse(cleanFolio, out var numericFolio) && numericFolio < 5000)
             {
-                return (null, "Los folios de libros deben ser a partir del 5000 en adelante.", false);
+                return (null, "Los folios de libros nuevos deben ser a partir del 5000 en adelante.", false);
             }
 
             book = new Book
@@ -205,8 +209,8 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
         {
             BookId = book.Id,
             BorrowerId = borrower.Id,
-            StartDate = now,
-            DueDate = now.AddDays(StandardLoanDays),
+            StartDate = today,
+            DueDate = today.AddDays(StandardLoanDays),
             ReturnDate = null,
             Responsible = "Lic. Martha Elena Vázquez Torres",
             DateCreate = now,
@@ -222,7 +226,7 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
             .AsNoTracking()
             .FirstAsync(l => l.Id == loan.Id);
 
-        return (MapLoanToDto(createdLoan, now), null, false);
+        return (MapLoanToDto(createdLoan, today), null, false);
     }
 
     public async Task<(CirculationLoanDto? Loan, string? Error, bool IsNotFound)> ReturnLoanAsync(int loanId)
@@ -238,7 +242,8 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
         }
 
         var now = DateTime.UtcNow;
-        loan.ReturnDate = now;
+        var today = DateOnly.FromDateTime(now);
+        loan.ReturnDate = today;
         loan.DateUpdate = now;
 
         if (loan.Book is not null)
@@ -248,7 +253,7 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
         }
 
         await db.SaveChangesAsync();
-        return (MapLoanToDto(loan, now), null, false);
+        return (MapLoanToDto(loan, today), null, false);
     }
 
     public async Task<(CirculationLoanDto? Loan, string? Error, bool IsNotFound)> RenewLoanAsync(int loanId)
@@ -269,16 +274,17 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
         }
 
         var now = DateTime.UtcNow;
+        var today = DateOnly.FromDateTime(now);
         // Si ya estaba vencido o por vencer, al renovar se añaden otros 3 días al plazo de entrega
-        var baseDate = loan.DueDate < now ? now : loan.DueDate;
+        var baseDate = loan.DueDate < today ? today : loan.DueDate;
         loan.DueDate = baseDate.AddDays(RenewalAdditionalDays);
         loan.DateUpdate = now;
 
         await db.SaveChangesAsync();
-        return (MapLoanToDto(loan, now), null, false);
+        return (MapLoanToDto(loan, today), null, false);
     }
 
-    private static CirculationLoanDto MapLoanToDto(Loan loan, DateTime now)
+    private static CirculationLoanDto MapLoanToDto(Loan loan, DateOnly today)
     {
         var folio = BookService.NormalizeFolio(loan.Book?.Folio);
         var bookTitle = loan.Book?.Title ?? "Ejemplar bibliográfico";
@@ -296,10 +302,10 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
         var careerKey = ResolveCareerKey(major);
 
         var isReturned = loan.ReturnDate.HasValue;
-        var isOverdue = !isReturned && loan.DueDate < now;
-        var isDueToday = !isReturned && !isOverdue && loan.DueDate.Date == now.Date;
-        var daysDiff = (int)Math.Ceiling((loan.DueDate.Date - now.Date).TotalDays);
-        var daysOverdue = isOverdue ? Math.Max(1, (int)Math.Ceiling((now.Date - loan.DueDate.Date).TotalDays)) : 0;
+        var isOverdue = !isReturned && loan.DueDate < today;
+        var isDueToday = !isReturned && !isOverdue && loan.DueDate == today;
+        var daysDiff = loan.DueDate.DayNumber - today.DayNumber;
+        var daysOverdue = isOverdue ? Math.Max(1, today.DayNumber - loan.DueDate.DayNumber) : 0;
 
         string state;
         string statusText;
@@ -372,11 +378,10 @@ public sealed class CirculationService(TecNMDbContext db) : ICirculationService
         return "sistemas";
     }
 
-    private static string FormatSpanishDate(DateTime dateUtc)
+    private static string FormatSpanishDate(DateOnly date)
     {
-        var local = dateUtc.ToLocalTime();
         string[] months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-        var month = months[local.Month - 1];
-        return $"{local.Day:D2}/{month}/{local:yy}";
+        var month = months[date.Month - 1];
+        return $"{date.Day:D2}/{month}/{date.Year % 100:D2}";
     }
 }
